@@ -1,0 +1,2144 @@
+{
+  "source_file": "A5 SH任务pilot.docx",
+  "blocks": [
+    {
+      "block_index": 0,
+      "type": "paragraph",
+      "text": "A5 SH任务pilot",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 1,
+      "type": "paragraph",
+      "text": "一、SH静态高负荷——理解并核对复杂任务事项",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 2,
+      "type": "paragraph",
+      "text": "首先确认这个任务的确是高负荷的，已准备好NASA-TLX认知负荷量表",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 3,
+      "type": "paragraph",
+      "text": "一名被试反应：一个任务需要4min左右，总共完成5个任务需要20min，",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 4,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 5,
+      "type": "paragraph",
+      "text": "请阅读并带入以下情景内容：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 6,
+      "type": "paragraph",
+      "text": "你是新品体验活动的筹备工作人员，活动定于2026年11月20日周五14:00至17:00，在创新中心一层体验厅举行，计划接待24名参与者。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 7,
+      "type": "paragraph",
+      "text": "接下来，你将在电脑上完成五个不同阶段的工作片段。每个任务有两个单元。先处理并提交第一单元，再根据第二单元的资料完成后续工作。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 8,
+      "type": "paragraph",
+      "text": "点击：阅读完毕，进入下一页。跳转到SH01页面的任务说明卡",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 9,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录：首页实际显示时间；点击“阅读完毕，进入下一页”的时间",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "计算：首页停留时长＝阅读完毕按钮点击时间－首页显示时间",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 10,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 11,
+      "type": "paragraph",
+      "text": "SH01任务：筛选符合基本要求的方案",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 12,
+      "type": "paragraph",
+      "text": "任务说明卡：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 13,
+      "type": "paragraph",
+      "text": "现在的时间是：11月6日 周五 10:00  距活动开始还有14天。你正在从四家服务方中筛选出合适的活动执行方案。同时，你原定13:00—13:45与同事交接活动资料，随后参加14:00的线上评审。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 14,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "在阅读完说明卡后，我们会口头问用户一些问题，看看他有没有理解这个任务安排。比如：你今天的线上方案评审会是几点？你是否准备好了介绍文件？",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 15,
+      "type": "paragraph",
+      "text": "点击：阅读完毕，进入第一个任务。跳转到SH01页面的第一个任务单元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 16,
+      "type": "paragraph",
+      "text": "第1任务单元　筛选出符合预算要求的方案",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 17,
+      "type": "paragraph",
+      "text": "要求：方案必须同时满足三项要求：总费用不超过5.00万元、筹备时间不超过10个自然日、每场可接待人数不少于24人。请先核对基本报价和接待人数，再点击“查看方案筹备日期表”，然后结合全部资料作答。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 18,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image1.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet1.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image2.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet2.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 19,
+      "type": "paragraph",
+      "text": "请选出加入必需服务后仍符合全部要求的方案，可多选。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 20,
+      "type": "paragraph",
+      "text": "□ A    □ B    □ C    □ D    □ 没有合格方案",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 21,
+      "type": "paragraph",
+      "text": "作答完毕，并准备进入下一个任务。跳转到SH01页面的第二个任务单元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 22,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 23,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间：（能够确认被试做任务的开始时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②点击“查看方案筹备周期表”的时间及实际显示时间；首次显示记E，重复展开不重复记录。",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录③首次及最后一次答案填写的时间：（能够确认被试作答完成的时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录④点击提交的时间；计算答案正误：（能够确认被试提交完成任务的时间，和作答的正确率）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录⑤点击进入下一题的时间：（能够确认可以机会性介入T1的时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 24,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 25,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：选择A、B",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1；否则记0分（漏选、错选）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 26,
+      "type": "paragraph",
+      "text": "第2任务单元　核算最终费用",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 27,
+      "type": "paragraph",
+      "text": "要求：评审前，所有方案都必须增加记录设备费和运输服务费。这两项费用均未包含在基本报价中，更新后的完整数据如下。要求仍为：最终费用不超过5.00万元；筹备时间不超过10个自然日；每场可接待人数不少于24人。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 28,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [
+        "assets/image3.png"
+      ],
+      "embedded_refs": [
+        "embeddings/Microsoft_Excel_Worksheet3.xlsx"
+      ]
+    },
+    {
+      "block_index": 29,
+      "type": "paragraph",
+      "text": "点击图片可查看完整电子表格",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 30,
+      "type": "paragraph",
+      "text": "表中所有费用单位均为万元。最终费用为基本报价、记录设备费与运输费之和。请填写各方案的最终费用，保留两位小数。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 31,
+      "type": "paragraph",
+      "text": "A ______ 万元    B ______ 万元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 32,
+      "type": "paragraph",
+      "text": "C ______ 万元    D ______ 万元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 33,
+      "type": "paragraph",
+      "text": "请选出加入必需服务后仍符合全部要求的方案，可多选。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 34,
+      "type": "paragraph",
+      "text": "□ A    □ B    □ C    □ D    □ 没有合格方案",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 35,
+      "type": "paragraph",
+      "text": "点击：作答完毕。跳转到白屏，待进入SH02页面。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 36,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 37,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②提交答案的时间，并计算答案正误",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 38,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 39,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：A＝5.04；B＝4.89；C＝4.92；D＝4.88万元，合格的选择为：B、D",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1；否则记0分（漏选、错选）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 40,
+      "type": "paragraph",
+      "text": "SH02任务：准备工作时间安排",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 41,
+      "type": "paragraph",
+      "text": "任务说明卡：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 42,
+      "type": "paragraph",
+      "text": "现在的时间是：11月10日 周二 14:00  距活动开始还有10天。你正在安排11月19日上午的场地准备工作，并检查是否能在12:00前完成现场验收。同时，今天16:00需将“准备工作清单”交给资料室，同时提交相关的配套材料。工作清单文件已完成，但办公室打印机暂时无法使用，尚未打印。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 43,
+      "type": "paragraph",
+      "text": "点击：阅读完毕，进入第一个任务。跳转到SH02页面的第一个任务单元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 44,
+      "type": "paragraph",
+      "text": "第1任务单元　安排最早可行的准备日程",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 45,
+      "type": "paragraph",
+      "text": "要求：场地开放时间为9:00至12:30。设备搬入工作的时间为9:00至9:30。设备调试工作必须在搬入结束后开始；调试完成后必须散热15分钟，才能开始讲解培训；培训结束后才能开始现场验收。所有环节由相关人员完成，每个环节都要尽早开始，希望在截止12:00前完成验收。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 46,
+      "type": "paragraph",
+      "text": "请先核对完工作环节的时长之后，再点击“查看人员时间安排”，然后结合全部资料作答。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 47,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image4.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet4.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image5.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet5.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 48,
+      "type": "paragraph",
+      "text": "请填写最早可行的开始时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 49,
+      "type": "paragraph",
+      "text": "设备调试 ______    讲解培训 ______    现场验收 ______    能否在12:00前完成验收？  □ 能    □ 不能",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 50,
+      "type": "paragraph",
+      "text": "点击：作答完毕，进入下一个任务。跳转到SH02页面的第二个任务单元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 51,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 52,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间：（能够确认被试做任务的开始时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②点击“查看人员时间安排”的时间及实际显示时间；首次显示记E，重复展开不重复记录。",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录③首次及最后一次答案填写的时间：（能够确认被试作答完成的时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录④点击提交的时间；计算答案正误：（能够确认被试提交完成任务的时间，和作答的正确率）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录⑤点击进入下一题的时间：（能够确认可以机会性介入T1的时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 53,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 54,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：设备调试9:45；讲解培训10:45；现场验收11:15；能",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1（写成09:45也算正确）；否则记0分（漏答、错答）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 55,
+      "type": "paragraph",
+      "text": "第2任务单元　调整准备日程",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 56,
+      "type": "paragraph",
+      "text": "要求：场地开放时间仍为9:00至12:30，设备调试延长至60分钟；验收人员最早可开始工作的时间为11:45。其余要求保持不变。请按更新后的完整资料重新排定日程。如果无法在12:00前完成，也请填写最早可行的安排，并判断是否按时。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 57,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [
+        "assets/image6.png"
+      ],
+      "embedded_refs": [
+        "embeddings/Microsoft_Excel_Worksheet6.xlsx"
+      ]
+    },
+    {
+      "block_index": 58,
+      "type": "paragraph",
+      "text": "点击图片可查看完整电子表格",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 59,
+      "type": "paragraph",
+      "text": "请填写更新后最早可行的开始时间。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 60,
+      "type": "paragraph",
+      "text": "设备调试 ______    讲解培训 ______    现场验收 ______  能否在12:00前完成验收？  □ 能    □ 不能",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 61,
+      "type": "paragraph",
+      "text": "点击：作答完毕。跳转到白屏，待进入SH03页面。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 62,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 63,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②提交答案的时间，并计算答案正误",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 64,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 65,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：设备调试9:45；讲解培训11:00；现场验收11:45；不能",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1（写成09:45也算正确）；否则记0分（漏选、错选）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 66,
+      "type": "paragraph",
+      "text": "SH03任务：活动参与资格确认与替补安排",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 67,
+      "type": "paragraph",
+      "text": "任务说明卡：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 68,
+      "type": "paragraph",
+      "text": "现在的时间是：11月13日 周五 15:30  距活动开始还有7天，本次活动共需24名参与者。其中16人已核实确认参加，不在本次表格中。你需要核对剩余人员的记录，确认人员的信息。人员的参与信息确认截止时间为今天17:00。今天16:00有项目沟通会，会前准备和前往会议室共需10分钟，需要提前5分钟发送会议资料。会议资料已整理好但仍未发送到会议群里。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 69,
+      "type": "paragraph",
+      "text": "第1任务单元　核对有效确认人数",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 70,
+      "type": "paragraph",
+      "text": "要求：只有同时满足三项条件的人才算有效确认：可以全程参加；资料齐全；最新状态为“已确认”。已报名未确认或已退出者均不计入。请先核对参加时间和资料，再点击“查看人员的确认状态”，结合全部记录作答。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 71,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image7.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet7.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image8.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet8.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 72,
+      "type": "paragraph",
+      "text": "加上已确认的16人，当前有效确认总人数为 ______ 人。距离24人的目标，还需补充 ______ 人。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 73,
+      "type": "paragraph",
+      "text": "点击：作答完毕，进入下一个任务。跳转到SH03页面的第二个任务单元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 74,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 75,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间：（能够确认被试做任务的开始时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②点击“查看人员的确认状态”的时间及实际显示时间；首次显示记E，重复展开不重复记录。",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录③首次及最后一次答案填写的时间：（能够确认被试作答完成的时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录④点击提交的时间；计算答案正误：（能够确认被试提交完成任务的时间，和作答的正确率）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录⑤点击进入下一题的时间：（能够确认可以机会性介入T1的时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 76,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 77,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：有效确认总人数20人；还需补充4人",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1分；否则记0分（漏答、错答）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 78,
+      "type": "paragraph",
+      "text": "第2任务单元　更新后的有效确认人数",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 79,
+      "type": "paragraph",
+      "text": "要求：本单元仍按“可全程参加、资料齐全、最新状态为已确认”三项条件判断。已核实确认的16人不在本表格里，以下待确认人员信息继续保留。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 80,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [
+        "assets/image9.png"
+      ],
+      "embedded_refs": [
+        "embeddings/Microsoft_Excel_Worksheet9.xlsx"
+      ]
+    },
+    {
+      "block_index": 81,
+      "type": "paragraph",
+      "text": "点击图片可查看完整电子表格",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 82,
+      "type": "paragraph",
+      "text": "同时，有最新的人员消息：吴桐退出；陈晨补齐资料；周宁确认全程参加。如果人员不足24人，再按下表顺序纳入符合条件的替补人员，达到24人即停止，不符合条件的替补直接跳过。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 83,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [
+        "assets/image10.png"
+      ],
+      "embedded_refs": [
+        "embeddings/Microsoft_Excel_Worksheet10.xlsx"
+      ]
+    },
+    {
+      "block_index": 84,
+      "type": "paragraph",
+      "text": "点击图片可查看完整电子表格",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 85,
+      "type": "paragraph",
+      "text": "本次应纳入正式名单的替补人员有哪些，可多选。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 86,
+      "type": "paragraph",
+      "text": "□ 王帆    □ 唐可    □ 赵禾    □ 顾然    □ 无人可纳入",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 87,
+      "type": "paragraph",
+      "text": "纳入替补后，有效确认总人数为 ______ 人，仍缺 ______ 人。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 88,
+      "type": "paragraph",
+      "text": "点击：作答完毕。跳转到白屏，待进入SH04页面。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 89,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 90,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②提交答案的时间，并计算答案正误",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 91,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 92,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：替补选择王帆、赵禾；有效确认总人数23人；仍缺1人",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1；否则记0分（漏选、错选）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 93,
+      "type": "paragraph",
+      "text": "SH04任务：工作人员排班与调整",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 94,
+      "type": "paragraph",
+      "text": "任务说明卡：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 95,
+      "type": "paragraph",
+      "text": "现在的时间是：11月18日 周三 15:00  距活动开始还有2天。你需要安排好活动当天的签到、现场引导和设备管理三个岗位的人员。先完成排班，再根据缺席和到岗变化重新安排。同时，今天16:00需前往另一栋办公楼确认展板。前期已采购部分活动物料，但报销材料尚未整理。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 96,
+      "type": "paragraph",
+      "text": "第1任务单元　为岗位分配人员",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 97,
+      "type": "paragraph",
+      "text": "任务：每个岗位需1人，每人只能去一个岗位。安排者必须具备对应资格，并在岗位开始前或者开始时到岗。满足全部要求的排班均可，无须选出唯一最佳安排。先明确岗位的时间，和人员对应的岗位，再点击“查看人员的到岗时间”，结合全部记录作答。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 98,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image11.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet11.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image12.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet12.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image13.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet13.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 99,
+      "type": "paragraph",
+      "text": "请为三个岗位各选择1人，同一人不能重复。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 100,
+      "type": "paragraph",
+      "text": "签到 ______    现场引导 ______    设备管理 ______",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 101,
+      "type": "paragraph",
+      "text": "点击：作答完毕，进入下一个任务。跳转到SH04页面的第二个任务单元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 102,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 103,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间：（能够确认被试做任务的开始时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②点击“查看人员的到岗时间”的时间及实际显示时间；首次显示记E，重复展开不重复记录。",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录③首次及最后一次答案填写的时间：（能够确认被试作答完成的时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录④点击提交的时间；计算答案正误：（能够确认被试提交完成任务的时间，和作答的正确率）",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录⑤点击进入下一题的时间：（能够确认可以机会性介入T1的时间）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 104,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 105,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：签到13:00，现场引导13:15，设备岗位13:00",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1分；否则记0分（漏答、错答）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 106,
+      "type": "paragraph",
+      "text": "第2任务单元　根据人员变化重新排班",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 107,
+      "type": "paragraph",
+      "text": "要求：收到三项变化：周悦临时缺席；赵禾到岗时间改为13:10；新增支援人员梁欣，可在12:55到岗，具备现场引导和设备管理资格。请重新为全部岗位安排人员。岗位工作时间、资格要求和每人只能去一个岗位的规则不变。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 108,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image14.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet14.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image15.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet15.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 109,
+      "type": "paragraph",
+      "text": "请为三个岗位各选择1人，同一人不能重复。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 110,
+      "type": "paragraph",
+      "text": "签到 ______    现场引导 ______    设备管理 ______",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 111,
+      "type": "paragraph",
+      "text": "点击：作答完毕。跳转到白屏，待进入SH05页面。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 112,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 113,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②提交答案的时间，并计算答案正误",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 114,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 115,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：设备管理必须为梁欣；签到可选林晨/许宁；现场引导可选林晨/陈珂/唐可，但不能与签到重复！",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "答案示例：签到：许宁；现场引导：许宁；设备管理：梁欣",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 116,
+      "type": "paragraph",
+      "text": "SH05任务：物料清点与补齐缺少数量",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 117,
+      "type": "paragraph",
+      "text": "任务说明卡：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 118,
+      "type": "paragraph",
+      "text": "现在的时间是：11月19日 周四 15:30  距活动开始还有1天。你当前需要确认24名参与者，分为三个体验区，每区8人；另有6名工作人员。你需要清点可用物料，计算还缺少多少物料，选择明天工作开始前能够送达的补充方案。另外，明天12:30开始活动现场准备，工作人员需从创新中心北门进入。从办公地点步行前往约25分钟。园区提供免费接驳车，车程约10分钟，需要提前预约，但你尚未安排明天的交通。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 119,
+      "type": "paragraph",
+      "text": "第1任务单元　计算可用库存与物料缺口",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 120,
+      "type": "paragraph",
+      "text": "要求：下表库存包含已损坏物料。损坏品不能使用，实际可用数量为库存总数减去损坏数。请先核对库存，再点击“查看配套规则”。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 121,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image16.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet16.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "配套规则：",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "胸牌：每名参与者和每名工作人员各1张",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "活动指南：每名参与者1份，另外每个体验区备用2份；工作人员不领取",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "体验记录表：每名参与者2张，另外每个体验区备用1张；工作人员不领取",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 122,
+      "type": "paragraph",
+      "text": "请填写实际可用数量与需要补充的数量：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 123,
+      "type": "paragraph",
+      "text": "胸牌：实际可用数量______张；需要补充的数量______张",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 124,
+      "type": "paragraph",
+      "text": "活动指南：实际可用数量______张；需要补充的数量______张",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 125,
+      "type": "paragraph",
+      "text": "体验记录表：实际可用数量______张；需要补充的数量______张",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 126,
+      "type": "paragraph",
+      "text": "点击：作答完毕，进入下一个任务。跳转到SH05页面的第二个任务单元",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 127,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 128,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本单元正文、基础表格及答题区实际显示时间。",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②点击“查看配套规则”的时间及实际显示时间；首次显示记E，重复展开不重复记录。",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录③首次及最后一次答案变更时间。",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录④提交点击的时间；计算答案正误。",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录⑤首次有效提交时记F。",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 129,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 130,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "胸牌：可用26，需补充4",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "指南：可用32，需补充0",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录表：可用44，需补充7",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1分；否则记0分（漏答、错答）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 131,
+      "type": "paragraph",
+      "text": "第2任务单元　选择补充方案",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 132,
+      "type": "paragraph",
+      "text": "要求：补充预算不超过130元，物料须在11月20日12:00前送达。每个方案是一套完整订单，只能选一套，不能拆分或组合。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 133,
+      "type": "paragraph",
+      "text": "参与人数和配套要求不变：24名参与者、6名工作人员、3个体验区。胸牌每人1张；指南每位参与者1份且每区备用2份；记录表每位参与者2张且每区备用1张。指南和记录表不向工作人员配发。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 134,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image17.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet17.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "",
+                "image_refs": [
+                  "assets/image18.png"
+                ],
+                "embedded_refs": [
+                  "embeddings/Microsoft_Excel_Worksheet18.xlsx"
+                ]
+              },
+              {
+                "text": "点击图片可查看完整电子表格",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 135,
+      "type": "paragraph",
+      "text": "请选择能补足全部缺少的数量，并符合预算与到货要求的方案，单选。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 136,
+      "type": "paragraph",
+      "text": "□ A    □ B    □ C    □ D    □ 没有合格方案",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 137,
+      "type": "paragraph",
+      "text": "采用你选择的方案后，除规定需求外，多出胸牌 ______ 张，体验记录表 ______ 张。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 138,
+      "type": "paragraph",
+      "text": "如“没有合格方案”，两个数量栏均填写“不适用”。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 139,
+      "type": "paragraph",
+      "text": "点击：作答完毕。跳转到作答完毕页面。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 140,
+      "type": "paragraph",
+      "text": "程序记录的时间：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 141,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "记录①本页面内容实际显示的时间",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "记录②提交答案的时间，并计算答案正误",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 142,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 143,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "答案记录",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "标准答案：D；多出胸牌1张，记录表3张",
+                "image_refs": [],
+                "embedded_refs": []
+              },
+              {
+                "text": "完全一致则记1分；否则记0分（漏答、错答）",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 144,
+      "type": "paragraph",
+      "text": "二、每个任务结束后的访谈+量表的填写",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 145,
+      "type": "paragraph",
+      "text": "其中，为了判断被试对每条信息的获取效果，在每个任务结束之后会进行一次消息理解题的测试：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 146,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [
+        "assets/image19.png"
+      ],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 147,
+      "type": "paragraph",
+      "text": "然后填写一份信息体验评价的问卷，一共4题，每题1-7分：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 148,
+      "type": "paragraph",
+      "text": "时机的合适度：你觉得这条信息出现的时机合适吗？1分（非常不合适）7分（非常合适）",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 149,
+      "type": "paragraph",
+      "text": "打扰感：这条消息对你刚才做任务的打扰程度有多大？1分（完全没有打扰）7分（打扰非常大）",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 150,
+      "type": "paragraph",
+      "text": "完成主任务的努力程度：因为这条消息，你需要多花多少精力才能继续完成任务？1分（完全不需要）7分（需要非常多）",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 151,
+      "type": "paragraph",
+      "text": "帮助程度：结合情景，这条消息对你处理你之后要处理的事情有多大帮助？1分（完全没有帮助）7分（帮助非常大）",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 152,
+      "type": "paragraph",
+      "text": "然后休息3min，再紧接着进入下一个任务。",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 153,
+      "type": "paragraph",
+      "text": "在5个任务全部做完后，需要再进行一次用户的访谈，主要围绕刚才的实验过程询问：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 154,
+      "type": "paragraph",
+      "text": "刚才哪条消息让你印象最深？它出现时你正在做什么？",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 155,
+      "type": "paragraph",
+      "text": "你当时怎么处理这条消息？看完后继续做任务是否顺利？",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 156,
+      "type": "paragraph",
+      "text": "如果由你决定，这条消息在哪个步骤出现更合适？为什么？",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 157,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 158,
+      "type": "paragraph",
+      "text": "最后导出程序的时间记录，大概为这样的，两个被试阅读速度不同，因此不要求同秒：",
+      "image_refs": [],
+      "embedded_refs": []
+    },
+    {
+      "block_index": 159,
+      "type": "table",
+      "rows": [
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "被试及分配",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "开始",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "t_event",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "t_boundary ",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "t_display",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "交付延迟",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "边界触发误差",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "被试001 N01-T0",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "0s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "18.0s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "45.0s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "18.2s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "0.2s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "0.2s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "paragraphs": [
+              {
+                "text": "被试002 N01-T1",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "0s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "24.0s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "66.0s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "66.3s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "42.3s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          },
+          {
+            "paragraphs": [
+              {
+                "text": "0.3s",
+                "image_refs": [],
+                "embedded_refs": []
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "block_index": 160,
+      "type": "paragraph",
+      "text": "",
+      "image_refs": [],
+      "embedded_refs": []
+    }
+  ],
+  "assets": [
+    "assets/image1.png",
+    "assets/image10.png",
+    "assets/image11.png",
+    "assets/image12.png",
+    "assets/image13.png",
+    "assets/image14.png",
+    "assets/image15.png",
+    "assets/image16.png",
+    "assets/image17.png",
+    "assets/image18.png",
+    "assets/image19.png",
+    "assets/image2.png",
+    "assets/image3.png",
+    "assets/image4.png",
+    "assets/image5.png",
+    "assets/image6.png",
+    "assets/image7.png",
+    "assets/image8.png",
+    "assets/image9.png"
+  ],
+  "embedded_workbook_count": 18
+}

@@ -1,0 +1,29 @@
+{
+  "content_version": "sh-source-2026-10-18-v1",
+  "files": [
+    {
+      "path": "docs/A5 SH任务pilot.docx",
+      "sha256": "f35125b9d7c9ce9de434004b4b869909fb79d29954901278b66f5a79cb615b47",
+      "bytes": 601144
+    },
+    {
+      "path": "docs/PRD.md",
+      "sha256": "55c1838b8d74b6a8b107c20421c2cee4842a40ce11af5ee37cc352e95b24f579",
+      "bytes": 33509
+    },
+    {
+      "path": "docs/刺激材料的属性判断.xlsx",
+      "sha256": "32d264d2f7b4eda5f5c6b9312d8c6d13461f1d54055d76912c37c905388a91ec",
+      "bytes": 46168
+    }
+  ],
+  "native_table_count": 30,
+  "image_count": 19,
+  "sheet_names": [
+    "文案呈现与问答表",
+    "情景属性判断表",
+    "每个场景中的试次顺序安排",
+    "SH—被试记录表"
+  ],
+  "task_data_status": "raw_extracted_not_yet_normalized"
+}

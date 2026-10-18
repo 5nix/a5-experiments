@@ -1,0 +1,1540 @@
+{
+  "source_file": "A5 SH任务pilot.docx",
+  "workbooks": [
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet1.xlsx",
+      "sha256": "04fd626179bbcec9ec0c1918a5af00923ccd6bfcfa3ac4dafe7829b7fc00554b",
+      "sheets": [
+        {
+          "name": "GN7nYL",
+          "cells": {
+            "A1": {
+              "value": "方案报价表",
+              "display": "方案报价表"
+            },
+            "A2": {
+              "value": "方案",
+              "display": "方案"
+            },
+            "B2": {
+              "value": "基本报价 万元",
+              "display": "基本报价 万元"
+            },
+            "C2": {
+              "value": "每场可接待人数",
+              "display": "每场可接待人数"
+            },
+            "A3": {
+              "value": "A",
+              "display": "A"
+            },
+            "B3": {
+              "value": "4.6",
+              "display": "4.6"
+            },
+            "C3": {
+              "value": "28",
+              "display": "28"
+            },
+            "A4": {
+              "value": "B",
+              "display": "B"
+            },
+            "B4": {
+              "value": "4.35",
+              "display": "4.35"
+            },
+            "C4": {
+              "value": "24",
+              "display": "24"
+            },
+            "A5": {
+              "value": "C",
+              "display": "C"
+            },
+            "B5": {
+              "value": "4.7",
+              "display": "4.7"
+            },
+            "C5": {
+              "value": "22",
+              "display": "22"
+            },
+            "A6": {
+              "value": "D",
+              "display": "D"
+            },
+            "B6": {
+              "value": "5.1",
+              "display": "5.1"
+            },
+            "C6": {
+              "value": "30",
+              "display": "30"
+            }
+          },
+          "merged_ranges": [
+            "A1:C1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet10.xlsx",
+      "sha256": "b1985c01deff4a2cd47c46e2751d76b0db9793b222670af20e0b0205eb9c5ccc",
+      "sheets": [
+        {
+          "name": "SpLD1w",
+          "cells": {
+            "A1": {
+              "value": "替补人员信息",
+              "display": "替补人员信息"
+            },
+            "A2": {
+              "value": "替补顺序",
+              "display": "替补顺序"
+            },
+            "B2": {
+              "value": "姓名",
+              "display": "姓名"
+            },
+            "C2": {
+              "value": "可全程参加",
+              "display": "可全程参加"
+            },
+            "D2": {
+              "value": "资料情况",
+              "display": "资料情况"
+            },
+            "E2": {
+              "value": "当前回复",
+              "display": "当前回复"
+            },
+            "A3": {
+              "value": "1",
+              "display": "1"
+            },
+            "B3": {
+              "value": "王帆",
+              "display": "王帆"
+            },
+            "C3": {
+              "value": "是",
+              "display": "是"
+            },
+            "D3": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "E3": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A4": {
+              "value": "2",
+              "display": "2"
+            },
+            "B4": {
+              "value": "唐可",
+              "display": "唐可"
+            },
+            "C4": {
+              "value": "仅前半程",
+              "display": "仅前半程"
+            },
+            "D4": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "E4": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A5": {
+              "value": "3",
+              "display": "3"
+            },
+            "B5": {
+              "value": "赵禾",
+              "display": "赵禾"
+            },
+            "C5": {
+              "value": "是",
+              "display": "是"
+            },
+            "D5": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "E5": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A6": {
+              "value": "4",
+              "display": "4"
+            },
+            "B6": {
+              "value": "顾然",
+              "display": "顾然"
+            },
+            "C6": {
+              "value": "是",
+              "display": "是"
+            },
+            "D6": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "E6": {
+              "value": "尚未回复",
+              "display": "尚未回复"
+            }
+          },
+          "merged_ranges": [
+            "A1:E1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet11.xlsx",
+      "sha256": "57958103ff8e99985993a958a0f2d13ec19fea7951414e863cdc5021187a532f",
+      "sheets": [
+        {
+          "name": "650kQj",
+          "cells": {
+            "A1": {
+              "value": "岗位",
+              "display": "岗位"
+            },
+            "B1": {
+              "value": "活动当天工作时间",
+              "display": "活动当天工作时间"
+            },
+            "C1": {
+              "value": "所需人数",
+              "display": "所需人数"
+            },
+            "A2": {
+              "value": "签到",
+              "display": "签到"
+            },
+            "B2": {
+              "value": "13:00至14:00",
+              "display": "13:00至14:00"
+            },
+            "C2": {
+              "value": "1人",
+              "display": "1人"
+            },
+            "A3": {
+              "value": "现场引导",
+              "display": "现场引导"
+            },
+            "B3": {
+              "value": "13:15至14:00",
+              "display": "13:15至14:00"
+            },
+            "C3": {
+              "value": "1人",
+              "display": "1人"
+            },
+            "A4": {
+              "value": "设备管理",
+              "display": "设备管理"
+            },
+            "B4": {
+              "value": "13:00至14:30",
+              "display": "13:00至14:30"
+            },
+            "C4": {
+              "value": "1人",
+              "display": "1人"
+            }
+          },
+          "merged_ranges": []
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet12.xlsx",
+      "sha256": "d5285dae485259f9699fc7f9ae4f41f771beecd297be00d03b23eb978beb3f52",
+      "sheets": [
+        {
+          "name": "j7UmwT",
+          "cells": {
+            "A1": {
+              "value": "姓名",
+              "display": "姓名"
+            },
+            "B1": {
+              "value": "可以去的岗位",
+              "display": "可以去的岗位"
+            },
+            "A2": {
+              "value": "林晨",
+              "display": "林晨"
+            },
+            "B2": {
+              "value": "签到 现场引导",
+              "display": "签到 现场引导"
+            },
+            "A3": {
+              "value": "周悦",
+              "display": "周悦"
+            },
+            "B3": {
+              "value": "签到 设备管理",
+              "display": "签到 设备管理"
+            },
+            "A4": {
+              "value": "陈珂",
+              "display": "陈珂"
+            },
+            "B4": {
+              "value": "现场引导 设备管理",
+              "display": "现场引导 设备管理"
+            },
+            "A5": {
+              "value": "许宁",
+              "display": "许宁"
+            },
+            "B5": {
+              "value": "签到",
+              "display": "签到"
+            },
+            "A6": {
+              "value": "唐可",
+              "display": "唐可"
+            },
+            "B6": {
+              "value": "现场引导",
+              "display": "现场引导"
+            },
+            "A7": {
+              "value": "赵禾",
+              "display": "赵禾"
+            },
+            "B7": {
+              "value": "设备管理",
+              "display": "设备管理"
+            }
+          },
+          "merged_ranges": []
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet13.xlsx",
+      "sha256": "9a262e944d816c65a89a0fd1b4f87d29cab2e464a304a5e0d52058653619211a",
+      "sheets": [
+        {
+          "name": "d5FAOp",
+          "cells": {
+            "A1": {
+              "value": "人员到岗时间安排",
+              "display": "人员到岗时间安排"
+            },
+            "A2": {
+              "value": "姓名",
+              "display": "姓名"
+            },
+            "B2": {
+              "value": "到岗时间",
+              "display": "到岗时间"
+            },
+            "C2": {
+              "value": "姓名",
+              "display": "姓名"
+            },
+            "D2": {
+              "value": "到岗时间",
+              "display": "到岗时间"
+            },
+            "A3": {
+              "value": "林晨",
+              "display": "林晨"
+            },
+            "B3": {
+              "value": "0.5277777777777778",
+              "display": "12:40",
+              "number_format": "h:mm"
+            },
+            "C3": {
+              "value": "周悦",
+              "display": "周悦"
+            },
+            "D3": {
+              "value": "0.5347222222222222",
+              "display": "12:50",
+              "number_format": "h:mm"
+            },
+            "A4": {
+              "value": "陈珂",
+              "display": "陈珂"
+            },
+            "B4": {
+              "value": "0.5451388888888888",
+              "display": "13:05",
+              "number_format": "h:mm"
+            },
+            "C4": {
+              "value": "许宁",
+              "display": "许宁"
+            },
+            "D4": {
+              "value": "0.5381944444444444",
+              "display": "12:55",
+              "number_format": "h:mm"
+            },
+            "A5": {
+              "value": "唐可",
+              "display": "唐可"
+            },
+            "B5": {
+              "value": "0.5486111111111112",
+              "display": "13:10",
+              "number_format": "h:mm"
+            },
+            "C5": {
+              "value": "赵禾",
+              "display": "赵禾"
+            },
+            "D5": {
+              "value": "0.53125",
+              "display": "12:45",
+              "number_format": "h:mm"
+            }
+          },
+          "merged_ranges": [
+            "A1:D1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet14.xlsx",
+      "sha256": "17e57dfafbf517a82b6a5260da97efd107f59c49ac08395e4f9f46fb87f7ff6e",
+      "sheets": [
+        {
+          "name": "KC6p8U",
+          "cells": {
+            "A1": {
+              "value": "岗位",
+              "display": "岗位"
+            },
+            "B1": {
+              "value": "活动当天工作时间",
+              "display": "活动当天工作时间"
+            },
+            "C1": {
+              "value": "所需人数",
+              "display": "所需人数"
+            },
+            "A2": {
+              "value": "签到",
+              "display": "签到"
+            },
+            "B2": {
+              "value": "13:00至14:00",
+              "display": "13:00至14:00"
+            },
+            "C2": {
+              "value": "1人",
+              "display": "1人"
+            },
+            "A3": {
+              "value": "现场引导",
+              "display": "现场引导"
+            },
+            "B3": {
+              "value": "13:15至14:00",
+              "display": "13:15至14:00"
+            },
+            "C3": {
+              "value": "1人",
+              "display": "1人"
+            },
+            "A4": {
+              "value": "设备管理",
+              "display": "设备管理"
+            },
+            "B4": {
+              "value": "13:00至14:30",
+              "display": "13:00至14:30"
+            },
+            "C4": {
+              "value": "1人",
+              "display": "1人"
+            }
+          },
+          "merged_ranges": []
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet15.xlsx",
+      "sha256": "e3af7a61892bc341b6f6e351621d1787660e4c330a2689e52eb5c0a87b719b30",
+      "sheets": [
+        {
+          "name": "n57C3G",
+          "cells": {
+            "A1": {
+              "value": "姓名",
+              "display": "姓名"
+            },
+            "B1": {
+              "value": "可以去的岗位",
+              "display": "可以去的岗位"
+            },
+            "C1": {
+              "value": "最新到岗时间",
+              "display": "最新到岗时间"
+            },
+            "A2": {
+              "value": "林晨",
+              "display": "林晨"
+            },
+            "B2": {
+              "value": "签到 现场引导",
+              "display": "签到 现场引导"
+            },
+            "C2": {
+              "value": "0.5277777777777778",
+              "display": "12:40",
+              "number_format": "h:mm"
+            },
+            "A3": {
+              "value": "周悦",
+              "display": "周悦"
+            },
+            "B3": {
+              "value": "签到 设备管理",
+              "display": "签到 设备管理"
+            },
+            "C3": {
+              "value": "缺席",
+              "display": "缺席"
+            },
+            "A4": {
+              "value": "陈珂",
+              "display": "陈珂"
+            },
+            "B4": {
+              "value": "现场引导 设备管理",
+              "display": "现场引导 设备管理"
+            },
+            "C4": {
+              "value": "0.5451388888888888",
+              "display": "13:05",
+              "number_format": "h:mm"
+            },
+            "A5": {
+              "value": "许宁",
+              "display": "许宁"
+            },
+            "B5": {
+              "value": "签到",
+              "display": "签到"
+            },
+            "C5": {
+              "value": "0.5381944444444444",
+              "display": "12:55",
+              "number_format": "h:mm"
+            },
+            "A6": {
+              "value": "唐可",
+              "display": "唐可"
+            },
+            "B6": {
+              "value": "现场引导",
+              "display": "现场引导"
+            },
+            "C6": {
+              "value": "0.5486111111111112",
+              "display": "13:10",
+              "number_format": "h:mm"
+            },
+            "A7": {
+              "value": "赵禾",
+              "display": "赵禾"
+            },
+            "B7": {
+              "value": "设备管理",
+              "display": "设备管理"
+            },
+            "C7": {
+              "value": "0.5486111111111112",
+              "display": "13:10",
+              "number_format": "h:mm"
+            },
+            "A8": {
+              "value": "梁欣",
+              "display": "梁欣"
+            },
+            "B8": {
+              "value": "现场引导 设备管理",
+              "display": "现场引导 设备管理"
+            },
+            "C8": {
+              "value": "0.5381944444444444",
+              "display": "12:55",
+              "number_format": "h:mm"
+            }
+          },
+          "merged_ranges": []
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet16.xlsx",
+      "sha256": "ac2280be564f1821c8dedea9d1a2ff408551219f74617972baac8860d2d89455",
+      "sheets": [
+        {
+          "name": "tnMW4t",
+          "cells": {
+            "A1": {
+              "value": "已有库存数",
+              "display": "已有库存数"
+            },
+            "A2": {
+              "value": "物料",
+              "display": "物料"
+            },
+            "B2": {
+              "value": "库存总数",
+              "display": "库存总数"
+            },
+            "C2": {
+              "value": "损坏数",
+              "display": "损坏数"
+            },
+            "A3": {
+              "value": "胸牌",
+              "display": "胸牌"
+            },
+            "B3": {
+              "value": "28张",
+              "display": "28张"
+            },
+            "C3": {
+              "value": "2张",
+              "display": "2张"
+            },
+            "A4": {
+              "value": "活动指南",
+              "display": "活动指南"
+            },
+            "B4": {
+              "value": "35份",
+              "display": "35份"
+            },
+            "C4": {
+              "value": "3份",
+              "display": "3份"
+            },
+            "A5": {
+              "value": "体验记录表",
+              "display": "体验记录表"
+            },
+            "B5": {
+              "value": "48张",
+              "display": "48张"
+            },
+            "C5": {
+              "value": "4张",
+              "display": "4张"
+            }
+          },
+          "merged_ranges": [
+            "A1:C1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet17.xlsx",
+      "sha256": "678727e0197a8e273a922db001e6663712b842a05fc1b55829e6a1389cbaecc8",
+      "sheets": [
+        {
+          "name": "J6IK0f",
+          "cells": {
+            "A1": {
+              "value": "物料",
+              "display": "物料"
+            },
+            "B1": {
+              "value": "原库存总数",
+              "display": "原库存总数"
+            },
+            "C1": {
+              "value": "损坏数",
+              "display": "损坏数"
+            },
+            "A2": {
+              "value": "胸牌",
+              "display": "胸牌"
+            },
+            "B2": {
+              "value": "28张",
+              "display": "28张"
+            },
+            "C2": {
+              "value": "2张",
+              "display": "2张"
+            },
+            "A3": {
+              "value": "活动指南",
+              "display": "活动指南"
+            },
+            "B3": {
+              "value": "35份",
+              "display": "35份"
+            },
+            "C3": {
+              "value": "3份",
+              "display": "3份"
+            },
+            "A4": {
+              "value": "体验记录表",
+              "display": "体验记录表"
+            },
+            "B4": {
+              "value": "48张",
+              "display": "48张"
+            },
+            "C4": {
+              "value": "4张",
+              "display": "4张"
+            }
+          },
+          "merged_ranges": []
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet18.xlsx",
+      "sha256": "1f4c8773a896dc9d80e4f1eb5ed04d3f70077c8d4bda3127bc20c7a8a36d3014",
+      "sheets": [
+        {
+          "name": "uA5IdN",
+          "cells": {
+            "A1": {
+              "value": "方案",
+              "display": "方案"
+            },
+            "B1": {
+              "value": "补充胸牌",
+              "display": "补充胸牌"
+            },
+            "C1": {
+              "value": "补充体验记录表",
+              "display": "补充体验记录表"
+            },
+            "D1": {
+              "value": "送达时间",
+              "display": "送达时间"
+            },
+            "E1": {
+              "value": "总费用",
+              "display": "总费用"
+            },
+            "A2": {
+              "value": "A",
+              "display": "A"
+            },
+            "B2": {
+              "value": "5张",
+              "display": "5张"
+            },
+            "C2": {
+              "value": "10张",
+              "display": "10张"
+            },
+            "D2": {
+              "value": "11月19日18:00",
+              "display": "11月19日18:00"
+            },
+            "E2": {
+              "value": "140元",
+              "display": "140元"
+            },
+            "A3": {
+              "value": "B",
+              "display": "B"
+            },
+            "B3": {
+              "value": "4张",
+              "display": "4张"
+            },
+            "C3": {
+              "value": "7张",
+              "display": "7张"
+            },
+            "D3": {
+              "value": "11月20日13:00",
+              "display": "11月20日13:00"
+            },
+            "E3": {
+              "value": "105元",
+              "display": "105元"
+            },
+            "A4": {
+              "value": "C",
+              "display": "C"
+            },
+            "B4": {
+              "value": "5张",
+              "display": "5张"
+            },
+            "C4": {
+              "value": "4张",
+              "display": "4张"
+            },
+            "D4": {
+              "value": "11月20日10:00",
+              "display": "11月20日10:00"
+            },
+            "E4": {
+              "value": "90元",
+              "display": "90元"
+            },
+            "A5": {
+              "value": "D",
+              "display": "D"
+            },
+            "B5": {
+              "value": "5张",
+              "display": "5张"
+            },
+            "C5": {
+              "value": "10张",
+              "display": "10张"
+            },
+            "D5": {
+              "value": "11月20日11:30",
+              "display": "11月20日11:30"
+            },
+            "E5": {
+              "value": "125元",
+              "display": "125元"
+            }
+          },
+          "merged_ranges": []
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet2.xlsx",
+      "sha256": "4023b162d16a6ee49199842753accf0ec1abca009008cf7acf0845c63e56ddf6",
+      "sheets": [
+        {
+          "name": "5mJJfK",
+          "cells": {
+            "A1": {
+              "value": "方案筹备日期表",
+              "display": "方案筹备日期表"
+            },
+            "A2": {
+              "value": "方案",
+              "display": "方案"
+            },
+            "B2": {
+              "value": "筹备所需自然日",
+              "display": "筹备所需自然日"
+            },
+            "A3": {
+              "value": "A",
+              "display": "A"
+            },
+            "B3": {
+              "value": "9天",
+              "display": "9天"
+            },
+            "A4": {
+              "value": "B",
+              "display": "B"
+            },
+            "B4": {
+              "value": "10天",
+              "display": "10天"
+            },
+            "A5": {
+              "value": "C",
+              "display": "C"
+            },
+            "B5": {
+              "value": "8天",
+              "display": "8天"
+            },
+            "A6": {
+              "value": "D",
+              "display": "D"
+            },
+            "B6": {
+              "value": "11天",
+              "display": "11天"
+            }
+          },
+          "merged_ranges": [
+            "A1:B1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet3.xlsx",
+      "sha256": "4f06eebc801c072e18d48bfaed3593cb57271a364c83ba29c0dc504b0f5c64f2",
+      "sheets": [
+        {
+          "name": "Bi211v",
+          "cells": {
+            "A1": {
+              "value": "方案",
+              "display": "方案"
+            },
+            "B1": {
+              "value": "基本报价",
+              "display": "基本报价"
+            },
+            "C1": {
+              "value": "记录设备费",
+              "display": "记录设备费"
+            },
+            "D1": {
+              "value": "运输费",
+              "display": "运输费"
+            },
+            "E1": {
+              "value": "筹备周期",
+              "display": "筹备周期"
+            },
+            "F1": {
+              "value": "接待人数",
+              "display": "接待人数"
+            },
+            "A2": {
+              "value": "A",
+              "display": "A"
+            },
+            "B2": {
+              "value": "4.6",
+              "display": "4.6"
+            },
+            "C2": {
+              "value": "0.18",
+              "display": "0.18"
+            },
+            "D2": {
+              "value": "0.26",
+              "display": "0.26"
+            },
+            "E2": {
+              "value": "9天",
+              "display": "9天"
+            },
+            "F2": {
+              "value": "28人",
+              "display": "28人"
+            },
+            "A3": {
+              "value": "B",
+              "display": "B"
+            },
+            "B3": {
+              "value": "4.35",
+              "display": "4.35"
+            },
+            "C3": {
+              "value": "0.24",
+              "display": "0.24"
+            },
+            "D3": {
+              "value": "0.3",
+              "display": "0.3"
+            },
+            "E3": {
+              "value": "10天",
+              "display": "10天"
+            },
+            "F3": {
+              "value": "24人",
+              "display": "24人"
+            },
+            "A4": {
+              "value": "C",
+              "display": "C"
+            },
+            "B4": {
+              "value": "4.7",
+              "display": "4.7"
+            },
+            "C4": {
+              "value": "0.1",
+              "display": "0.1"
+            },
+            "D4": {
+              "value": "0.12",
+              "display": "0.12"
+            },
+            "E4": {
+              "value": "8天",
+              "display": "8天"
+            },
+            "F4": {
+              "value": "22人",
+              "display": "22人"
+            },
+            "A5": {
+              "value": "D",
+              "display": "D"
+            },
+            "B5": {
+              "value": "4.4",
+              "display": "4.4"
+            },
+            "C5": {
+              "value": "0.2",
+              "display": "0.2"
+            },
+            "D5": {
+              "value": "0.28",
+              "display": "0.28"
+            },
+            "E5": {
+              "value": "10天",
+              "display": "10天"
+            },
+            "F5": {
+              "value": "30人",
+              "display": "30人"
+            }
+          },
+          "merged_ranges": []
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet4.xlsx",
+      "sha256": "de4b310a184f13c85d6aafc12a511f789c792cbafcdce72772daebfad3434339",
+      "sheets": [
+        {
+          "name": "VenLap",
+          "cells": {
+            "A1": {
+              "value": "工作环节与时长的对应",
+              "display": "工作环节与时长的对应"
+            },
+            "A2": {
+              "value": "工作环节",
+              "display": "工作环节"
+            },
+            "B2": {
+              "value": "所需时长",
+              "display": "所需时长"
+            },
+            "A3": {
+              "value": "设备搬入",
+              "display": "设备搬入"
+            },
+            "B3": {
+              "value": "30分钟 已固定",
+              "display": "30分钟 已固定"
+            },
+            "A4": {
+              "value": "设备调试",
+              "display": "设备调试"
+            },
+            "B4": {
+              "value": "45分钟",
+              "display": "45分钟"
+            },
+            "A5": {
+              "value": "讲解培训",
+              "display": "讲解培训"
+            },
+            "B5": {
+              "value": "30分钟",
+              "display": "30分钟"
+            },
+            "A6": {
+              "value": "现场验收",
+              "display": "现场验收"
+            },
+            "B6": {
+              "value": "30分钟",
+              "display": "30分钟"
+            }
+          },
+          "merged_ranges": [
+            "A1:B1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet5.xlsx",
+      "sha256": "0b143140ca0fc8cb717708465421fdda00b85b290076566a02eca666d2a9fceb",
+      "sheets": [
+        {
+          "name": "n2Gwnb",
+          "cells": {
+            "A1": {
+              "value": "人员时间安排",
+              "display": "人员时间安排"
+            },
+            "A2": {
+              "value": "人员",
+              "display": "人员"
+            },
+            "B2": {
+              "value": "最早可开始工作的时间",
+              "display": "最早可开始工作的时间"
+            },
+            "A3": {
+              "value": "调试人员",
+              "display": "调试人员"
+            },
+            "B3": {
+              "value": "0.40625",
+              "display": "9:45",
+              "number_format": "h:mm"
+            },
+            "A4": {
+              "value": "培训人员",
+              "display": "培训人员"
+            },
+            "B4": {
+              "value": "0.4375",
+              "display": "10:30",
+              "number_format": "h:mm"
+            },
+            "A5": {
+              "value": "验收人员",
+              "display": "验收人员"
+            },
+            "B5": {
+              "value": "0.4583333333333333",
+              "display": "11:00",
+              "number_format": "h:mm"
+            }
+          },
+          "merged_ranges": [
+            "A1:B1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet6.xlsx",
+      "sha256": "309fad23d703781b7f7ca475f75b5c7f53d62bd9a6b0f679958d5b4a9b6165da",
+      "sheets": [
+        {
+          "name": "F5Ku5h",
+          "cells": {
+            "A1": {
+              "value": "工作环节",
+              "display": "工作环节"
+            },
+            "B1": {
+              "value": "时长",
+              "display": "时长"
+            },
+            "C1": {
+              "value": "开始前必须满足的条件",
+              "display": "开始前必须满足的条件"
+            },
+            "A2": {
+              "value": "设备搬入",
+              "display": "设备搬入"
+            },
+            "B2": {
+              "value": "30分钟",
+              "display": "30分钟"
+            },
+            "C2": {
+              "value": "固定9:00至9:30",
+              "display": "固定9:00至9:30"
+            },
+            "A3": {
+              "value": "设备调试",
+              "display": "设备调试"
+            },
+            "B3": {
+              "value": "60分钟",
+              "display": "60分钟"
+            },
+            "C3": {
+              "value": "搬入结束 且调试人员9:45起可工作",
+              "display": "搬入结束 且调试人员9:45起可工作"
+            },
+            "A4": {
+              "value": "讲解培训",
+              "display": "讲解培训"
+            },
+            "B4": {
+              "value": "30分钟",
+              "display": "30分钟"
+            },
+            "C4": {
+              "value": "调试结束后散热15分钟 且培训人员10:30起可工作",
+              "display": "调试结束后散热15分钟 且培训人员10:30起可工作"
+            },
+            "A5": {
+              "value": "现场验收",
+              "display": "现场验收"
+            },
+            "B5": {
+              "value": "30分钟",
+              "display": "30分钟"
+            },
+            "C5": {
+              "value": "培训结束 且验收人员11:45起可工作",
+              "display": "培训结束 且验收人员11:45起可工作"
+            }
+          },
+          "merged_ranges": []
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet7.xlsx",
+      "sha256": "91b615759387ca2a13205a66ca9d021407efd6a5e0ad6c39981eb8cd86e6466b",
+      "sheets": [
+        {
+          "name": "rCgwoo",
+          "cells": {
+            "A1": {
+              "value": "待确认人员信息",
+              "display": "待确认人员信息"
+            },
+            "A2": {
+              "value": "姓名",
+              "display": "姓名"
+            },
+            "B2": {
+              "value": "是否可全程参加",
+              "display": "是否可全程参加"
+            },
+            "C2": {
+              "value": "资料情况",
+              "display": "资料情况"
+            },
+            "A3": {
+              "value": "林悦",
+              "display": "林悦"
+            },
+            "B3": {
+              "value": "是",
+              "display": "是"
+            },
+            "C3": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "A4": {
+              "value": "周宁",
+              "display": "周宁"
+            },
+            "B4": {
+              "value": "是",
+              "display": "是"
+            },
+            "C4": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "A5": {
+              "value": "陈晨",
+              "display": "陈晨"
+            },
+            "B5": {
+              "value": "是",
+              "display": "是"
+            },
+            "C5": {
+              "value": "缺一份",
+              "display": "缺一份"
+            },
+            "A6": {
+              "value": "吴桐",
+              "display": "吴桐"
+            },
+            "B6": {
+              "value": "是",
+              "display": "是"
+            },
+            "C6": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "A7": {
+              "value": "何佳",
+              "display": "何佳"
+            },
+            "B7": {
+              "value": "仅前半程",
+              "display": "仅前半程"
+            },
+            "C7": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "A8": {
+              "value": "宋宇",
+              "display": "宋宇"
+            },
+            "B8": {
+              "value": "是",
+              "display": "是"
+            },
+            "C8": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "A9": {
+              "value": "郑楠",
+              "display": "郑楠"
+            },
+            "B9": {
+              "value": "是",
+              "display": "是"
+            },
+            "C9": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "A10": {
+              "value": "许妍",
+              "display": "许妍"
+            },
+            "B10": {
+              "value": "是",
+              "display": "是"
+            },
+            "C10": {
+              "value": "齐全",
+              "display": "齐全"
+            }
+          },
+          "merged_ranges": [
+            "A1:C1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet8.xlsx",
+      "sha256": "ec2e5a6f1b7c234d817f413b203d98c8279819224a2f7a6c4f34696414bfda5b",
+      "sheets": [
+        {
+          "name": "yFYdDe",
+          "cells": {
+            "A1": {
+              "value": "人员的确认状态",
+              "display": "人员的确认状态"
+            },
+            "A2": {
+              "value": "最新状态",
+              "display": "最新状态"
+            },
+            "B2": {
+              "value": "对应人员",
+              "display": "对应人员"
+            },
+            "A3": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "B3": {
+              "value": "林悦 陈晨 吴桐 何佳 宋宇 郑楠",
+              "display": "林悦 陈晨 吴桐 何佳 宋宇 郑楠"
+            },
+            "A4": {
+              "value": "已报名未确认",
+              "display": "已报名未确认"
+            },
+            "B4": {
+              "value": "周宁",
+              "display": "周宁"
+            },
+            "A5": {
+              "value": "已退出",
+              "display": "已退出"
+            },
+            "B5": {
+              "value": "许妍",
+              "display": "许妍"
+            }
+          },
+          "merged_ranges": [
+            "A1:B1"
+          ]
+        }
+      ]
+    },
+    {
+      "source_member": "word/embeddings/Microsoft_Excel_Worksheet9.xlsx",
+      "sha256": "44ea28a4879eab43bae2def9758e647a08129c2c9ddcc232aff8bf252fd7524f",
+      "sheets": [
+        {
+          "name": "OCnV9M",
+          "cells": {
+            "A1": {
+              "value": "待确认人员信息",
+              "display": "待确认人员信息"
+            },
+            "A2": {
+              "value": "姓名",
+              "display": "姓名"
+            },
+            "B2": {
+              "value": "可全程参加",
+              "display": "可全程参加"
+            },
+            "C2": {
+              "value": "资料情况",
+              "display": "资料情况"
+            },
+            "D2": {
+              "value": "原确认状态",
+              "display": "原确认状态"
+            },
+            "A3": {
+              "value": "林悦",
+              "display": "林悦"
+            },
+            "B3": {
+              "value": "是",
+              "display": "是"
+            },
+            "C3": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "D3": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A4": {
+              "value": "周宁",
+              "display": "周宁"
+            },
+            "B4": {
+              "value": "是",
+              "display": "是"
+            },
+            "C4": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "D4": {
+              "value": "已报名未确认",
+              "display": "已报名未确认"
+            },
+            "A5": {
+              "value": "陈晨",
+              "display": "陈晨"
+            },
+            "B5": {
+              "value": "是",
+              "display": "是"
+            },
+            "C5": {
+              "value": "缺一份",
+              "display": "缺一份"
+            },
+            "D5": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A6": {
+              "value": "吴桐",
+              "display": "吴桐"
+            },
+            "B6": {
+              "value": "是",
+              "display": "是"
+            },
+            "C6": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "D6": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A7": {
+              "value": "何佳",
+              "display": "何佳"
+            },
+            "B7": {
+              "value": "仅前半程",
+              "display": "仅前半程"
+            },
+            "C7": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "D7": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A8": {
+              "value": "宋宇",
+              "display": "宋宇"
+            },
+            "B8": {
+              "value": "是",
+              "display": "是"
+            },
+            "C8": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "D8": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A9": {
+              "value": "郑楠",
+              "display": "郑楠"
+            },
+            "B9": {
+              "value": "是",
+              "display": "是"
+            },
+            "C9": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "D9": {
+              "value": "已确认",
+              "display": "已确认"
+            },
+            "A10": {
+              "value": "许妍",
+              "display": "许妍"
+            },
+            "B10": {
+              "value": "是",
+              "display": "是"
+            },
+            "C10": {
+              "value": "齐全",
+              "display": "齐全"
+            },
+            "D10": {
+              "value": "已退出",
+              "display": "已退出"
+            }
+          },
+          "merged_ranges": [
+            "A1:D1"
+          ]
+        }
+      ]
+    }
+  ]
+}

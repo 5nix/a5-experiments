@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>实验员后台</title><link rel="stylesheet" href="/app.css"><script type="module" src="/admin.js"></script></head>
+<body><header><strong>f5-sh-pilot 实验员后台</strong></header><main>
+<p><strong>当前使用 Mock 眼镜，只验证软件流程。真实呈现尚未接入。</strong> 被试使用单独的实验链接，请勿向被试展示本后台。</p>
+<p id="error" role="alert"></p><p id="notice" role="status"></p>
+<section><h1>启动实验</h1><form id="start"><label for="participant">被试编号</label><select id="participant" required><option value="">请选择</option></select><button type="submit">创建会话</button></form>
+<pre id="assignment"></pre><p id="access"></p></section>
+<section><h2>配置与检查</h2><form id="import"><label for="config">导入已分配的被试配置 JSON</label><input id="config" type="file" accept=".json,application/json" required><button type="submit">校验并导入</button></form>
+<button id="preflight" type="button">运行材料检查</button><button id="export-all" type="button">导出全部会话</button><pre id="check-result"></pre></section>
+<section><h2>会话进度</h2><div class="scroll"><table><thead><tr><th>被试</th><th>阶段</th><th>任务</th><th>状态</th><th>异常</th><th>操作</th></tr></thead><tbody id="sessions"></tbody></table></div></section>
+<section id="selected" hidden><h2 id="selected-title">会话详情</h2>
+<section id="current-state" aria-label="用户当前状态"><h3>用户当前状态</h3><dl id="state-values"></dl><p>以下操作根据当前状态开放。请先填写干预原因。</p>
+<form id="control"><label for="reason">干预原因</label><input id="reason" required maxlength="4000"><div id="intervention-actions">
+<button type="submit" value="pause">暂停实验</button><button type="submit" value="resume">恢复实验</button><button type="submit" value="skip_break">跳过休息</button><button type="submit" value="stop">结束会话</button>
+</div><div id="admin-debug" hidden><label for="admin-debug-target">000调试跳题</label><select id="admin-debug-target"></select><button type="submit" value="debug_jump">跳转调试页面</button></div></form></section>
+<details><summary>配置、设备与请求详情</summary><pre id="details"></pre></details><p><button id="recover" type="button">生成恢复入口</button><button id="export-one" type="button">导出当前会话</button></p>
+<h3>访谈与备注</h3><ul id="prompts"></ul><form id="note"><label for="category">备注类型</label><select id="category"><option value="interview">访谈记录</option><option value="observation">任务观察</option><option value="anomaly">异常备注</option></select><label for="note-stage">关联任务组</label><select id="note-stage"><option value="">全实验</option><option>SH01</option><option>SH02</option><option>SH03</option><option>SH04</option><option>SH05</option></select><label for="note-text">记录内容</label><textarea id="note-text" rows="5" required maxlength="50000"></textarea><button type="submit">追加保存</button></form><pre id="notes"></pre>
+<details><summary>事件日志与 Mock 请求（仅实验员）</summary><button id="logs" type="button">读取日志</button><pre id="events"></pre></details></section>
+</main></body></html>

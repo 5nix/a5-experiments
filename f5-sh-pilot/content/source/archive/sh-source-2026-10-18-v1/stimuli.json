@@ -1,0 +1,285 @@
+{
+  "content_version": "sh-source-2026-10-18-v1",
+  "stimuli": [
+    {
+      "stage_id": "SH01",
+      "message_id": "N01",
+      "text": "线上方案评审会，调整为13:30开始。",
+      "duration_ms": 8500,
+      "question": "线上方案评审调整到几点开始？",
+      "options": [
+        {
+          "id": "A",
+          "text": "13:00"
+        },
+        {
+          "id": "B",
+          "text": "13:30"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 13:30",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A2:I2"
+      }
+    },
+    {
+      "stage_id": "SH01",
+      "message_id": "A01",
+      "text": "评审提前后与交接时间冲突，建议及时调整。",
+      "duration_ms": 8500,
+      "question": "建议你需要及时调整什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "时间冲突"
+        },
+        {
+          "id": "B",
+          "text": "工作材料"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 时间冲突",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A3:I3"
+      }
+    },
+    {
+      "stage_id": "SH02",
+      "message_id": "N02",
+      "text": "请前往二楼服务台领取工作清单的配套材料。",
+      "duration_ms": 8500,
+      "question": "清单收件地点在哪里？",
+      "options": [
+        {
+          "id": "A",
+          "text": "二楼服务台"
+        },
+        {
+          "id": "B",
+          "text": "一楼服务台"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 二楼服务台",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A4:I4"
+      }
+    },
+    {
+      "stage_id": "SH02",
+      "message_id": "A02",
+      "text": "建议前往三楼自助打印区打印清单。",
+      "duration_ms": 8500,
+      "question": "眼镜建议提交清单前先做什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "检查打印机连接"
+        },
+        {
+          "id": "B",
+          "text": "预览打印版式"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 预览打印版式",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A5:I5"
+      }
+    },
+    {
+      "stage_id": "SH03",
+      "message_id": "N03",
+      "text": "项目沟通会，调整到B201会议室举行。",
+      "duration_ms": 8500,
+      "question": "项目沟通会调整到哪个会议室？",
+      "options": [
+        {
+          "id": "A",
+          "text": "B201会议室"
+        },
+        {
+          "id": "B",
+          "text": "A302会议室"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A B201会议室",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A6:I6"
+      }
+    },
+    {
+      "stage_id": "SH03",
+      "message_id": "A03",
+      "text": "参加沟通会前，建议将资料发至项目群。",
+      "duration_ms": 8500,
+      "question": "眼镜建议把什么发到项目群？",
+      "options": [
+        {
+          "id": "A",
+          "text": "用户访谈"
+        },
+        {
+          "id": "B",
+          "text": "会议资料"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 会议资料",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A7:I7"
+      }
+    },
+    {
+      "stage_id": "SH04",
+      "message_id": "N04",
+      "text": "今天的展板确认时间推迟到16:30。",
+      "duration_ms": 8500,
+      "question": "展板确认的时间推迟到几点？",
+      "options": [
+        {
+          "id": "A",
+          "text": "17:20"
+        },
+        {
+          "id": "B",
+          "text": "16:30"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 16:30",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A8:I8"
+      }
+    },
+    {
+      "stage_id": "SH04",
+      "message_id": "A04",
+      "text": "活动采购的物料报销材料，可为你提前整理。",
+      "duration_ms": 8500,
+      "question": "可以为你整理什么材料？",
+      "options": [
+        {
+          "id": "A",
+          "text": "物料报销材料"
+        },
+        {
+          "id": "B",
+          "text": "展板确认材料"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 物料报销材料",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A9:I9"
+      }
+    },
+    {
+      "stage_id": "SH05",
+      "message_id": "N05",
+      "text": "工作人员入口调整到创新中心东门。",
+      "duration_ms": 8500,
+      "question": "工作人员入口调整为创新中心哪个门？",
+      "options": [
+        {
+          "id": "A",
+          "text": "北门"
+        },
+        {
+          "id": "B",
+          "text": "东门"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 东门",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A10:I10"
+      }
+    },
+    {
+      "stage_id": "SH05",
+      "message_id": "A05",
+      "text": "建议提前预约明天前往创新中心的接驳车。",
+      "duration_ms": 8500,
+      "question": "眼镜建议提前预约什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "接驳车"
+        },
+        {
+          "id": "B",
+          "text": "签到码"
+        },
+        {
+          "id": "C",
+          "text": "没看到或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 接驳车",
+      "source_ref": {
+        "file": "刺激材料的属性判断.xlsx",
+        "sheet": "文案呈现与问答表",
+        "range": "A11:I11"
+      }
+    }
+  ]
+}

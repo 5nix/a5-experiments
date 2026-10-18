@@ -1,0 +1,831 @@
+{
+  "experiment_id": "f5-sh-pilot",
+  "schema_version": "1.0",
+  "source_ref": {
+    "file": "刺激材料的属性判断.xlsx",
+    "sheet": "每个场景中的试次顺序安排",
+    "range": "B2:G8"
+  },
+  "participants": [
+    {
+      "participant_id": "001",
+      "version_label": "V1",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T0",
+          "message_id": "N01",
+          "source_value": "N01-T0",
+          "source_cell": "C3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T1",
+          "message_id": "N02",
+          "source_value": "N02-T1",
+          "source_cell": "C4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T0",
+          "message_id": "A03",
+          "source_value": "A03-T0",
+          "source_cell": "C5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T1",
+          "message_id": "A04",
+          "source_value": "A04-T1",
+          "source_cell": "C6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "C7"
+        }
+      ]
+    },
+    {
+      "participant_id": "002",
+      "version_label": "V1",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T0",
+          "message_id": "N01",
+          "source_value": "N01-T0",
+          "source_cell": "C3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T1",
+          "message_id": "N02",
+          "source_value": "N02-T1",
+          "source_cell": "C4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T0",
+          "message_id": "A03",
+          "source_value": "A03-T0",
+          "source_cell": "C5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T1",
+          "message_id": "A04",
+          "source_value": "A04-T1",
+          "source_cell": "C6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "C7"
+        }
+      ]
+    },
+    {
+      "participant_id": "003",
+      "version_label": "V1",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T0",
+          "message_id": "N01",
+          "source_value": "N01-T0",
+          "source_cell": "C3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T1",
+          "message_id": "N02",
+          "source_value": "N02-T1",
+          "source_cell": "C4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T0",
+          "message_id": "A03",
+          "source_value": "A03-T0",
+          "source_cell": "C5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T1",
+          "message_id": "A04",
+          "source_value": "A04-T1",
+          "source_cell": "C6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "C7"
+        }
+      ]
+    },
+    {
+      "participant_id": "004",
+      "version_label": "V1",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T0",
+          "message_id": "N01",
+          "source_value": "N01-T0",
+          "source_cell": "C3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T1",
+          "message_id": "N02",
+          "source_value": "N02-T1",
+          "source_cell": "C4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T0",
+          "message_id": "A03",
+          "source_value": "A03-T0",
+          "source_cell": "C5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T1",
+          "message_id": "A04",
+          "source_value": "A04-T1",
+          "source_cell": "C6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "C7"
+        }
+      ]
+    },
+    {
+      "participant_id": "005",
+      "version_label": "V2",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T1",
+          "message_id": "N01",
+          "source_value": "N01-T1",
+          "source_cell": "D3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "A-T0",
+          "message_id": "A02",
+          "source_value": "A02-T0",
+          "source_cell": "D4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T1",
+          "message_id": "A03",
+          "source_value": "A03-T1",
+          "source_cell": "D5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "D6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "N-T0",
+          "message_id": "N05",
+          "source_value": "N05-T0",
+          "source_cell": "D7"
+        }
+      ]
+    },
+    {
+      "participant_id": "006",
+      "version_label": "V2",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T1",
+          "message_id": "N01",
+          "source_value": "N01-T1",
+          "source_cell": "D3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "A-T0",
+          "message_id": "A02",
+          "source_value": "A02-T0",
+          "source_cell": "D4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T1",
+          "message_id": "A03",
+          "source_value": "A03-T1",
+          "source_cell": "D5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "D6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "N-T0",
+          "message_id": "N05",
+          "source_value": "N05-T0",
+          "source_cell": "D7"
+        }
+      ]
+    },
+    {
+      "participant_id": "007",
+      "version_label": "V2",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T1",
+          "message_id": "N01",
+          "source_value": "N01-T1",
+          "source_cell": "D3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "A-T0",
+          "message_id": "A02",
+          "source_value": "A02-T0",
+          "source_cell": "D4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T1",
+          "message_id": "A03",
+          "source_value": "A03-T1",
+          "source_cell": "D5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "D6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "N-T0",
+          "message_id": "N05",
+          "source_value": "N05-T0",
+          "source_cell": "D7"
+        }
+      ]
+    },
+    {
+      "participant_id": "008",
+      "version_label": "V2",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T1",
+          "message_id": "N01",
+          "source_value": "N01-T1",
+          "source_cell": "D3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "A-T0",
+          "message_id": "A02",
+          "source_value": "A02-T0",
+          "source_cell": "D4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T1",
+          "message_id": "A03",
+          "source_value": "A03-T1",
+          "source_cell": "D5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "D6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "N-T0",
+          "message_id": "N05",
+          "source_value": "N05-T0",
+          "source_cell": "D7"
+        }
+      ]
+    },
+    {
+      "participant_id": "009",
+      "version_label": "V3",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "A-T0",
+          "message_id": "A01",
+          "source_value": "A01-T0",
+          "source_cell": "E3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "A-T1",
+          "message_id": "A02",
+          "source_value": "A02-T1",
+          "source_cell": "E4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "E5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "N-T0",
+          "message_id": "N04",
+          "source_value": "N04-T0",
+          "source_cell": "E6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "N-T1",
+          "message_id": "N05",
+          "source_value": "N05-T1",
+          "source_cell": "E7"
+        }
+      ]
+    },
+    {
+      "participant_id": "010",
+      "version_label": "V3",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "A-T0",
+          "message_id": "A01",
+          "source_value": "A01-T0",
+          "source_cell": "E3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "A-T1",
+          "message_id": "A02",
+          "source_value": "A02-T1",
+          "source_cell": "E4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "E5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "N-T0",
+          "message_id": "N04",
+          "source_value": "N04-T0",
+          "source_cell": "E6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "N-T1",
+          "message_id": "N05",
+          "source_value": "N05-T1",
+          "source_cell": "E7"
+        }
+      ]
+    },
+    {
+      "participant_id": "011",
+      "version_label": "V3",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "A-T0",
+          "message_id": "A01",
+          "source_value": "A01-T0",
+          "source_cell": "E3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "A-T1",
+          "message_id": "A02",
+          "source_value": "A02-T1",
+          "source_cell": "E4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "E5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "N-T0",
+          "message_id": "N04",
+          "source_value": "N04-T0",
+          "source_cell": "E6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "N-T1",
+          "message_id": "N05",
+          "source_value": "N05-T1",
+          "source_cell": "E7"
+        }
+      ]
+    },
+    {
+      "participant_id": "012",
+      "version_label": "V3",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "A-T0",
+          "message_id": "A01",
+          "source_value": "A01-T0",
+          "source_cell": "E3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "A-T1",
+          "message_id": "A02",
+          "source_value": "A02-T1",
+          "source_cell": "E4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "E5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "N-T0",
+          "message_id": "N04",
+          "source_value": "N04-T0",
+          "source_cell": "E6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "N-T1",
+          "message_id": "N05",
+          "source_value": "N05-T1",
+          "source_cell": "E7"
+        }
+      ]
+    },
+    {
+      "participant_id": "013",
+      "version_label": "V4",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "A-T1",
+          "message_id": "A01",
+          "source_value": "A01-T1",
+          "source_cell": "F3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "F4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "N-T0",
+          "message_id": "N03",
+          "source_value": "N03-T0",
+          "source_cell": "F5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "N-T1",
+          "message_id": "N04",
+          "source_value": "N04-T1",
+          "source_cell": "F6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "A-T0",
+          "message_id": "A05",
+          "source_value": "A05-T0",
+          "source_cell": "F7"
+        }
+      ]
+    },
+    {
+      "participant_id": "014",
+      "version_label": "V4",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "A-T1",
+          "message_id": "A01",
+          "source_value": "A01-T1",
+          "source_cell": "F3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "F4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "N-T0",
+          "message_id": "N03",
+          "source_value": "N03-T0",
+          "source_cell": "F5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "N-T1",
+          "message_id": "N04",
+          "source_value": "N04-T1",
+          "source_cell": "F6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "A-T0",
+          "message_id": "A05",
+          "source_value": "A05-T0",
+          "source_cell": "F7"
+        }
+      ]
+    },
+    {
+      "participant_id": "015",
+      "version_label": "V4",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "A-T1",
+          "message_id": "A01",
+          "source_value": "A01-T1",
+          "source_cell": "F3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "F4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "N-T0",
+          "message_id": "N03",
+          "source_value": "N03-T0",
+          "source_cell": "F5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "N-T1",
+          "message_id": "N04",
+          "source_value": "N04-T1",
+          "source_cell": "F6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "A-T0",
+          "message_id": "A05",
+          "source_value": "A05-T0",
+          "source_cell": "F7"
+        }
+      ]
+    },
+    {
+      "participant_id": "016",
+      "version_label": "V4",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "A-T1",
+          "message_id": "A01",
+          "source_value": "A01-T1",
+          "source_cell": "F3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "F4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "N-T0",
+          "message_id": "N03",
+          "source_value": "N03-T0",
+          "source_cell": "F5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "N-T1",
+          "message_id": "N04",
+          "source_value": "N04-T1",
+          "source_cell": "F6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "A-T0",
+          "message_id": "A05",
+          "source_value": "A05-T0",
+          "source_cell": "F7"
+        }
+      ]
+    },
+    {
+      "participant_id": "017",
+      "version_label": "V5",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "G3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T0",
+          "message_id": "N02",
+          "source_value": "N02-T0",
+          "source_cell": "G4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "N-T1",
+          "message_id": "N03",
+          "source_value": "N03-T1",
+          "source_cell": "G5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T0",
+          "message_id": "A04",
+          "source_value": "A04-T0",
+          "source_cell": "G6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "A-T1",
+          "message_id": "A05",
+          "source_value": "A05-T1",
+          "source_cell": "G7"
+        }
+      ]
+    },
+    {
+      "participant_id": "018",
+      "version_label": "V5",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "G3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T0",
+          "message_id": "N02",
+          "source_value": "N02-T0",
+          "source_cell": "G4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "N-T1",
+          "message_id": "N03",
+          "source_value": "N03-T1",
+          "source_cell": "G5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T0",
+          "message_id": "A04",
+          "source_value": "A04-T0",
+          "source_cell": "G6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "A-T1",
+          "message_id": "A05",
+          "source_value": "A05-T1",
+          "source_cell": "G7"
+        }
+      ]
+    },
+    {
+      "participant_id": "019",
+      "version_label": "V5",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "G3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T0",
+          "message_id": "N02",
+          "source_value": "N02-T0",
+          "source_cell": "G4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "N-T1",
+          "message_id": "N03",
+          "source_value": "N03-T1",
+          "source_cell": "G5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T0",
+          "message_id": "A04",
+          "source_value": "A04-T0",
+          "source_cell": "G6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "A-T1",
+          "message_id": "A05",
+          "source_value": "A05-T1",
+          "source_cell": "G7"
+        }
+      ]
+    },
+    {
+      "participant_id": "020",
+      "version_label": "V5",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "G3"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T0",
+          "message_id": "N02",
+          "source_value": "N02-T0",
+          "source_cell": "G4"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "N-T1",
+          "message_id": "N03",
+          "source_value": "N03-T1",
+          "source_cell": "G5"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T0",
+          "message_id": "A04",
+          "source_value": "A04-T0",
+          "source_cell": "G6"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "A-T1",
+          "message_id": "A05",
+          "source_value": "A05-T1",
+          "source_cell": "G7"
+        }
+      ]
+    }
+  ]
+}
