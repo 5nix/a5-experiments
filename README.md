@@ -1,6 +1,6 @@
 # a5-experiments
 
-A5 实验程序仓库（[5nix/a5-experiments](https://github.com/5nix/a5-experiments)），本地文件夹名为 `A5实验程序`。
+A5 实验程序仓库（[5nix/a5-experiments](https://github.com/5nix/a5-experiments)）。
 
 | 实验 | 场景 | 版本 |
 | --- | --- | --- |
