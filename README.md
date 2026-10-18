@@ -10,7 +10,7 @@ A5 实验程序仓库（[5nix/a5-experiments](https://github.com/5nix/a5-experim
 
 ## 启动器
 
-安装 Node.js 24+ 后，双击 `a5-experiments.command`（macOS）或 `a5-experiments.bat`（Windows，未实机验证），也可以运行 `npm run launcher`。先选择实验，再输入数字或指令：
+安装包含 npm 的 Node.js 24+ 后，双击 `a5-experiments.command`（macOS）或 `a5-experiments.bat`（Windows 11 已实机验证），也可以运行 `npm run launcher`。首次运行先选择实验并输入 `i` 安装依赖，再输入 `1` 启动、`5` 打开后台。安装 Node.js 后请重新打开终端。先选择实验，再输入数字或指令：
 
 `1 start [端口]` 启动 · `2 stop` 停止 · `3 restart` 重启 · `4 status` 状态 · `5 open` 打开后台 · `6 logs` 日志 · `7 check` 检查 · `8 doctor` 自检 · `i install` 安装依赖（npm ci） · `0 back` 返回 · `q quit` 退出（服务继续运行）
 
@@ -25,3 +25,5 @@ npm run start --workspace=f5-sh-pilot
 ```
 
 各实验的 `runtime/`、`exports/`、凭据和依赖都已被 Git 忽略。实验数据需按各实验 README 的说明单独备份。
+
+Windows 检出时请保留 `.gitattributes`：材料源文件 `f5-sh-pilot/docs/PRD.md` 必须使用 LF 换行，否则启动时的 SHA-256 完整性校验会失败。验收范围见 [TESTING.md](f5-sh-pilot/TESTING.md)。

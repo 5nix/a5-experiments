@@ -1,2 +1,4 @@
 *.command text eol=lf
 *.bat text eol=crlf
+# 材料清单按原始字节校验 SHA-256，禁止 Windows 自动转换该源文件换行。
+f5-sh-pilot/docs/PRD.md text eol=lf

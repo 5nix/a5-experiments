@@ -2,12 +2,18 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { validateConfig } from '../src/config.ts';
 import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
-import { readJson } from '../src/preflight.ts';
+import { preflight, readJson } from '../src/preflight.ts';
 import type { GlassesRequest, ParticipantConfig, Stimulus } from '../src/contracts.ts';
 
 const { stimuli } = await readJson<{ stimuli: Stimulus[] }>('content/stimuli.json');
 const pilot = await readJson<ParticipantConfig>('config/participants.pilot.json');
 const source = await readJson<ParticipantConfig>('config/participants.source.json');
+
+test('检出后的源材料通过字节完整性及启动检查（含 Windows 换行规则）', async () => {
+  const result = await preflight();
+  assert.deepEqual(result.material_errors, []);
+  assert.equal(result.startup_ok, true);
+});
 
 test('执行原表001—004条件，不重新分组', () => {
   assert.deepEqual(validateConfig(pilot, stimuli), []);

@@ -30,7 +30,8 @@ process.on('message',m=>{if(m?.type==='a5:shutdown')shutdown();});
 process.on('disconnect',shutdown);process.on('SIGTERM',shutdown);
 server.listen(Number(process.env.PORT),'127.0.0.1',()=>console.log('测试服务已就绪，中文与空格路径有效'));
 `);
-  return { root, name, path, port, close: async () => { await stopExperiment(name, root).catch(() => {}); await rm(root, { recursive: true, force: true }); } };
+  // stop 回执到达后，管理进程仍可能正在退出；Windows 会短暂锁住其工作目录。
+  return { root, name, path, port, close: async () => { await stopExperiment(name, root).catch(() => {}); await rm(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }); } };
 }
 
 test('动态发现实验，未配置的实验保留提示，无关目录忽略', async () => {

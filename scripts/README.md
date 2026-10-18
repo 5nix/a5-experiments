@@ -45,4 +45,4 @@ entry相对于实验目录，由当前Node进程的同版本可执行文件运�
 
 `npm run test:launcher`包含7项公共测试：动态发现、重复/后台启动和跨菜单状态、正常关闭、错误凭据、端口冲突及启动失败、非管理服务保护、遗留锁恢复、实际SH服务IPC及SQLite完整性、入口格式与菜单（部分检查合并在同一测试项）。测试使用临时目录和独立端口，不写入真实被试数据。
 
-macOS入口可用 `bash -n a5-experiments.command` 检查；Windows文件已使用CRLF、UTF-8控制台及带引号路径。Windows实机启动、浏览器打开行为仍需在目标电脑上验证。
+macOS入口可用 `bash -n a5-experiments.command` 检查；Windows文件使用CRLF、UTF-8控制台及带引号路径。Windows 11 已验证批处理菜单、启动、重启、跨菜单状态、正常停止和浏览器打开；7项启动器测试全部通过，包含中文及空格临时路径和SQLite完整性。测试清理对Windows进程退出时短暂的目录锁执行有限重试。
