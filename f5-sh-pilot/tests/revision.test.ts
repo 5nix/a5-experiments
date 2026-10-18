@@ -35,7 +35,13 @@ test('18张表格来自内嵌Excel且不再含图片；M1—M6使用已批准修
   assert.equal(tables.find(t => t.id === 'table-05')?.rows[0][1], '9:45');
   assert.equal(tables.find(t => t.id === 'table-13')?.rows[0][1], '12:40');
   assert.equal(tables.find(t => t.id === 'table-18')?.rows[3][4], '125元');
-  assert.ok(material.content.stages[0].units[0].paragraphs.includes('请选出符合以上全部要求的方案，可多选。'));
+  // 日常工作语气修订：M1仍为筛选当前基本方案且可多选；补充资料以文件附件名呈现，题干按文件名引用。
+  assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('选出符合全部标准的方案（可多选）')));
+  assert.equal(material.content.content_version, 'sh-current-2026-10-19-v4');
+  for (const unit of material.content.stages.map(s => s.units[0])) {
+    assert.match(unit.reveal!.button_label, /\.(xlsx|docx)$/);
+    assert.ok(unit.paragraphs.some(p => p.includes(`“${unit.reveal!.button_label}”`)));
+  }
   assert.ok(material.content.stages[0].units[1].paragraphs.some(p => p.includes('D方案的基本报价和筹备周期已更新')));
   assert.ok(material.content.stages[2].units[1].paragraphs.some(p => p.includes('最新状态更新为“已确认”')));
   const ai = material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'A02')!;
@@ -43,7 +49,7 @@ test('18张表格来自内嵌Excel且不再含图片；M1—M6使用已批准修
   assert.equal(material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'N02')?.question, '在哪里领取清单的配套材料？');
   for (const stage of material.content.stages) for (const unit of stage.units) {
     assert.equal(unit.scratchpad?.label, '草稿本');
-    assert.equal(unit.scratchpad?.placeholder, '您可以在这里输入任意内容...');
+    assert.equal(unit.scratchpad?.placeholder, '在这里记录你的思考...');
   }
 });
 

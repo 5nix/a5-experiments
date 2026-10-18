@@ -23,7 +23,7 @@ export interface Unit {
 export interface TaskContent {
   schema_version: string; content_version: string;
   intro: { title: string; paragraphs: string[] };
-  stages: { stage_id: StageId; title: string; card: string; units: Unit[] }[];
+  stages: { stage_id: StageId; title: string; card: string; scene_time?: { date: string; time: string }; units: Unit[] }[];
   ratings: { id: string; label: string; min: number; max: number }[];
   interview_prompts: string[]; break_ms: number; allow_break_skip?: boolean; message_duration_ms: number; completion_text: string;
 }

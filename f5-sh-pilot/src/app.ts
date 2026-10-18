@@ -29,18 +29,19 @@ export function createApp(engine: Engine, adminKey: string, exportRoot: string) 
     response.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
     try {
       const url = new URL(request.url ?? '/', 'http://127.0.0.1'); const path = url.pathname; const method = request.method;
-      if (method === 'GET' && ['/', '/admin', '/experiment', '/app.css', '/admin.js', '/experiment.js'].includes(path)) {
-        const files: Record<string, string> = { '/': 'admin.html', '/admin': 'admin.html', '/experiment': 'experiment.html', '/app.css': 'app.css', '/admin.js': 'admin.js', '/experiment.js': 'experiment.js' };
-        const name = files[path]; const mime = name.endsWith('.html') ? 'text/html' : name.endsWith('.js') ? 'text/javascript' : 'text/css';
+      if (method === 'GET' && ['/', '/admin', '/experiment', '/app.css', '/desktop.css', '/admin.js', '/experiment.js', '/favicon.svg', '/favicon-admin.svg', '/favicon.ico'].includes(path)) {
+        const files: Record<string, string> = { '/': 'admin.html', '/admin': 'admin.html', '/experiment': 'experiment.html', '/app.css': 'app.css', '/desktop.css': 'desktop.css', '/admin.js': 'admin.js', '/experiment.js': 'experiment.js', '/favicon.svg': 'favicon.svg', '/favicon-admin.svg': 'favicon-admin.svg', '/favicon.ico': 'favicon.svg' };
+        const name = files[path]; const mime = name.endsWith('.html') ? 'text/html' : name.endsWith('.js') ? 'text/javascript' : name.endsWith('.svg') ? 'image/svg+xml' : 'text/css';
         response.writeHead(200, { 'Content-Type': `${mime}; charset=utf-8` }); response.end(await readFile(join(experimentRoot, 'public', name))); return;
       }
-      if (method === 'GET' && path === '/api/health') { json(response, { ok: true, repository: 'a5-experiments', experiment_id: 'f5-sh-pilot', phase: 'core', mock_only: engine.adapter.getStatus().source === 'mock', real_presentation_verified: false }); return; }
+      if (method === 'GET' && path === '/api/health') { json(response, { ok: true, repository: 'a5-experiments', experiment_id: 'f5-sh-pilot', phase: 'core', mock_only: engine.adapter.getStatus().source === 'mock', real_presentation_verified: false, adapter: engine.adapter.getStatus() }); return; }
       if (path.startsWith('/api/admin/') || path === '/api/preflight') {
         admin(request);
-        if (method === 'GET' && ['/api/preflight', '/api/admin/preflight'].includes(path)) { json(response, await preflight()); return; }
+        if (method === 'GET' && ['/api/preflight', '/api/admin/preflight'].includes(path)) { json(response, { ...await preflight(), adapter: engine.adapter.getStatus() }); return; }
+        if (method === 'GET' && path === '/api/admin/device') { json(response, { adapter: engine.adapter.getStatus(), audit: engine.store.deviceAudit() }); return; }
         if (method === 'GET' && path === '/api/admin/config') { json(response, { config: engine.config(), debug_participant: engine.debugParticipant(), adapter: engine.adapter.getStatus(), interview_prompts: engine.material.content.interview_prompts }); return; }
         if (method === 'POST' && path === '/api/admin/config') { json(response, { config: engine.importConfig(await body(request)) }); return; }
-        if (method === 'GET' && path === '/api/admin/sessions') { json(response, { sessions: engine.store.ids().map(id => engine.summary(id)) }); return; }
+        if (method === 'GET' && path === '/api/admin/sessions') { json(response, { adapter: engine.adapter.getStatus(), sessions: engine.store.ids().map(id => engine.summary(id)), deleted_sessions: engine.store.deletedIds().map(id => engine.summary(id)) }); return; }
         if (method === 'POST' && path === '/api/admin/sessions') {
           const input = await body(request); if (typeof input.participant_id !== 'string') throw new HttpError(422, '请选择被试。');
           const created = engine.create(input.participant_id, { user_agent: request.headers['user-agent'] ?? null });

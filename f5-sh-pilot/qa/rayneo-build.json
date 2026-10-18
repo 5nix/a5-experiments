@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-19",
+  "host": "macOS 27.0.1 arm64",
+  "jdk": "Amazon Corretto 21.0.12.12.1",
+  "jdk_java_version": "21.0.12.1",
+  "android_command_line_tools": "23.0",
+  "android_cli": "1.0.16625370",
+  "android_platform": "37.0 revision 2",
+  "build_tools": "36.0.0",
+  "platform_tools": "37.0.1",
+  "gradle": "9.5.0",
+  "agp": "9.3.1",
+  "java_source_level": 17,
+  "runtime_dependencies": {
+    "kotlin_stdlib": "2.2.10",
+    "kotlinx_coroutines_android": "1.6.4",
+    "kotlinx_coroutines_core": "1.6.4"
+  },
+  "command": "./gradlew :app:assembleDebug :app:lintDebug --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "apk": "rayneo-display/app/build/outputs/apk/debug/app-debug.apk",
+  "apk_sha256": "6e7a50ee7796aebf4d5e3c4313359bdad9b8241061269911e41e6972c8def934",
+  "signing": "debug certificate, apksigner verify passed, v2 scheme",
+  "lint": {
+    "errors": 0,
+    "warnings": 6,
+    "rules": [
+      "GradleDependency (3)",
+      "DiscouragedApi",
+      "DataExtractionRules",
+      "MissingApplicationIcon"
+    ]
+  },
+  "hardware_tested": false,
+  "windows_tested": false,
+  "optical_presentation_verified": false
+}

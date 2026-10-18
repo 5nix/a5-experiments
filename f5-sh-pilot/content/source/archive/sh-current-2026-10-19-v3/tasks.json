@@ -1,0 +1,2002 @@
+{
+  "schema_version": "1.1",
+  "content_version": "sh-current-2026-10-19-v3",
+  "revision_id": "user-approved-M1-M6-2026-10-19",
+  "intro": {
+    "title": "情景导入",
+    "paragraphs": [
+      "你是新品体验活动的筹备工作人员，活动定于2026年11月20日周五14:00至17:00，在创新中心一层体验厅举行，计划接待24名参与者。",
+      "接下来，你将在电脑上完成五个不同阶段的工作片段。每个任务有两个单元。先处理并提交第一单元，再根据第二单元的资料完成后续工作。"
+    ],
+    "source_ref": {
+      "file": "A5 SH任务pilot.docx",
+      "block_indexes": [
+        6,
+        7
+      ],
+      "revision_id": "user-approved-M1-M6-2026-10-19"
+    }
+  },
+  "stages": [
+    {
+      "stage_id": "SH01",
+      "title": "SH01任务：筛选符合基本要求的方案",
+      "card": "现在的时间是：11月6日 周五 10:00  距活动开始还有14天。你正在从四家服务方中筛选出合适的活动执行方案。同时，你原定13:00—13:45与同事交接活动资料，随后参加14:00的线上评审。",
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          11,
+          13
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      },
+      "units": [
+        {
+          "unit_id": "SH01_U1",
+          "title": "第1任务单元　筛选出符合预算要求的方案",
+          "paragraphs": [
+            "要求：方案必须同时满足三项要求：总费用不超过5.00万元、筹备时间不超过10个自然日、每场可接待人数不少于24人。请先核对基本报价和接待人数，再点击“查看方案筹备日期表”，然后结合全部资料作答。",
+            "请选出符合以上全部要求的方案，可多选。"
+          ],
+          "tables": [
+            {
+              "id": "table-01",
+              "caption": "方案报价表",
+              "columns": [
+                "方案",
+                "基本报价 万元",
+                "每场可接待人数"
+              ],
+              "rows": [
+                [
+                  "A",
+                  "4.6",
+                  "28"
+                ],
+                [
+                  "B",
+                  "4.35",
+                  "24"
+                ],
+                [
+                  "C",
+                  "4.7",
+                  "22"
+                ],
+                [
+                  "D",
+                  "5.1",
+                  "30"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet1.xlsx",
+                "sheet": "GN7nYL",
+                "range": "A2:C6",
+                "sha256": "04fd626179bbcec9ec0c1918a5af00923ccd6bfcfa3ac4dafe7829b7fc00554b"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "plans",
+              "label": "合格方案",
+              "type": "multi",
+              "required": true,
+              "options": [
+                {
+                  "value": "A",
+                  "label": "A"
+                },
+                {
+                  "value": "B",
+                  "label": "B"
+                },
+                {
+                  "value": "C",
+                  "label": "C"
+                },
+                {
+                  "value": "D",
+                  "label": "D"
+                },
+                {
+                  "value": "NONE",
+                  "label": "没有合格方案"
+                }
+              ],
+              "exclusive_value": "NONE"
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "plans": [
+                "A",
+                "B"
+              ]
+            },
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                25
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              16,
+              17,
+              19
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          },
+          "reveal": {
+            "button_label": "查看方案筹备日期表",
+            "paragraphs": [],
+            "tables": [
+              {
+                "id": "table-02",
+                "caption": "方案筹备日期表",
+                "columns": [
+                  "方案",
+                  "筹备所需自然日"
+                ],
+                "rows": [
+                  [
+                    "A",
+                    "9天"
+                  ],
+                  [
+                    "B",
+                    "10天"
+                  ],
+                  [
+                    "C",
+                    "8天"
+                  ],
+                  [
+                    "D",
+                    "11天"
+                  ]
+                ],
+                "source_ref": {
+                  "file": "A5 SH任务pilot.docx",
+                  "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet2.xlsx",
+                  "sheet": "5mJJfK",
+                  "range": "A2:B6",
+                  "sha256": "4023b162d16a6ee49199842753accf0ec1abca009008cf7acf0845c63e56ddf6"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "unit_id": "SH01_U2",
+          "title": "第2任务单元　核算最终费用",
+          "paragraphs": [
+            "要求：评审前，所有方案都必须增加记录设备费和运输服务费。这两项费用均未包含在基本报价中，更新后的完整数据如下。其中，D方案的基本报价和筹备周期已更新。要求仍为：最终费用不超过5.00万元；筹备时间不超过10个自然日；每场可接待人数不少于24人。",
+            "表中所有费用单位均为万元。最终费用为基本报价、记录设备费与运输费之和。请填写各方案的最终费用，保留两位小数。",
+            "请选出加入必需服务后仍符合全部要求的方案，可多选。"
+          ],
+          "tables": [
+            {
+              "id": "table-03",
+              "caption": "更新后的完整方案数据",
+              "columns": [
+                "方案",
+                "基本报价",
+                "记录设备费",
+                "运输费",
+                "筹备周期",
+                "接待人数"
+              ],
+              "rows": [
+                [
+                  "A",
+                  "4.6",
+                  "0.18",
+                  "0.26",
+                  "9天",
+                  "28人"
+                ],
+                [
+                  "B",
+                  "4.35",
+                  "0.24",
+                  "0.3",
+                  "10天",
+                  "24人"
+                ],
+                [
+                  "C",
+                  "4.7",
+                  "0.1",
+                  "0.12",
+                  "8天",
+                  "22人"
+                ],
+                [
+                  "D",
+                  "4.4",
+                  "0.2",
+                  "0.28",
+                  "10天",
+                  "30人"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet3.xlsx",
+                "sheet": "Bi211v",
+                "range": "A1:F5",
+                "sha256": "4f06eebc801c072e18d48bfaed3593cb57271a364c83ba29c0dc504b0f5c64f2"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "A",
+              "label": "A 最终费用（万元）",
+              "type": "money",
+              "required": true
+            },
+            {
+              "id": "B",
+              "label": "B 最终费用（万元）",
+              "type": "money",
+              "required": true
+            },
+            {
+              "id": "C",
+              "label": "C 最终费用（万元）",
+              "type": "money",
+              "required": true
+            },
+            {
+              "id": "D",
+              "label": "D 最终费用（万元）",
+              "type": "money",
+              "required": true
+            },
+            {
+              "id": "plans",
+              "label": "合格方案",
+              "type": "multi",
+              "required": true,
+              "options": [
+                {
+                  "value": "A",
+                  "label": "A"
+                },
+                {
+                  "value": "B",
+                  "label": "B"
+                },
+                {
+                  "value": "C",
+                  "label": "C"
+                },
+                {
+                  "value": "D",
+                  "label": "D"
+                },
+                {
+                  "value": "NONE",
+                  "label": "没有合格方案"
+                }
+              ],
+              "exclusive_value": "NONE"
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "A": "5.04",
+              "B": "4.89",
+              "C": "4.92",
+              "D": "4.88",
+              "plans": [
+                "B",
+                "D"
+              ]
+            },
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                39
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              26,
+              27,
+              30,
+              33
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          }
+        }
+      ]
+    },
+    {
+      "stage_id": "SH02",
+      "title": "SH02任务：准备工作时间安排",
+      "card": "现在的时间是：11月10日 周二 14:00  距活动开始还有10天。你正在安排11月19日上午的场地准备工作，并检查是否能在12:00前完成现场验收。同时，今天16:00需将“准备工作清单”交给资料室，同时提交相关的配套材料。工作清单文件已完成，但办公室打印机暂时无法使用，尚未打印。",
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          40,
+          42
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      },
+      "units": [
+        {
+          "unit_id": "SH02_U1",
+          "title": "第1任务单元　安排最早可行的准备日程",
+          "paragraphs": [
+            "要求：场地开放时间为9:00至12:30。设备搬入工作的时间为9:00至9:30。设备调试工作必须在搬入结束后开始；调试完成后必须散热15分钟，才能开始讲解培训；培训结束后才能开始现场验收。所有环节由相关人员完成，每个环节都要尽早开始，希望在截止12:00前完成验收。",
+            "请先核对完工作环节的时长之后，再点击“查看人员时间安排”，然后结合全部资料作答。",
+            "请填写最早可行的开始时间："
+          ],
+          "tables": [
+            {
+              "id": "table-04",
+              "caption": "工作环节与时长的对应",
+              "columns": [
+                "工作环节",
+                "所需时长"
+              ],
+              "rows": [
+                [
+                  "设备搬入",
+                  "30分钟 已固定"
+                ],
+                [
+                  "设备调试",
+                  "45分钟"
+                ],
+                [
+                  "讲解培训",
+                  "30分钟"
+                ],
+                [
+                  "现场验收",
+                  "30分钟"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet4.xlsx",
+                "sheet": "VenLap",
+                "range": "A2:B6",
+                "sha256": "de4b310a184f13c85d6aafc12a511f789c792cbafcdce72772daebfad3434339"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "debug",
+              "label": "设备调试",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "training",
+              "label": "讲解培训",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "acceptance",
+              "label": "现场验收",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "on_time",
+              "label": "能否在12:00前完成验收？",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "能",
+                  "label": "能"
+                },
+                {
+                  "value": "不能",
+                  "label": "不能"
+                }
+              ]
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "debug": "9:45",
+              "training": "10:45",
+              "acceptance": "11:15",
+              "on_time": "能"
+            },
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                54
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              44,
+              45,
+              46,
+              48
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          },
+          "reveal": {
+            "button_label": "查看人员时间安排",
+            "paragraphs": [],
+            "tables": [
+              {
+                "id": "table-05",
+                "caption": "人员时间安排",
+                "columns": [
+                  "人员",
+                  "最早可开始工作的时间"
+                ],
+                "rows": [
+                  [
+                    "调试人员",
+                    "9:45"
+                  ],
+                  [
+                    "培训人员",
+                    "10:30"
+                  ],
+                  [
+                    "验收人员",
+                    "11:00"
+                  ]
+                ],
+                "source_ref": {
+                  "file": "A5 SH任务pilot.docx",
+                  "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet5.xlsx",
+                  "sheet": "n2Gwnb",
+                  "range": "A2:B5",
+                  "sha256": "0b143140ca0fc8cb717708465421fdda00b85b290076566a02eca666d2a9fceb"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "unit_id": "SH02_U2",
+          "title": "第2任务单元　调整准备日程",
+          "paragraphs": [
+            "要求：场地开放时间仍为9:00至12:30，设备调试延长至60分钟；验收人员最早可开始工作的时间为11:45。其余要求保持不变。请按更新后的完整资料重新排定日程。如果无法在12:00前完成，也请填写最早可行的安排，并判断是否按时。",
+            "请填写更新后最早可行的开始时间。"
+          ],
+          "tables": [
+            {
+              "id": "table-06",
+              "caption": "更新后的准备日程资料",
+              "columns": [
+                "工作环节",
+                "时长",
+                "开始前必须满足的条件"
+              ],
+              "rows": [
+                [
+                  "设备搬入",
+                  "30分钟",
+                  "固定9:00至9:30"
+                ],
+                [
+                  "设备调试",
+                  "60分钟",
+                  "搬入结束 且调试人员9:45起可工作"
+                ],
+                [
+                  "讲解培训",
+                  "30分钟",
+                  "调试结束后散热15分钟 且培训人员10:30起可工作"
+                ],
+                [
+                  "现场验收",
+                  "30分钟",
+                  "培训结束 且验收人员11:45起可工作"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet6.xlsx",
+                "sheet": "F5Ku5h",
+                "range": "A1:C5",
+                "sha256": "309fad23d703781b7f7ca475f75b5c7f53d62bd9a6b0f679958d5b4a9b6165da"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "debug",
+              "label": "设备调试",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "training",
+              "label": "讲解培训",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "acceptance",
+              "label": "现场验收",
+              "type": "time",
+              "required": true
+            },
+            {
+              "id": "on_time",
+              "label": "能否在12:00前完成验收？",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "能",
+                  "label": "能"
+                },
+                {
+                  "value": "不能",
+                  "label": "不能"
+                }
+              ]
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "debug": "9:45",
+              "training": "11:00",
+              "acceptance": "11:45",
+              "on_time": "不能"
+            },
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                65
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              55,
+              56,
+              59
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          }
+        }
+      ]
+    },
+    {
+      "stage_id": "SH03",
+      "title": "SH03任务：活动参与资格确认与替补安排",
+      "card": "现在的时间是：11月13日 周五 15:30  距活动开始还有7天，本次活动共需24名参与者。其中16人已核实确认参加，不在本次表格中。你需要核对剩余人员的记录，确认人员的信息。人员的参与信息确认截止时间为今天17:00。今天16:00有项目沟通会，会前准备和前往会议室共需10分钟，需要提前5分钟发送会议资料。会议资料已整理好但仍未发送到会议群里。",
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          66,
+          68
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      },
+      "units": [
+        {
+          "unit_id": "SH03_U1",
+          "title": "第1任务单元　核对有效确认人数",
+          "paragraphs": [
+            "要求：只有同时满足三项条件的人才算有效确认：可以全程参加；资料齐全；最新状态为“已确认”。已报名未确认或已退出者均不计入。请先核对参加时间和资料，再点击“查看人员的确认状态”，结合全部记录作答。",
+            "加上已确认的16人，当前有效确认总人数为 ______ 人。距离24人的目标，还需补充 ______ 人。"
+          ],
+          "tables": [
+            {
+              "id": "table-07",
+              "caption": "待确认人员信息",
+              "columns": [
+                "姓名",
+                "是否可全程参加",
+                "资料情况"
+              ],
+              "rows": [
+                [
+                  "林悦",
+                  "是",
+                  "齐全"
+                ],
+                [
+                  "周宁",
+                  "是",
+                  "齐全"
+                ],
+                [
+                  "陈晨",
+                  "是",
+                  "缺一份"
+                ],
+                [
+                  "吴桐",
+                  "是",
+                  "齐全"
+                ],
+                [
+                  "何佳",
+                  "仅前半程",
+                  "齐全"
+                ],
+                [
+                  "宋宇",
+                  "是",
+                  "齐全"
+                ],
+                [
+                  "郑楠",
+                  "是",
+                  "齐全"
+                ],
+                [
+                  "许妍",
+                  "是",
+                  "齐全"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet7.xlsx",
+                "sheet": "rCgwoo",
+                "range": "A2:C10",
+                "sha256": "91b615759387ca2a13205a66ca9d021407efd6a5e0ad6c39981eb8cd86e6466b"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "total",
+              "label": "当前有效确认总人数（人）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "gap",
+              "label": "还需补充（人）",
+              "type": "integer",
+              "required": true
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "total": 20,
+              "gap": 4
+            },
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                77
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              69,
+              70,
+              72
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          },
+          "reveal": {
+            "button_label": "查看人员的确认状态",
+            "paragraphs": [],
+            "tables": [
+              {
+                "id": "table-08",
+                "caption": "人员的确认状态",
+                "columns": [
+                  "最新状态",
+                  "对应人员"
+                ],
+                "rows": [
+                  [
+                    "已确认",
+                    "林悦 陈晨 吴桐 何佳 宋宇 郑楠"
+                  ],
+                  [
+                    "已报名未确认",
+                    "周宁"
+                  ],
+                  [
+                    "已退出",
+                    "许妍"
+                  ]
+                ],
+                "source_ref": {
+                  "file": "A5 SH任务pilot.docx",
+                  "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet8.xlsx",
+                  "sheet": "yFYdDe",
+                  "range": "A2:B5",
+                  "sha256": "ec2e5a6f1b7c234d817f413b203d98c8279819224a2f7a6c4f34696414bfda5b"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "unit_id": "SH03_U2",
+          "title": "第2任务单元　更新后的有效确认人数",
+          "paragraphs": [
+            "要求：本单元仍按“可全程参加、资料齐全、最新状态为已确认”三项条件判断。已核实确认的16人不在本表格里，以下待确认人员信息继续保留。",
+            "同时，有最新的人员消息：吴桐退出；陈晨补齐资料；周宁确认全程参加，最新状态更新为“已确认”。如果人员不足24人，再按下表顺序纳入符合条件的替补人员，达到24人即停止，不符合条件的替补直接跳过。",
+            "本次应纳入正式名单的替补人员有哪些，可多选。",
+            "纳入替补后，有效确认总人数为 ______ 人，仍缺 ______ 人。"
+          ],
+          "tables": [
+            {
+              "id": "table-09",
+              "caption": "待确认人员信息",
+              "columns": [
+                "姓名",
+                "可全程参加",
+                "资料情况",
+                "原确认状态"
+              ],
+              "rows": [
+                [
+                  "林悦",
+                  "是",
+                  "齐全",
+                  "已确认"
+                ],
+                [
+                  "周宁",
+                  "是",
+                  "齐全",
+                  "已报名未确认"
+                ],
+                [
+                  "陈晨",
+                  "是",
+                  "缺一份",
+                  "已确认"
+                ],
+                [
+                  "吴桐",
+                  "是",
+                  "齐全",
+                  "已确认"
+                ],
+                [
+                  "何佳",
+                  "仅前半程",
+                  "齐全",
+                  "已确认"
+                ],
+                [
+                  "宋宇",
+                  "是",
+                  "齐全",
+                  "已确认"
+                ],
+                [
+                  "郑楠",
+                  "是",
+                  "齐全",
+                  "已确认"
+                ],
+                [
+                  "许妍",
+                  "是",
+                  "齐全",
+                  "已退出"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet9.xlsx",
+                "sheet": "OCnV9M",
+                "range": "A2:D10",
+                "sha256": "44ea28a4879eab43bae2def9758e647a08129c2c9ddcc232aff8bf252fd7524f"
+              }
+            },
+            {
+              "id": "table-10",
+              "caption": "替补人员信息",
+              "columns": [
+                "替补顺序",
+                "姓名",
+                "可全程参加",
+                "资料情况",
+                "当前回复"
+              ],
+              "rows": [
+                [
+                  "1",
+                  "王帆",
+                  "是",
+                  "齐全",
+                  "已确认"
+                ],
+                [
+                  "2",
+                  "唐可",
+                  "仅前半程",
+                  "齐全",
+                  "已确认"
+                ],
+                [
+                  "3",
+                  "赵禾",
+                  "是",
+                  "齐全",
+                  "已确认"
+                ],
+                [
+                  "4",
+                  "顾然",
+                  "是",
+                  "齐全",
+                  "尚未回复"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet10.xlsx",
+                "sheet": "SpLD1w",
+                "range": "A2:E6",
+                "sha256": "b1985c01deff4a2cd47c46e2751d76b0db9793b222670af20e0b0205eb9c5ccc"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "substitutes",
+              "label": "应纳入的替补人员",
+              "type": "multi",
+              "required": true,
+              "options": [
+                {
+                  "value": "王帆",
+                  "label": "王帆"
+                },
+                {
+                  "value": "唐可",
+                  "label": "唐可"
+                },
+                {
+                  "value": "赵禾",
+                  "label": "赵禾"
+                },
+                {
+                  "value": "顾然",
+                  "label": "顾然"
+                },
+                {
+                  "value": "NONE",
+                  "label": "无人可纳入"
+                }
+              ],
+              "exclusive_value": "NONE"
+            },
+            {
+              "id": "total",
+              "label": "有效确认总人数（人）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "gap",
+              "label": "仍缺（人）",
+              "type": "integer",
+              "required": true
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "substitutes": [
+                "王帆",
+                "赵禾"
+              ],
+              "total": 23,
+              "gap": 1
+            },
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                92
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              78,
+              79,
+              82,
+              85,
+              87
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          }
+        }
+      ]
+    },
+    {
+      "stage_id": "SH04",
+      "title": "SH04任务：工作人员排班与调整",
+      "card": "现在的时间是：11月18日 周三 15:00  距活动开始还有2天。你需要安排好活动当天的签到、现场引导和设备管理三个岗位的人员。先完成排班，再根据缺席和到岗变化重新安排。同时，今天16:00需前往另一栋办公楼确认展板。前期已采购部分活动物料，但报销材料尚未整理。",
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          93,
+          95
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      },
+      "units": [
+        {
+          "unit_id": "SH04_U1",
+          "title": "第1任务单元　为岗位分配人员",
+          "paragraphs": [
+            "任务：每个岗位需1人，每人只能去一个岗位。安排者必须具备对应资格，并在岗位开始前或者开始时到岗。满足全部要求的排班均可，无须选出唯一最佳安排。先明确岗位的时间，和人员对应的岗位，再点击“查看人员的到岗时间”，结合全部记录作答。",
+            "请为三个岗位各选择1人，同一人不能重复。"
+          ],
+          "tables": [
+            {
+              "id": "table-11",
+              "caption": "岗位工作时间",
+              "columns": [
+                "岗位",
+                "活动当天工作时间",
+                "所需人数"
+              ],
+              "rows": [
+                [
+                  "签到",
+                  "13:00至14:00",
+                  "1人"
+                ],
+                [
+                  "现场引导",
+                  "13:15至14:00",
+                  "1人"
+                ],
+                [
+                  "设备管理",
+                  "13:00至14:30",
+                  "1人"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet11.xlsx",
+                "sheet": "650kQj",
+                "range": "A1:C4",
+                "sha256": "57958103ff8e99985993a958a0f2d13ec19fea7951414e863cdc5021187a532f"
+              }
+            },
+            {
+              "id": "table-12",
+              "caption": "人员岗位资格",
+              "columns": [
+                "姓名",
+                "可以去的岗位"
+              ],
+              "rows": [
+                [
+                  "林晨",
+                  "签到 现场引导"
+                ],
+                [
+                  "周悦",
+                  "签到 设备管理"
+                ],
+                [
+                  "陈珂",
+                  "现场引导 设备管理"
+                ],
+                [
+                  "许宁",
+                  "签到"
+                ],
+                [
+                  "唐可",
+                  "现场引导"
+                ],
+                [
+                  "赵禾",
+                  "设备管理"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet12.xlsx",
+                "sheet": "j7UmwT",
+                "range": "A1:B7",
+                "sha256": "d5285dae485259f9699fc7f9ae4f41f771beecd297be00d03b23eb978beb3f52"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "checkin",
+              "label": "签到",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "林晨",
+                  "label": "林晨"
+                },
+                {
+                  "value": "周悦",
+                  "label": "周悦"
+                },
+                {
+                  "value": "陈珂",
+                  "label": "陈珂"
+                },
+                {
+                  "value": "许宁",
+                  "label": "许宁"
+                },
+                {
+                  "value": "唐可",
+                  "label": "唐可"
+                },
+                {
+                  "value": "赵禾",
+                  "label": "赵禾"
+                }
+              ]
+            },
+            {
+              "id": "guide",
+              "label": "现场引导",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "林晨",
+                  "label": "林晨"
+                },
+                {
+                  "value": "周悦",
+                  "label": "周悦"
+                },
+                {
+                  "value": "陈珂",
+                  "label": "陈珂"
+                },
+                {
+                  "value": "许宁",
+                  "label": "许宁"
+                },
+                {
+                  "value": "唐可",
+                  "label": "唐可"
+                },
+                {
+                  "value": "赵禾",
+                  "label": "赵禾"
+                }
+              ]
+            },
+            {
+              "id": "equipment",
+              "label": "设备管理",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "林晨",
+                  "label": "林晨"
+                },
+                {
+                  "value": "周悦",
+                  "label": "周悦"
+                },
+                {
+                  "value": "陈珂",
+                  "label": "陈珂"
+                },
+                {
+                  "value": "许宁",
+                  "label": "许宁"
+                },
+                {
+                  "value": "唐可",
+                  "label": "唐可"
+                },
+                {
+                  "value": "赵禾",
+                  "label": "赵禾"
+                }
+              ]
+            }
+          ],
+          "scoring": {
+            "type": "staffing",
+            "positions": {
+              "checkin": {
+                "qualification": "签到",
+                "start": "13:00"
+              },
+              "guide": {
+                "qualification": "现场引导",
+                "start": "13:15"
+              },
+              "equipment": {
+                "qualification": "设备管理",
+                "start": "13:00"
+              }
+            },
+            "personnel": [
+              {
+                "name": "林晨",
+                "qualifications": [
+                  "签到",
+                  "现场引导"
+                ],
+                "arrival": "12:40",
+                "absent": false
+              },
+              {
+                "name": "周悦",
+                "qualifications": [
+                  "签到",
+                  "设备管理"
+                ],
+                "arrival": "12:50",
+                "absent": false
+              },
+              {
+                "name": "陈珂",
+                "qualifications": [
+                  "现场引导",
+                  "设备管理"
+                ],
+                "arrival": "13:05",
+                "absent": false
+              },
+              {
+                "name": "许宁",
+                "qualifications": [
+                  "签到"
+                ],
+                "arrival": "12:55",
+                "absent": false
+              },
+              {
+                "name": "唐可",
+                "qualifications": [
+                  "现场引导"
+                ],
+                "arrival": "13:10",
+                "absent": false
+              },
+              {
+                "name": "赵禾",
+                "qualifications": [
+                  "设备管理"
+                ],
+                "arrival": "12:45",
+                "absent": false
+              }
+            ],
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "embedded_workbooks": [
+                11,
+                12,
+                13
+              ]
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              96,
+              97,
+              99
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          },
+          "reveal": {
+            "button_label": "查看人员的到岗时间",
+            "paragraphs": [],
+            "tables": [
+              {
+                "id": "table-13",
+                "caption": "人员到岗时间安排",
+                "columns": [
+                  "姓名",
+                  "到岗时间",
+                  "姓名",
+                  "到岗时间"
+                ],
+                "rows": [
+                  [
+                    "林晨",
+                    "12:40",
+                    "周悦",
+                    "12:50"
+                  ],
+                  [
+                    "陈珂",
+                    "13:05",
+                    "许宁",
+                    "12:55"
+                  ],
+                  [
+                    "唐可",
+                    "13:10",
+                    "赵禾",
+                    "12:45"
+                  ]
+                ],
+                "source_ref": {
+                  "file": "A5 SH任务pilot.docx",
+                  "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet13.xlsx",
+                  "sheet": "d5FAOp",
+                  "range": "A2:D5",
+                  "sha256": "9a262e944d816c65a89a0fd1b4f87d29cab2e464a304a5e0d52058653619211a"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "unit_id": "SH04_U2",
+          "title": "第2任务单元　根据人员变化重新排班",
+          "paragraphs": [
+            "要求：收到三项变化：周悦临时缺席；赵禾到岗时间改为13:10；新增支援人员梁欣，可在12:55到岗，具备现场引导和设备管理资格。请重新为全部岗位安排人员。岗位工作时间、资格要求和每人只能去一个岗位的规则不变。",
+            "请为三个岗位各选择1人，同一人不能重复。"
+          ],
+          "tables": [
+            {
+              "id": "table-14",
+              "caption": "岗位工作时间",
+              "columns": [
+                "岗位",
+                "活动当天工作时间",
+                "所需人数"
+              ],
+              "rows": [
+                [
+                  "签到",
+                  "13:00至14:00",
+                  "1人"
+                ],
+                [
+                  "现场引导",
+                  "13:15至14:00",
+                  "1人"
+                ],
+                [
+                  "设备管理",
+                  "13:00至14:30",
+                  "1人"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet14.xlsx",
+                "sheet": "KC6p8U",
+                "range": "A1:C4",
+                "sha256": "17e57dfafbf517a82b6a5260da97efd107f59c49ac08395e4f9f46fb87f7ff6e"
+              }
+            },
+            {
+              "id": "table-15",
+              "caption": "更新后的人员资格及到岗时间",
+              "columns": [
+                "姓名",
+                "可以去的岗位",
+                "最新到岗时间"
+              ],
+              "rows": [
+                [
+                  "林晨",
+                  "签到 现场引导",
+                  "12:40"
+                ],
+                [
+                  "周悦",
+                  "签到 设备管理",
+                  "缺席"
+                ],
+                [
+                  "陈珂",
+                  "现场引导 设备管理",
+                  "13:05"
+                ],
+                [
+                  "许宁",
+                  "签到",
+                  "12:55"
+                ],
+                [
+                  "唐可",
+                  "现场引导",
+                  "13:10"
+                ],
+                [
+                  "赵禾",
+                  "设备管理",
+                  "13:10"
+                ],
+                [
+                  "梁欣",
+                  "现场引导 设备管理",
+                  "12:55"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet15.xlsx",
+                "sheet": "n57C3G",
+                "range": "A1:C8",
+                "sha256": "e3af7a61892bc341b6f6e351621d1787660e4c330a2689e52eb5c0a87b719b30"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "checkin",
+              "label": "签到",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "林晨",
+                  "label": "林晨"
+                },
+                {
+                  "value": "周悦",
+                  "label": "周悦"
+                },
+                {
+                  "value": "陈珂",
+                  "label": "陈珂"
+                },
+                {
+                  "value": "许宁",
+                  "label": "许宁"
+                },
+                {
+                  "value": "唐可",
+                  "label": "唐可"
+                },
+                {
+                  "value": "赵禾",
+                  "label": "赵禾"
+                },
+                {
+                  "value": "梁欣",
+                  "label": "梁欣"
+                }
+              ]
+            },
+            {
+              "id": "guide",
+              "label": "现场引导",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "林晨",
+                  "label": "林晨"
+                },
+                {
+                  "value": "周悦",
+                  "label": "周悦"
+                },
+                {
+                  "value": "陈珂",
+                  "label": "陈珂"
+                },
+                {
+                  "value": "许宁",
+                  "label": "许宁"
+                },
+                {
+                  "value": "唐可",
+                  "label": "唐可"
+                },
+                {
+                  "value": "赵禾",
+                  "label": "赵禾"
+                },
+                {
+                  "value": "梁欣",
+                  "label": "梁欣"
+                }
+              ]
+            },
+            {
+              "id": "equipment",
+              "label": "设备管理",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "林晨",
+                  "label": "林晨"
+                },
+                {
+                  "value": "周悦",
+                  "label": "周悦"
+                },
+                {
+                  "value": "陈珂",
+                  "label": "陈珂"
+                },
+                {
+                  "value": "许宁",
+                  "label": "许宁"
+                },
+                {
+                  "value": "唐可",
+                  "label": "唐可"
+                },
+                {
+                  "value": "赵禾",
+                  "label": "赵禾"
+                },
+                {
+                  "value": "梁欣",
+                  "label": "梁欣"
+                }
+              ]
+            }
+          ],
+          "scoring": {
+            "type": "staffing",
+            "positions": {
+              "checkin": {
+                "qualification": "签到",
+                "start": "13:00"
+              },
+              "guide": {
+                "qualification": "现场引导",
+                "start": "13:15"
+              },
+              "equipment": {
+                "qualification": "设备管理",
+                "start": "13:00"
+              }
+            },
+            "personnel": [
+              {
+                "name": "林晨",
+                "qualifications": [
+                  "签到",
+                  "现场引导"
+                ],
+                "arrival": "12:40",
+                "absent": false
+              },
+              {
+                "name": "周悦",
+                "qualifications": [
+                  "签到",
+                  "设备管理"
+                ],
+                "arrival": "12:50",
+                "absent": true
+              },
+              {
+                "name": "陈珂",
+                "qualifications": [
+                  "现场引导",
+                  "设备管理"
+                ],
+                "arrival": "13:05",
+                "absent": false
+              },
+              {
+                "name": "许宁",
+                "qualifications": [
+                  "签到"
+                ],
+                "arrival": "12:55",
+                "absent": false
+              },
+              {
+                "name": "唐可",
+                "qualifications": [
+                  "现场引导"
+                ],
+                "arrival": "13:10",
+                "absent": false
+              },
+              {
+                "name": "赵禾",
+                "qualifications": [
+                  "设备管理"
+                ],
+                "arrival": "13:10",
+                "absent": false
+              },
+              {
+                "name": "梁欣",
+                "qualifications": [
+                  "现场引导",
+                  "设备管理"
+                ],
+                "arrival": "12:55",
+                "absent": false
+              }
+            ],
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "embedded_workbooks": [
+                14,
+                15
+              ]
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              106,
+              107,
+              109
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          }
+        }
+      ]
+    },
+    {
+      "stage_id": "SH05",
+      "title": "SH05任务：物料清点与补齐缺少数量",
+      "card": "现在的时间是：11月19日 周四 15:30  距活动开始还有1天。你当前需要确认24名参与者，分为三个体验区，每区8人；另有6名工作人员。你需要清点可用物料，计算还缺少多少物料，选择明天工作开始前能够送达的补充方案。另外，明天12:30开始活动现场准备，工作人员需从创新中心北门进入。从办公地点步行前往约25分钟。园区提供免费接驳车，车程约10分钟，需要提前预约，但你尚未安排明天的交通。",
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          116,
+          118
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      },
+      "units": [
+        {
+          "unit_id": "SH05_U1",
+          "title": "第1任务单元　计算可用库存与物料缺口",
+          "paragraphs": [
+            "要求：下表库存包含已损坏物料。损坏品不能使用，实际可用数量为库存总数减去损坏数。请先核对库存，再点击“查看配套规则”。",
+            "请填写实际可用数量与需要补充的数量："
+          ],
+          "tables": [
+            {
+              "id": "table-16",
+              "caption": "已有库存数",
+              "columns": [
+                "物料",
+                "库存总数",
+                "损坏数"
+              ],
+              "rows": [
+                [
+                  "胸牌",
+                  "28张",
+                  "2张"
+                ],
+                [
+                  "活动指南",
+                  "35份",
+                  "3份"
+                ],
+                [
+                  "体验记录表",
+                  "48张",
+                  "4张"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet16.xlsx",
+                "sheet": "tnMW4t",
+                "range": "A2:C5",
+                "sha256": "ac2280be564f1821c8dedea9d1a2ff408551219f74617972baac8860d2d89455"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "badge_available",
+              "label": "胸牌：实际可用数量（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "badge_gap",
+              "label": "胸牌：需要补充的数量（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "guide_available",
+              "label": "活动指南：实际可用数量（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "guide_gap",
+              "label": "活动指南：需要补充的数量（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "record_available",
+              "label": "体验记录表：实际可用数量（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "record_gap",
+              "label": "体验记录表：需要补充的数量（张）",
+              "type": "integer",
+              "required": true
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "badge_available": 26,
+              "badge_gap": 4,
+              "guide_available": 32,
+              "guide_gap": 0,
+              "record_available": 44,
+              "record_gap": 7
+            },
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                130
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              119,
+              120,
+              122
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          },
+          "reveal": {
+            "button_label": "查看配套规则",
+            "paragraphs": [
+              "配套规则：",
+              "胸牌：每名参与者和每名工作人员各1张",
+              "活动指南：每名参与者1份，另外每个体验区备用2份；工作人员不领取",
+              "体验记录表：每名参与者2张，另外每个体验区备用1张；工作人员不领取"
+            ],
+            "assets": [],
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                121
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          }
+        },
+        {
+          "unit_id": "SH05_U2",
+          "title": "第2任务单元　选择补充方案",
+          "paragraphs": [
+            "要求：补充预算不超过130元，物料须在11月20日12:00前送达。每个方案是一套完整订单，只能选一套，不能拆分或组合。",
+            "参与人数和配套要求不变：24名参与者、6名工作人员、3个体验区。胸牌每人1张；指南每位参与者1份且每区备用2份；记录表每位参与者2张且每区备用1张。指南和记录表不向工作人员配发。",
+            "请选择能补足全部缺少的数量，并符合预算与到货要求的方案，单选。",
+            "采用你选择的方案后，除规定需求外，多出胸牌 ______ 张，体验记录表 ______ 张。",
+            "如“没有合格方案”，两个数量栏均填写“不适用”。"
+          ],
+          "tables": [
+            {
+              "id": "table-17",
+              "caption": "原库存数",
+              "columns": [
+                "物料",
+                "原库存总数",
+                "损坏数"
+              ],
+              "rows": [
+                [
+                  "胸牌",
+                  "28张",
+                  "2张"
+                ],
+                [
+                  "活动指南",
+                  "35份",
+                  "3份"
+                ],
+                [
+                  "体验记录表",
+                  "48张",
+                  "4张"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet17.xlsx",
+                "sheet": "J6IK0f",
+                "range": "A1:C4",
+                "sha256": "678727e0197a8e273a922db001e6663712b842a05fc1b55829e6a1389cbaecc8"
+              }
+            },
+            {
+              "id": "table-18",
+              "caption": "补充方案",
+              "columns": [
+                "方案",
+                "补充胸牌",
+                "补充体验记录表",
+                "送达时间",
+                "总费用"
+              ],
+              "rows": [
+                [
+                  "A",
+                  "5张",
+                  "10张",
+                  "11月19日18:00",
+                  "140元"
+                ],
+                [
+                  "B",
+                  "4张",
+                  "7张",
+                  "11月20日13:00",
+                  "105元"
+                ],
+                [
+                  "C",
+                  "5张",
+                  "4张",
+                  "11月20日10:00",
+                  "90元"
+                ],
+                [
+                  "D",
+                  "5张",
+                  "10张",
+                  "11月20日11:30",
+                  "125元"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH任务pilot.docx",
+                "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet18.xlsx",
+                "sheet": "uA5IdN",
+                "range": "A1:E5",
+                "sha256": "1f4c8773a896dc9d80e4f1eb5ed04d3f70077c8d4bda3127bc20c7a8a36d3014"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "plan",
+              "label": "补充方案",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "A",
+                  "label": "A"
+                },
+                {
+                  "value": "B",
+                  "label": "B"
+                },
+                {
+                  "value": "C",
+                  "label": "C"
+                },
+                {
+                  "value": "D",
+                  "label": "D"
+                },
+                {
+                  "value": "NONE",
+                  "label": "没有合格方案"
+                }
+              ]
+            },
+            {
+              "id": "badge_surplus",
+              "label": "多出胸牌（张）",
+              "type": "integer_or_na",
+              "required": true
+            },
+            {
+              "id": "record_surplus",
+              "label": "多出体验记录表（张）",
+              "type": "integer_or_na",
+              "required": true
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "plan": "D",
+              "badge_surplus": 1,
+              "record_surplus": 3
+            },
+            "source_ref": {
+              "file": "A5 SH任务pilot.docx",
+              "block_indexes": [
+                143
+              ],
+              "revision_id": "user-approved-M1-M6-2026-10-19"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH任务pilot.docx",
+            "block_indexes": [
+              131,
+              132,
+              133,
+              135,
+              137,
+              138
+            ],
+            "revision_id": "user-approved-M1-M6-2026-10-19"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "您可以在这里输入任意内容...",
+            "max_length": 20000
+          }
+        }
+      ]
+    }
+  ],
+  "ratings": [
+    {
+      "id": "timing",
+      "label": "时机的合适度：你觉得这条信息出现的时机合适吗？1分（非常不合适）7分（非常合适）",
+      "min": 1,
+      "max": 7,
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          148
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      }
+    },
+    {
+      "id": "disruption",
+      "label": "打扰感：这条消息对你刚才做任务的打扰程度有多大？1分（完全没有打扰）7分（打扰非常大）",
+      "min": 1,
+      "max": 7,
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          149
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      }
+    },
+    {
+      "id": "effort",
+      "label": "完成主任务的努力程度：因为这条消息，你需要多花多少精力才能继续完成任务？1分（完全不需要）7分（需要非常多）",
+      "min": 1,
+      "max": 7,
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          150
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      }
+    },
+    {
+      "id": "helpfulness",
+      "label": "帮助程度：结合情景，这条消息对你处理你之后要处理的事情有多大帮助？1分（完全没有帮助）7分（帮助非常大）",
+      "min": 1,
+      "max": 7,
+      "source_ref": {
+        "file": "A5 SH任务pilot.docx",
+        "block_indexes": [
+          151
+        ],
+        "revision_id": "user-approved-M1-M6-2026-10-19"
+      }
+    }
+  ],
+  "interview_prompts": [
+    "刚才哪条消息让你印象最深？它出现时你正在做什么？",
+    "你当时怎么处理这条消息？看完后继续做任务是否顺利？",
+    "如果由你决定，这条消息在哪个步骤出现更合适？为什么？"
+  ],
+  "break_ms": 180000,
+  "allow_break_skip": true,
+  "message_duration_ms": 8500,
+  "completion_text": "五组任务已完成，请等待实验员进行访谈。"
+}

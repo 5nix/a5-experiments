@@ -1,82 +1,50 @@
 # f5-sh-pilot
 
-SH（静态高负荷）场景的 Pilot 实验程序，属于 [a5-experiments 仓库](../README.md)。本文件只说明这套实验的运行、材料、数据与验收。
+SH（静态高负荷）场景的 Pilot 实验程序，属于 [a5-experiments](../README.md)。
 
-核心软件已实现：5组10单元、服务端判分与必答校验、T0/T1消息请求、问卷、可跳过的180秒休息、会话恢复、实验员后台、备注与CSV/JSONL导出。前端为基础HTML，后续可直接替换，不需重写服务端规则。
-
-**当前仅有Mock眼镜，没有真实消息呈现途径。软件流程可预演，真实眼镜实验尚待接口联调。** 已采用2026-10-19更新的XLSX及用户批准的M1—M6修订，后续最终稿仍可配置替换；Windows尚未实机验证。
+**当前状态**：5 组 10 单元、问卷、可跳过的休息、会话恢复、导出、Windows 11 风格的被试桌面、管理端 v2 都已完成；内容版本为 v4。眼镜目前只能用 Mock 预演，真实雷鸟眼镜待现场验收；Windows 未实机验证。
 
 ## 启动
 
-也可双击仓库根目录的 `a5-experiments.command`（macOS）或 `a5-experiments.bat`（Windows），用数字选择本实验，再输入 `start`、`open`、`stop` 等指令。通用菜单见 [仓库启动器说明](../README.md#交互启动器)。
-
-需要 Node.js 24 或更高版本及 npm。日常启动不需要 Python、系统Office或云服务。
+需要 Node.js 24+。双击仓库根目录的 `a5-experiments.command` 或 `a5-experiments.bat`，选择本实验后输入 `start` / `open` / `restart` / `stop`；也可以用命令：
 
 ```bash
-# 从仓库根目录安装依赖
-npm ci
-cd f5-sh-pilot
-npm run check
-npm start
+npm ci && npm run check            # 仓库根目录
+npm run start --workspace=f5-sh-pilot
 ```
 
-Windows在 PowerShell 中进入实际仓库根目录后，同样执行上述命令。也可留在仓库根目录，用 `npm run start --workspace=f5-sh-pilot` 启动本实验。
+启动后打开终端里打印的 `http://127.0.0.1:5173/admin#key=…`，在后台创建会话，再把被试入口打开在被试电脑上。端口冲突时用 `PORT=5174`。连续预演请用 `start`，不要用 `dev`。
 
-终端会打印完整实验员后台链接：`http://127.0.0.1:5173/admin#key=...`。请打开该链接，而不是只打开无凭据的 `/admin`。
+- **编号**：001—004 为 V1 预分配；000 是调试测试者，复制 001 的配置，可以跳题。
+- **会话限制**：同一编号同时只能有一个未结束的会话；不同编号可以并行。
+- **修改内容后**：修改 `content/` 后必须重启服务并新建会话，已有会话始终显示创建时的内容快照。
 
-1. 选择被试，后台显示其预分配条件。默认001—004均为V1，不自动分组；000为调试测试者，动态复制当前001配置。
-2. 点击“创建会话”，再打开生成的“被试界面”链接。
-3. 被试完成情景导入、5张说明卡、10单元及对应理解题/评价，组间默认休息180秒，被试或实验员均可跳过并留下记录；最后一组直接完成。
-4. 后台的“用户当前状态”显示任务、答题进度、消息及休息状态，按当前状态提供暂停、恢复、跳过休息、结束操作；管理员操作须填原因。可追加备注、按会话或批量导出ZIP。
-5. 全部10个任务单元均提供“草稿本”，空白时以灰字提示“您可以在这里输入任意内容...”，按单元保存，不参与评分。刷新被试页面会恢复当前页、答案与计算草稿。关闭页面后，可在后台“查看”已有会话并生成恢复入口；旧入口会失效。
+## 数据
 
-所有题必答，但完整的错误答案仍可提交。各U1按原题干先查看补充资料，再提交；首次实际展示产生E。眼镜展示独立计时，本程序不控制关闭，不等待8.5秒结束才切题或进入问卷。
-
-`npm run dev` 使用代码监听，开发时会重启服务；**连续预演请用 `npm start`**。在终端按 `Ctrl+C` 停止。端口冲突可指定其他端口：macOS为 `PORT=5174 npm start`，PowerShell为 `$env:PORT=5174; npm start`。
-
-服务可同时保存多个不同编号的会话，各自状态、计时、草稿与消息记录独立；同一编号只允许一个未结束会话。不同实验通过通用启动器指定不同端口、数据库独立。
-
-默认只绑定本机 `127.0.0.1`。当前可同机或同机多屏使用；不同电脑的后台访问方式尚未配置。
-
-## 数据与备份
-
-以下路径均相对于本实验目录：
-
-- 数据库：`runtime/experiment.sqlite`，SQLite WAL模式及事务落盘。
-- 实验员凭据：`runtime/admin-key`，首次启动生成，后续复用。
-- 导出：`exports/<导出编号>/`，浏览器同时下载ZIP。
-- ZIP包含 `events.jsonl`、`trials.csv`、`interventions.csv`、`surveys.csv`、`sessions.csv`、`notes.csv`，以及完整内容/配置快照和导出清单。
-
-原始事件只追加，数据库触发器禁止更新或删除。会话固定创建时的内容、配置及来源哈希；导入新配置或更换材料不会回写已有会话。
-
-备份时先正常停止服务，再复制完整 `runtime/` 与需要保留的 `exports/`。这两处被Git忽略，Git推送不等于实验数据备份。不要在运行中只拷贝SQLite主文件而遗漏WAL文件。
-
-可通过 `A5_RUNTIME_DIR`、`A5_EXPORT_DIR` 指定独立测试目录，避免软件验收记录混入正式运行数据。
+- **存放位置**：`runtime/experiment.sqlite`（WAL 模式）、`runtime/admin-key`、`exports/<编号>/`，都已被 Git 忽略。
+- **备份**：先停止服务，再复制整个 `runtime/` 和需要保留的 `exports/`。
+- **测试隔离**：测试时用 `A5_RUNTIME_DIR` / `A5_EXPORT_DIR` 指定独立目录。
+- **导出范围**：“导出全部”包含所有未删除会话（含 000 和未完成的会话），“导出当前”只导出选中的那一次会话。删除会话可恢复。
 
 ## 内容维护
 
-运行时读取本实验的 `content/tasks.json`、`content/stimuli.json`，不把题干、选项、表格、答案写死在前端或状态机中。更新这些文件及版本号后重启；新会话使用新材料，已有会话继续使用原快照。
-
-原始附件位于本实验的 `docs/`。首次转换工具仅依赖Python标准库，在本实验目录执行：
+运行时读取 `content/tasks.json` 与 `content/stimuli.json`。`tasks.json` 由脚本从原始附件和 `content/revisions.json` 生成：
 
 ```bash
-python3 scripts/extract_materials.py
-python3 scripts/build_task_content.py
-npm run check
+python3 scripts/build_task_content.py   # 只用 Python 标准库
 ```
 
-上述命令会重新生成材料和默认配置，**不要用它覆盖已经人工维护的最终稿JSON**。它们用于从原始附件重建初始版本，日常改文案直接编辑内容JSON即可。文本表格直接来自Word内嵌Excel；批准文案修订记录在 `content/revisions.json`，稳定字段ID需保留，评分数据独立放在单元的 `scoring` 中。详见 [前端与内容接口](API.md)。
+修改文案时先编辑 `revisions.json`，再生成并提升 `content_version`。字段 ID 保持不变，评分写在各单元的 `scoring` 中。
 
-新版XLSX已将V5/SH02修正为N02-T0，源20人配置现校验通过；默认仍只启用001—004。旧JSON提取已归档到 `content/source/archive/sh-source-2026-10-18-v1/`。
+## 文档
 
-000可在被试端或后台跳转至任意任务及有效流程页面；正式被试不开放跳题。调试操作、事件和全部CSV均标识 `is_debug`。跳回页面保留已有答案/草稿和消息去重，不自动重发眼镜请求。
-
-## 文档与验证
-
-- [最新开发决定](DECISIONS.md)：覆盖原PRD的必答、F及独立眼镜计时等规则。
-- [架构与恢复机制](ARCHITECTURE.md)
-- [API及前端交接](API.md)
-- [测试与验收记录](TESTING.md)
-- [材料问题清单](content_audit.md)
-
-`npm run check` 包含类型检查、21项自动测试和启动自检。测试覆盖完整五组流程，使用注入时钟验证180秒边界；覆盖文本表格、草稿、跳过休息、000跳题权限及导出。浏览器冒烟测试使用独立临时目录。
+| 文档 | 内容 |
+| --- | --- |
+| [DECISIONS.md](DECISIONS.md) | 当前执行规则与材料处理（优先于 PRD） |
+| [API.md](API.md) | 接口、view、操作、时序 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 组成、状态、时间与持久化 |
+| [FRONTEND.md](FRONTEND.md) | 被试桌面与管理端 |
+| [RAYNEO.md](RAYNEO.md) | 眼镜接入与真机验收清单 |
+| [TESTING.md](TESTING.md) | 测试与验收结果 |
+| [qa/browser/](qa/browser/README.md) | 可重跑的浏览器验收脚本 |
+| [docs/](docs/) | 原始 PRD、Word、XLSX |

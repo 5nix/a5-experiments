@@ -5,9 +5,10 @@ import { Store } from './store.ts';
 import { Engine } from './engine.ts';
 import { createApp } from './app.ts';
 import { loadMaterial } from './tasks.ts';
+import { RayNeoGlassesAdapter } from './adapters/rayneo-glasses.ts';
 import { MockGlassesAdapter } from './adapters/mock-glasses.ts';
 import { experimentRoot, preflight, readJson } from './preflight.ts';
-import type { ParticipantConfig } from './contracts.ts';
+import type { GlassesAdapter, ParticipantConfig } from './contracts.ts';
 
 const port = Number(process.env.PORT ?? 5173);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT必须是1至65535之间的整数。');
@@ -23,19 +24,26 @@ catch (error) {
   adminKey = randomBytes(32).toString('hex'); await writeFile(keyPath, adminKey, { mode: 0o600, flag: 'wx' });
 }
 const store = new Store(join(runtime, 'experiment.sqlite'));
-const engine = new Engine(store, new MockGlassesAdapter(), await loadMaterial(), await readJson<ParticipantConfig>('config/participants.pilot.json'));
+const mode = process.env.A5_GLASSES_MODE ?? 'mock';
+if (!['mock', 'rayneo'].includes(mode)) throw new Error('A5_GLASSES_MODE 只能是 mock 或 rayneo。');
+const adapter: GlassesAdapter = mode === 'rayneo' ? new RayNeoGlassesAdapter(process.env.A5_RAYNEO_SERIAL ?? '', { adb: process.env.A5_ADB_PATH }) : new MockGlassesAdapter();
+if (adapter instanceof RayNeoGlassesAdapter) await adapter.probe();
+const engine = new Engine(store, adapter, await loadMaterial(), await readJson<ParticipantConfig>('config/participants.pilot.json'));
 const server = createApp(engine, adminKey, resolve(process.env.A5_EXPORT_DIR ?? join(experimentRoot, 'exports')));
-const ticker = setInterval(() => { for (const id of store.ids()) engine.tick(id); }, 1000); ticker.unref();
-server.on('error', error => { console.error('服务启动失败：', error.message); clearInterval(ticker); store.close(); process.exitCode = 1; });
+engine.pollDevice();
+const ticker = setInterval(() => { engine.pollDevice(); for (const id of store.ids()) engine.tick(id); }, 1000); ticker.unref();
+server.on('error', error => { console.error('服务启动失败：', error.message); clearInterval(ticker); void Promise.resolve(adapter.close?.()).then(() => engine.settle()).finally(() => store.close()); process.exitCode = 1; });
 server.listen(port, '127.0.0.1', () => {
   console.log(`实验员后台：http://127.0.0.1:${port}/admin#key=${adminKey}`);
   console.log(`数据库：${join(runtime, 'experiment.sqlite')}`);
-  console.log('当前为Mock眼镜模式，不能用于声称真实消息呈现成功。被试入口由后台创建或恢复会话后提供。');
+  console.log(mode === 'mock' ? '当前为 Mock 预演模式，不能用于真实消息呈现实验。' : `当前为雷鸟 USB 模式，设备：${adapter.getStatus().device_id}；硬件呈现仍需现场验收。`);
 });
 let stopping = false;
 const shutdown = () => {
   if (stopping) return; stopping = true; clearInterval(ticker);
-  server.close(() => { void engine.settle().finally(() => { store.close(); if (process.connected) process.disconnect?.(); }); });
+  const closing = Promise.resolve(adapter.close?.());
+  server.closeIdleConnections();
+  server.close(() => { void closing.then(() => engine.settle()).finally(() => { store.close(); if (process.connected) process.disconnect?.(); }); });
 };
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, shutdown);
 process.on('message', message => {

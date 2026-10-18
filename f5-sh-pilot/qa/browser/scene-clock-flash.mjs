@@ -1,0 +1,24 @@
+// 浏览器验收脚本：见 qa/browser/README.md。环境变量 A5_BASE、A5_RUNTIME_DIR、A5_QA_OUT、A5_PLAYWRIGHT。
+import { mkdirSync as __mkdir } from 'node:fs';
+const __out = process.env.A5_QA_OUT ?? '/tmp/a5-qa'; __mkdir(__out, { recursive: true });
+const { chromium } = await import(process.env.A5_PLAYWRIGHT ?? 'playwright');
+import { readFileSync } from 'node:fs';
+const base = (process.env.A5_BASE ?? 'http://127.0.0.1:5174');
+const key = readFileSync(`${process.env.A5_RUNTIME_DIR ?? '/tmp/a5-frontend-runtime'}/admin-key`, 'utf8').trim();
+const A = async (path, init = {}) => (await fetch(base + path, { ...init, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' } })).json();
+const c = await A('/api/admin/sessions', { method: 'POST', body: JSON.stringify({ participant_id: '000' }) });
+const browser = await chromium.launch({ channel: 'chrome' });
+const page = await browser.newPage({ viewport: { width: 1536, height: 864 } });
+await page.goto(base + c.participant_url);
+const ready = () => page.waitForSelector('.cmd-actions .btn:not([disabled])');
+await ready(); await page.click('.cmd-actions .btn'); await ready();
+console.log('card flash:', await page.locator('#clock.flash').count());
+await page.waitForTimeout(300); await page.screenshot({ path: __out + '/flash.png', clip: { x: 1300, y: 800, width: 236, height: 64 } });
+await page.waitForTimeout(3400); console.log('flash cleared:', await page.locator('#clock.flash').count() === 0);
+await page.click('.cmd-actions .btn'); await ready();
+console.log('same time in unit, no flash:', await page.locator('#clock.flash').count() === 0);
+await page.reload(); await ready(); console.log('reload same time, no flash:', await page.locator('#clock.flash').count() === 0);
+await page.click('.tray-btn'); await page.selectOption('#debug-target', { label: 'SH02 说明卡' }); await page.click('#debug-navigation .btn');
+await page.waitForFunction(() => document.querySelector('#clock-date')?.textContent.includes('10日'));
+console.log('new time flash:', await page.locator('#clock.flash').count());
+await browser.close();

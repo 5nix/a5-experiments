@@ -40,6 +40,7 @@ export interface GlassesRequest {
   message_id: string;
   text: string;
   duration_ms: 8500;
+  device_id?: string;
 }
 
 export interface GlassesReceipt {
@@ -52,9 +53,30 @@ export interface GlassesReceipt {
   t_hide: string | null;
   display_time_source: 'mock' | 'device_reported' | 'unavailable';
   error: string | null;
+  device_id?: string;
+  evidence?: unknown;
 }
 
+/** 设备时钟原样保存；应用绘制证据不等于光学呈现实测。 */
+export interface GlassesEvent {
+  event_id: string;
+  request_id: string;
+  device_id: string;
+  kind: 'accepted' | 'drawn' | 'hidden' | 'failed';
+  device_wall_ms: number;
+  device_monotonic_ms: number;
+  clock_id: string;
+  error: string | null;
+}
+export interface GlassesStatus {
+  source: 'mock' | 'device'; connected: boolean;
+  device_id?: string; ready?: boolean; busy?: boolean; error?: string | null;
+  protocol?: string; independent_duration?: boolean; persistent_deduplication?: boolean;
+  display_evidence?: string; device_info?: Record<string, string>;
+}
 export interface GlassesAdapter {
-  getStatus(): { source: 'mock' | 'device'; connected: boolean };
+  getStatus(): GlassesStatus;
+  pollEvents?(receive: (event: GlassesEvent) => void): Promise<void>;
+  close?(): void | Promise<void>;
   send(request: GlassesRequest): Promise<GlassesReceipt>;
 }

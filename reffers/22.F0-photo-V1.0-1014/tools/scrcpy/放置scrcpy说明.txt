@@ -1,0 +1,13 @@
+如果电脑已经能在命令行中运行 scrcpy，本文件夹可留空。
+
+否则将 scrcpy Windows 官方压缩包中的全部文件解压到本文件夹，使路径为：
+tools\scrcpy\scrcpy.exe
+tools\scrcpy\adb.exe
+tools\scrcpy\scrcpy-server
+以及官方压缩包中的 DLL 等配套文件。
+
+不要只复制 scrcpy.exe；本工程没有附带 scrcpy 可执行文件。
+官方发布页：https://github.com/Genymobile/scrcpy/releases
+
+首次在 Android Studio 编译并部署本次更新后，双击根目录 01_start_preview.bat。
+脚本会同时启动眼镜应用和640×480单眼预览，不需要另输裁剪命令。

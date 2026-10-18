@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { zipSync, strToU8 } from 'fflate';
 import type { Engine } from './engine.ts';
+import { HttpError } from './engine.ts';
 import type { EventRecord } from './store.ts';
 
 type Row = Record<string, unknown>;
@@ -21,6 +22,7 @@ const last = <T>(array: T[]) => array[array.length - 1];
 
 export async function exportData(engine: Engine, ids: string[], outputRoot: string) {
   const captures = ids.map(id => {
+    if (engine.session(id).state.deleted) throw new HttpError(410, '此会话记录已删除，请先恢复记录再导出。');
     const summary = engine.summary(id);
     return { session: engine.session(id), events: engine.store.events(id), interventions: engine.store.interventions(id), summary };
   });
@@ -72,16 +74,16 @@ export async function exportData(engine: Engine, ids: string[], outputRoot: stri
   const files: Record<string, string> = {
     'events.jsonl': events.map(e => JSON.stringify(e)).join('\n') + (events.length ? '\n' : ''),
     'trials.csv': csv(['session_id', 'participant_id', 'is_debug', 'version_label', 'stage_id', 'unit_id', 'condition', 'page_displayed', 'page_displayed_elapsed_ms', 'client_display_evidence', 'e_clicked', 'e_displayed', 'e_elapsed_ms', 'f_submitted', 'f_semantics', 'first_answer', 'last_answer', 'first_answer_elapsed_ms', 'last_answer_elapsed_ms', 'submitted', 'submitted_elapsed_ms', 'raw_answer', 'normalized_answer', 'score', 'completion_ms', 'submission_attempts', 'scratchpad_text', 'scratchpad_changes', 'content_version'], trials),
-    'interventions.csv': csv(['session_id', 'participant_id', 'is_debug', 'stage_id', 'condition', 'message_id', 'timing', 'request_id', 'duration_ms', 't_event', 'event_elapsed_ms', 't_send', 't_ack', 't_display', 't_hide', 'source', 'display_time_source', 'status', 'error', 'send_latency_ms', 'acknowledgement_latency_ms', 'display_latency_ms', 'latency_baseline', 'latency_unit', 'receipt', 'content_version'], interventions),
+    'interventions.csv': csv(['session_id', 'participant_id', 'is_debug', 'stage_id', 'condition', 'message_id', 'timing', 'request_id', 'device_id', 'device_events', 'duration_ms', 't_event', 'event_elapsed_ms', 't_send', 't_ack', 't_display', 't_hide', 'source', 'display_time_source', 'status', 'error', 'send_latency_ms', 'acknowledgement_latency_ms', 'display_latency_ms', 'latency_baseline', 'latency_unit', 'receipt', 'content_version'], interventions),
     'surveys.csv': csv(['session_id', 'participant_id', 'is_debug', 'stage_id', 'condition', 'message_id', 'comprehension_answer', 'comprehension_correct', 'comprehension_submitted', 'timing', 'disruption', 'effort', 'helpfulness', 'ratings_submitted', 'content_version'], surveys),
-    'sessions.csv': csv(['session_id', 'participant_id', 'is_debug', 'copied_from', 'version_label', 'status', 'phase', 'started_at', 'ended_at', 'elapsed_ms', 'device_source', 'real_presentation_verified', 'validation_status', 'intro_displayed', 'intro_continue', 'intro_duration_ms', 'resume_count', 'anomaly_count', 'breaks_skipped', 'debug_jumps', 'attention', 'config_hash', 'content_hash', 'content_version', 'stimulus_version'], sessions),
+    'sessions.csv': csv(['session_id', 'participant_id', 'is_debug', 'copied_from', 'version_label', 'status', 'phase', 'started_at', 'ended_at', 'elapsed_ms', 'device_source', 'real_presentation_verified', 'validation_status', 'device_id', 'expected_messages', 'device_drawn_messages', 'application_presentation_complete', 'intro_displayed', 'intro_continue', 'intro_duration_ms', 'resume_count', 'anomaly_count', 'breaks_skipped', 'debug_jumps', 'attention', 'config_hash', 'content_hash', 'content_version', 'stimulus_version'], sessions),
     'notes.csv': csv(['session_id', 'participant_id', 'is_debug', 'note_id', 'category', 'stage_id', 'text', 'saved_at', 'elapsed_ms', 'content_version'], notes),
     'snapshots.json': JSON.stringify(captures.map(c => ({ session_id: c.session.id, snapshot: c.session.snapshot })), null, 2),
-    'manifest.json': JSON.stringify({ schema_version: '1.1', created_at: new Date().toISOString(), session_ids: ids,
+    'manifest.json': JSON.stringify({ schema_version: '1.2', created_at: new Date().toISOString(), session_ids: ids,
       debug_session_ids: captures.filter(c => engine.isDebug(c.session)).map(c => c.session.id),
       row_counts: { events: events.length, trials: trials.length, interventions: interventions.length, surveys: surveys.length, sessions: sessions.length, notes: notes.length },
       timing: '服务器ISO墙上时间与会话单调相对毫秒；客户端实际可见证据在事件payload；未测得时间为null/CSV空值。恢复衔接包含停机时间。',
-      presentation: 'Mock不是实际眼镜显示；本应用不控制消息关闭。', csv: 'UTF-8 BOM；公式前缀字符串在CSV加单引号，原始值在JSONL中保留。' }, null, 2),
+      presentation: 'Mock不是实际眼镜显示；雷鸟 device_events 为双眼应用绘制证据，未完成光学实测。Android墙上时间和uptime原值未同步，不计算跨设备显示延迟。8500ms由眼镜端独立控制；电脑不发送清屏。', adapter: engine.adapter.getStatus(), csv: 'UTF-8 BOM；公式前缀字符串在CSV加单引号，原始值在JSONL中保留。' }, null, 2),
   };
   const exportId = `${new Date().toISOString().replace(/[:.]/g, '-')}-${randomUUID().slice(0, 8)}`;
   const directory = join(outputRoot, exportId); await mkdir(directory, { recursive: true });

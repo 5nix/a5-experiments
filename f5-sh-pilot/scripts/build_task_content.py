@@ -72,12 +72,18 @@ def staffing(updated=False):
             'source_ref': {'file': 'A5 SH任务pilot.docx', 'embedded_workbooks': [11, 12, 13] if not updated else [14, 15]}}
 
 
+work = revisions['work_style']
+
+
 def unit(stage, number, title, indexes, tables, fields, scoring, reveal=None):
-    value = {'unit_id': f'{stage}_U{number}', 'title': blocks[title]['text'], 'paragraphs': paragraphs(*indexes),
-             'tables': tables, 'assets': [], 'fields': fields, 'scoring': scoring, 'source_ref': source(title, *indexes)}
-    value['scratchpad'] = {'label': '草稿本', 'placeholder': '您可以在这里输入任意内容...', 'max_length': 20000}
+    unit_id = f'{stage}_U{number}'
+    # 日常工作语气的措辞修订：只换说法与呈现，数值、条件和作答要求不变；原句见原始提取与archive。
+    value = {'unit_id': unit_id, 'title': blocks[title]['text'], 'paragraphs': work['unit_paragraphs'].get(unit_id, paragraphs(*indexes)),
+             'tables': tables, 'assets': [], 'fields': fields, 'scoring': scoring,
+             'source_ref': {**source(title, *indexes), 'wording_revision_id': work['revision_id']}}
+    value['scratchpad'] = {'label': '草稿本', 'placeholder': work['scratchpad_placeholder'], 'max_length': 20000}
     if reveal:
-        value['reveal'] = reveal
+        value['reveal'] = {**reveal, 'button_label': work['reveal_labels'].get(unit_id, reveal['button_label'])}
     return value
 
 
@@ -114,10 +120,17 @@ units = [
           [field('plan', '补充方案', 'single', plans), field('badge_surplus', '多出胸牌（张）', 'integer_or_na'), field('record_surplus', '多出体验记录表（张）', 'integer_or_na')],
           exact({'plan': 'D', 'badge_surplus': 1, 'record_surplus': 3}, 143))],
 ]
+def scene_time(card):
+    # 说明卡中的情景时间，供被试端任务栏时钟固定显示（不走动），文字取自原卡片。
+    match = re.match(r'现在的时间是：(\d+月\d+日 周.) (\d{1,2}:\d{2})', card)
+    assert match, card
+    return {'date': match.group(1), 'time': match.group(2)}
+
+
 data = {
-    'schema_version': '1.1', 'content_version': 'sh-current-2026-10-19-v3', 'revision_id': revisions['revision_id'],
+    'schema_version': '1.1', 'content_version': 'sh-current-2026-10-19-v4', 'revision_id': revisions['revision_id'], 'wording_revision_id': work['revision_id'],
     'intro': {'title': '情景导入', 'paragraphs': paragraphs(6, 7), 'source_ref': source(6, 7)},
-    'stages': [{'stage_id': f'SH{i+1:02}', 'title': blocks[t]['text'], 'card': blocks[c]['text'], 'source_ref': source(t, c), 'units': pair}
+    'stages': [{'stage_id': f'SH{i+1:02}', 'title': blocks[t]['text'], 'card': blocks[c]['text'], 'scene_time': scene_time(blocks[c]['text']), 'source_ref': source(t, c), 'units': pair}
                for i, (t, c, pair) in enumerate(zip([11, 40, 66, 93, 116], [13, 42, 68, 95, 118], units))],
     'ratings': [{'id': id, 'label': blocks[i]['text'], 'min': 1, 'max': 7, 'source_ref': source(i)}
                 for id, i in zip(['timing', 'disruption', 'effort', 'helpfulness'], range(148, 152))],
@@ -126,4 +139,4 @@ data = {
     'completion_text': '五组任务已完成，请等待实验员进行访谈。',
 }
 (ROOT / 'content/tasks.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
-print('已生成5组10单元、18张文本表格、已批准M1—M6修订、可跳过休息和全任务草稿本配置。')
+print('已生成5组10单元、18张文本表格、已批准M1—M6修订、日常工作语气措辞、文件式附件、可跳过休息和全任务草稿本配置。')

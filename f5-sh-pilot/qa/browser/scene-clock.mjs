@@ -1,0 +1,27 @@
+// 浏览器验收脚本：见 qa/browser/README.md。环境变量 A5_BASE、A5_RUNTIME_DIR、A5_QA_OUT、A5_PLAYWRIGHT。
+import { mkdirSync as __mkdir } from 'node:fs';
+const __out = process.env.A5_QA_OUT ?? '/tmp/a5-qa'; __mkdir(__out, { recursive: true });
+const { chromium } = await import(process.env.A5_PLAYWRIGHT ?? 'playwright');
+import { readFileSync } from 'node:fs';
+const base = (process.env.A5_BASE ?? 'http://127.0.0.1:5174');
+const key = readFileSync(`${process.env.A5_RUNTIME_DIR ?? '/tmp/a5-frontend-runtime'}/admin-key`, 'utf8').trim();
+const A = async (path, init = {}) => (await fetch(base + path, { ...init, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' } })).json();
+const c = await A('/api/admin/sessions', { method: 'POST', body: JSON.stringify({ participant_id: '000' }) });
+const browser = await chromium.launch({ channel: 'chrome' });
+const page = await browser.newPage({ viewport: { width: 1536, height: 864 } });
+const errors = []; page.on('pageerror', e => errors.push(String(e)));
+await page.goto(base + c.participant_url);
+const ready = () => page.waitForSelector('.cmd-actions .btn:not([disabled])');
+await ready(); console.log('intro clock hidden:', await page.locator('#clock').isHidden());
+await page.click('.cmd-actions .btn'); await ready();
+console.log('card clock:', await page.textContent('#clock'));
+await page.click('.tray-btn'); await page.waitForTimeout(200);
+await page.selectOption('#debug-target', { label: 'SH05 说明卡' });
+await page.screenshot({ path: __out + '/clock-debug.png' });
+const box = await page.locator('#debug-navigation').boundingBox(); const sel = await page.locator('#debug-target').boundingBox();
+console.log('flyout', box, 'select inside:', sel.x + sel.width <= box.x + box.width + 0.5);
+await page.click('#debug-navigation .btn'); await page.waitForFunction(() => document.querySelector('#clock-date')?.textContent.includes('19'));
+console.log('after jump title:', await page.textContent('h1'), '| clock:', await page.textContent('#clock'));
+await page.screenshot({ path: __out + '/clock-unit.png' });
+console.log('errors', errors);
+await browser.close();

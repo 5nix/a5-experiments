@@ -3,7 +3,7 @@ import { Store } from './store.ts';
 import type { EventRecord, Intervention, Session, Phase } from './store.ts';
 import { hash, InputError, normalize, score } from './tasks.ts';
 import type { DataTable, Field, Snapshot, Unit } from './tasks.ts';
-import type { GlassesAdapter, Participant, ParticipantConfig } from './contracts.ts';
+import type { GlassesAdapter, GlassesEvent, GlassesReceipt, Participant, ParticipantConfig } from './contracts.ts';
 import { validateConfig } from './config.ts';
 
 export class HttpError extends Error {
@@ -30,15 +30,14 @@ export class Engine {
     this.store = store; this.adapter = adapter; this.material = material;
     this.wallNow = clock?.wall ?? Date.now; this.monoNow = clock?.mono ?? (() => performance.now());
     if (!store.setting('participants')) this.importConfig(initialConfig);
-    for (const id of store.ids()) {
+    for (const id of store.allIds()) {
       const session = this.session(id);
-      if (session.state.status !== 'active') continue;
       this.store.tx(() => {
-        this.log(session, 'server_restarted', { clock_source: 'max(persisted_elapsed,wall_since_start)', downtime_included: true });
+        if (session.state.status === 'active') this.log(session, 'server_restarted', { clock_source: 'max(persisted_elapsed,wall_since_start)', downtime_included: true });
         for (const message of this.store.interventions(id)) if (['scheduled', 'send_requested'].includes(message.status)) {
           message.status = 'unknown'; message.error = 'server_restarted_delivery_unknown'; this.store.intervention(message);
           session.state.attention.push(`${message.stage_id}:message_delivery_unknown`);
-          this.log(session, 'message_failed', { request_id: message.request_id, reason: message.error, retry: false });
+          this.log(session, 'message_failed', { request_id: message.request_id, reason: message.error, retry: false }, { stage_id: message.stage_id, unit_id: null, condition: message.condition });
         }
         this.store.save(session);
       });
@@ -62,10 +61,12 @@ export class Engine {
   }
   iso() { return new Date(this.wallNow()).toISOString(); }
   session(id: string) { const s = this.store.get(id); if (!s) throw new HttpError(404, '会话不存在。'); return s; }
+  private requireAvailable(s: Session) { if (s.state.deleted) throw new HttpError(410, '此会话记录已删除，请先在后台恢复记录。'); }
   authenticate(id: string, token: string) {
     const session = this.session(id);
     const candidate = hash(token);
     if (!token || !timingSafeEqual(Buffer.from(candidate), Buffer.from(session.token_hash))) throw new HttpError(401, '被试访问凭据无效。');
+    this.requireAvailable(session);
     return session;
   }
   elapsed(s: Session) {
@@ -93,12 +94,17 @@ export class Engine {
     const participant = participantId === '000' ? this.debugParticipant() : this.config().participants.find(p => p.participant_id === participantId);
     if (!participant) throw new HttpError(404, '被试不在当前已导入配置中。');
     if (this.store.ids().some(id => { const s = this.session(id); return s.snapshot.participant.participant_id === participantId && s.state.status === 'active'; })) throw new HttpError(409, '该被试已有未结束会话，请恢复已有会话。');
+    const device = this.adapter.getStatus();
+    if (device.source === 'device') {
+      if (!device.connected || !device.ready || device.busy || !device.device_id) throw new HttpError(409, '眼镜尚未就绪，请检查 USB、授权和显示端前台状态。');
+      if (this.store.ids().some(id => { const existing = this.session(id); return existing.state.status === 'active' && existing.state.device_id === device.device_id; })) throw new HttpError(409, '此眼镜已绑定一个进行中的会话，请先结束该会话。');
+    }
     const token = randomBytes(32).toString('hex');
     const snapshot: Snapshot = structuredClone({ ...this.material, participant, config_hash: hash(participant), content_hash: hash(this.material) });
     const s: Session = { id: randomUUID(), token_hash: hash(token), snapshot, state: {
       phase: 'INTRO', stage: 0, unit: 0, page_token: randomUUID(), displayed: {}, drafts: {}, reveals: {},
       started_at: this.iso(), ended_at: null, ended_elapsed_ms: null, last_elapsed_ms: 0, break_until_ms: null, break_completed: false,
-      paused_at_ms: null, attention: [], status: 'active', scratchpads: {},
+      paused_at_ms: null, attention: [], status: 'active', scratchpads: {}, delivery_source: device.source, ...(device.source === 'device' ? { device_id: device.device_id } : {}),
     } };
     this.clocks.set(s.id, { base: 0, origin: this.monoNow() });
     this.store.tx(() => {
@@ -112,6 +118,7 @@ export class Engine {
     const token = randomBytes(32).toString('hex');
     this.store.tx(() => {
       const s = this.session(id);
+      this.requireAvailable(s);
       this.store.db.prepare('UPDATE sessions SET token_hash=? WHERE id=?').run(hash(token), id);
       this.log(s, 'admin_intervention', { action: 'participant_token_rotated' }); this.store.save(s);
     });
@@ -174,7 +181,7 @@ export class Engine {
     this.log(s, 'stage_completed');
     if (s.state.stage === s.snapshot.content.stages.length - 1) {
       this.transition(s, 'COMPLETED'); s.state.status = 'completed'; s.state.ended_at = this.iso(); s.state.ended_elapsed_ms = this.elapsed(s);
-      this.log(s, 'session_completed', { delivery_source: this.adapter.getStatus().source, real_presentation_verified: false, attention_count: s.state.attention.length });
+      this.log(s, 'session_completed', { ...this.presentation(s.id), attention_count: s.state.attention.length });
     } else {
       this.transition(s, 'BREAK'); s.state.break_until_ms = this.elapsed(s) + s.snapshot.content.break_ms; s.state.break_completed = false;
       this.log(s, 'break_started', { duration_ms: s.snapshot.content.break_ms, until_elapsed_ms: s.state.break_until_ms });
@@ -193,7 +200,9 @@ export class Engine {
       reveal: null as null | { button_label: string; open: boolean; observed: boolean; paragraphs: string[]; assets: { id: string; label: string }[]; tables: DataTable[] },
       tables: [] as DataTable[], scratchpad: null as null | { label: string; placeholder: string; max_length: number; text: string },
       is_debug: this.isDebug(s), debug_targets: this.debugTargets(s).map(t => ({ id: t.id, label: t.label })),
-      remaining_ms: 0, can_continue: true, can_skip_break: false };
+      remaining_ms: 0, can_continue: true, can_skip_break: false,
+      // 当前任务组说明卡中的情景时间，被试端在任务栏固定显示；旧快照无此字段时为null。
+      scene_time: state.phase === 'INTRO' ? null : content.stages[state.stage]?.scene_time ?? null };
     if (state.paused_at_ms !== null) return { ...base, phase: 'PAUSED', title: '实验已暂停，请等待实验员。', can_continue: false };
     if (state.phase === 'INTRO') Object.assign(base, content.intro);
     else if (state.phase === 'CARD') { base.title = content.stages[state.stage].title; base.paragraphs = [content.stages[state.stage].card]; }
@@ -215,7 +224,7 @@ export class Engine {
     const a = this.assignment(s);
     if (a.condition === 'NONE' || !a.condition.endsWith(timing) || this.store.interventions(s.id).some(m => m.stage_id === a.stage_id)) return;
     const message: Intervention = { session_id: s.id, participant_id: s.snapshot.participant.participant_id, stage_id: a.stage_id, message_id: a.message_id!, condition: a.condition,
-      request_id: randomUUID(), status: 'scheduled', source: this.adapter.getStatus().source, duration_ms: s.snapshot.content.message_duration_ms,
+      device_id: s.state.device_id, device_events: [], request_id: randomUUID(), status: 'scheduled', source: this.deliverySource(s), duration_ms: s.snapshot.content.message_duration_ms,
       t_event: event.timestamp_iso, event_elapsed_ms: event.elapsed_ms, t_send: null, t_ack: null, t_display: null, t_hide: null,
       display_time_source: 'unavailable', receipt: null, error: null };
     this.store.intervention(message);
@@ -230,12 +239,23 @@ export class Engine {
         this.log(s, 'message_send_requested', { request_id: message.request_id, message_id: message.message_id, duration_ms: message.duration_ms, source: message.source }, context); this.store.save(s);
       });
       // 已先持久化发送意图；网络调用绝不阻塞主任务响应，不在恢复后自动重发。
-      const task = Promise.resolve().then(() => this.adapter.send({ session_id: id, participant_id: message.participant_id, stage_id: stimulus.stage_id, message_id: stimulus.message_id,
-        request_id: message.request_id, text: stimulus.text, duration_ms: message.duration_ms as 8500 })).then(receipt => {
+      let timer: ReturnType<typeof setTimeout>;
+      const sending = Promise.resolve().then(() => {
+        const target = this.adapter.getStatus();
+        if (target.source !== message.source || (message.source === 'device' && target.device_id !== message.device_id)) throw new Error('adapter_mode_or_device_mismatch');
+        return this.adapter.send({ session_id: id, participant_id: message.participant_id, stage_id: stimulus.stage_id, message_id: stimulus.message_id,
+        request_id: message.request_id, text: stimulus.text, device_id: message.device_id, duration_ms: message.duration_ms as 8500 });
+      });
+      const deadline = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('adapter_send_timeout_delivery_unknown')), 5000); });
+      const task = Promise.race([sending, deadline]).then(receipt => {
+        if (receipt.request_id !== message.request_id || receipt.source !== message.source || (message.device_id && receipt.device_id !== message.device_id)) throw new Error('adapter_receipt_identity_mismatch');
         this.store.tx(() => {
           const current = this.session(id);
-          Object.assign(message, { status: receipt.status, source: receipt.source, t_ack: receipt.t_ack, t_display: receipt.t_display, t_hide: receipt.t_hide,
-            display_time_source: receipt.display_time_source, receipt, error: receipt.error });
+          // 轮询事件可能先到；始终合并数据库中的最新记录。
+          Object.assign(message, this.store.findRequest(message.request_id));
+          const deviceFailed = message.device_events?.some(e => e.kind === 'failed');
+          Object.assign(message, { status: deviceFailed || receipt.status === 'failed' ? 'failed' : message.device_events?.length ? 'accepted' : receipt.status, source: receipt.source, t_ack: receipt.t_ack, t_display: receipt.t_display, t_hide: receipt.t_hide,
+            display_time_source: receipt.display_time_source, receipt, error: receipt.status === 'failed' ? receipt.error : deviceFailed ? message.error : message.device_events?.length ? null : receipt.error });
           this.store.intervention(message);
           this.log(current, receipt.status === 'accepted' ? 'message_send_accepted' : 'message_failed', { request_id: message.request_id, receipt }, context);
           if (receipt.t_display) this.log(current, 'message_display_confirmed', { request_id: message.request_id, t_display: receipt.t_display, source: receipt.source }, context);
@@ -245,18 +265,74 @@ export class Engine {
         });
       }).catch(error => {
         this.store.tx(() => {
-          const current = this.session(id); message.status = 'failed'; message.error = error instanceof Error ? error.message : String(error);
+          const current = this.session(id); Object.assign(message, this.store.findRequest(message.request_id));
+          if (message.device_events?.length) { this.log(current, 'message_transport_error', { request_id: message.request_id, reason: String(error) }, context); this.store.save(current); return; }
+          message.status = message.source === 'device' ? 'unknown' : 'failed'; message.error = error instanceof Error ? error.message : String(error);
           this.store.intervention(message); current.state.attention.push(`${message.stage_id}:message_failed`);
           this.log(current, 'message_failed', { request_id: message.request_id, reason: message.error }, context); this.store.save(current);
         });
       });
-      this.pending.add(task); void task.finally(() => this.pending.delete(task));
+      const tracked = task.finally(() => clearTimeout(timer));
+      this.pending.add(tracked); void tracked.then(() => this.pending.delete(tracked), () => this.pending.delete(tracked));
     }
   }
   async settle() { await Promise.all([...this.pending]); }
 
+  /** 分阶段事件按原 request_id 落盘，允许来自已结束或软删除会话。 */
+  receiveDeviceEvent(event: GlassesEvent) {
+    this.store.tx(() => {
+      const prior = this.store.db.prepare('SELECT data FROM device_events WHERE event_id=?').get(event.event_id) as { data: string } | undefined;
+      if (prior) { if (prior.data !== JSON.stringify(event)) throw new Error('device_event_id_conflict'); return; }
+      const message = this.store.findRequest(event.request_id);
+      const rejection = !message ? 'unknown_request' : message.source !== 'device' || message.device_id !== event.device_id ? 'device_binding_mismatch' : null;
+      this.store.db.prepare('INSERT INTO device_events VALUES (?,?)').run(event.event_id, JSON.stringify(event));
+      if (rejection) {
+        this.store.db.prepare('INSERT INTO admin_audit(data) VALUES (?)').run(JSON.stringify({ event_type: 'device_event_rejected', reason: rejection, event, received_at: this.iso() })); return;
+      }
+      if (!message) return;
+      const current = this.session(message.session_id);
+      const m = message;
+      m.device_events = [...(m.device_events ?? []), event];
+      if (event.kind === 'failed') { m.status = 'failed'; m.error = event.error ?? 'device_failed'; current.state.attention.push(`${m.stage_id}:${m.error}`); }
+      else if (!m.device_events.some(e => e.kind === 'failed') && (m.receipt as GlassesReceipt | null)?.status !== 'failed') { m.status = 'accepted'; m.error = null; }
+      // Android wall/uptime 尚未与服务器同步，不写入跨设备 ISO 时间字段。
+      this.store.intervention(m);
+      this.log(current, `message_device_${event.kind}`, { request_id: m.request_id, evidence: event, received_at: this.iso(), clock_synchronization: 'unavailable' },
+        { stage_id: m.stage_id, unit_id: null, condition: m.condition });
+      this.store.save(current);
+    });
+  }
+  pollDevice() {
+    if (!this.adapter.pollEvents) return;
+    const task = this.adapter.pollEvents(event => this.receiveDeviceEvent(event)).then(() => {
+      const status = this.adapter.getStatus();
+      const previous = this.store.setting('device_status');
+      if (JSON.stringify(status) !== JSON.stringify(previous)) {
+        this.store.tx(() => {
+          this.store.setSetting('device_status', status);
+          this.store.db.prepare('INSERT INTO admin_audit(data) VALUES (?)').run(JSON.stringify({ event_type: 'device_status_changed', timestamp_iso: this.iso(), status }));
+        });
+      }
+    });
+    this.pending.add(task); void task.then(() => this.pending.delete(task), () => this.pending.delete(task));
+  }
+  private deliverySource(s: Session): 'mock' | 'device' {
+    const created = this.store.events(s.id).find(e => e.event_type === 'session_created')?.payload.adapter as { source?: 'mock' | 'device' } | undefined;
+    return s.state.delivery_source ?? (s.state.device_id ? 'device' : created?.source ?? 'mock');
+  }
+  presentation(id: string) {
+    const s = this.session(id), messages = this.store.interventions(id);
+    const expected = s.snapshot.participant.stages.filter(a => a.condition !== 'NONE').length;
+    const drawn = messages.filter(m => m.source === 'device' && m.device_events?.some(e => e.kind === 'drawn')).length;
+    return { delivery_source: this.deliverySource(s),
+      validation_status: s.state.device_id || messages.some(m => m.source === 'device') ? 'hardware_validation_pending' : 'mock_only',
+      real_presentation_verified: false, expected_messages: expected, device_drawn_messages: drawn,
+      application_presentation_complete: messages.length === expected && drawn === expected && messages.every(m => m.status === 'accepted' && m.device_events?.some(e => e.kind === 'hidden')) };
+  }
+
   command(id: string, command: Command) {
     if (!command || typeof command.command_id !== 'string' || command.command_id.length > 100 || !command.command_id || typeof command.action !== 'string') throw new HttpError(400, '操作必须包含有效command_id和action。');
+    this.requireAvailable(this.session(id));
     const fingerprint = hash(command); let rejected: Error | undefined;
     this.store.tx(() => {
       const prior = this.store.command(id, command.command_id);
@@ -355,6 +431,18 @@ export class Engine {
     if (!reason.trim() || reason.length > 4000) throw new HttpError(422, '人工干预必须填写原因。');
     this.store.tx(() => {
       const s = this.session(id);
+      if (action === 'restore') {
+        if (!s.state.deleted) throw new HttpError(409, '此会话未删除，无需恢复。');
+        const deletion = s.state.deleted; delete s.state.deleted;
+        this.log(s, 'session_restored', { reason, deletion, restored_status: s.state.status }); this.store.save(s); return;
+      }
+      if (action === 'delete' && s.state.deleted) return;
+      this.requireAvailable(s);
+      if (action === 'delete') {
+        if (s.state.status === 'active') throw new HttpError(409, '会话仍在进行中，请先结束会话，再删除记录。');
+        s.state.deleted = { deleted_at: this.iso(), reason };
+        this.log(s, 'session_deleted', { reason, recoverable: true, status: s.state.status }); this.store.save(s); return;
+      }
       if (action === 'debug_jump') {
         this.jump(s, target, 'admin', reason);
         this.log(s, 'admin_intervention', { action, reason, target, is_debug: true }); this.store.save(s); return;
@@ -373,6 +461,7 @@ export class Engine {
     });
   }
   note(id: string, category: string, text: string, stageId: string | null) {
+    this.requireAvailable(this.session(id));
     if (!['interview', 'observation', 'anomaly'].includes(category) || typeof text !== 'string' || text.length > 50000) throw new HttpError(422, '备注类型或长度不合法。');
     if (stageId !== null && !this.session(id).snapshot.content.stages.some(s => s.stage_id === stageId)) throw new HttpError(422, '备注任务组非法。');
     this.store.tx(() => { const s = this.session(id); this.log(s, 'note_saved', { note_id: randomUUID(), category, text, stage_id: stageId }); this.store.save(s); });
@@ -383,19 +472,24 @@ export class Engine {
     const answered = fields.filter(f => Array.isArray(draft[f.id]) ? (draft[f.id] as unknown[]).length > 0 : draft[f.id] !== undefined && draft[f.id] !== null && String(draft[f.id]).trim() !== '').length;
     const lastEvent = this.store.events(id).at(-1);
     const actions: string[] = [];
-    if (s.state.status === 'active') {
+    if (s.state.deleted) actions.push('restore');
+    else if (s.state.status === 'active') {
       actions.push(s.state.paused_at_ms === null ? 'pause' : 'resume', 'stop');
       if (s.state.phase === 'BREAK' && s.state.paused_at_ms === null && s.snapshot.content.allow_break_skip !== false) actions.push('skip_break');
     }
-    if (this.isDebug(s)) actions.push('debug_jump');
+    else actions.push('delete');
+    if (this.isDebug(s) && !s.state.deleted) actions.push('debug_jump');
     const message = this.store.interventions(id).find(m => m.stage_id === this.assignment(s).stage_id);
     return { session_id: id, participant_id: s.snapshot.participant.participant_id, version_label: s.snapshot.participant.version_label,
       is_debug: this.isDebug(s), copied_from: s.snapshot.participant.copied_from ?? null, current_title: this.view(id).title,
+      deleted: !!s.state.deleted, deleted_at: s.state.deleted?.deleted_at ?? null, deletion_reason: s.state.deleted?.reason ?? null,
       answered_fields: answered, total_fields: fields.length, reveal_observed: s.state.phase === 'UNIT' ? s.state.reveals[this.unit(s).unit_id]?.displayed ?? false : null,
       available_actions: actions, last_event_type: lastEvent?.event_type ?? null, last_event_at: lastEvent?.timestamp_iso ?? null, message_status: message?.status ?? (this.assignment(s).condition === 'NONE' ? 'NONE' : 'not_triggered'),
       phase: s.state.phase, stage_id: s.snapshot.content.stages[s.state.stage].stage_id, unit: s.state.unit + 1, status: s.state.status, paused: s.state.paused_at_ms !== null,
       started_at: s.state.started_at, ended_at: s.state.ended_at, elapsed_ms: s.state.ended_elapsed_ms ?? this.elapsed(s), remaining_ms: s.state.phase === 'BREAK' ? Math.max(0, s.state.break_until_ms! - (s.state.paused_at_ms ?? this.elapsed(s))) : null,
       content_version: s.snapshot.content.content_version, config_hash: s.snapshot.config_hash, attention: s.state.attention,
-      validation_status: this.store.interventions(id).some(i => i.source === 'device') ? 'hardware_validation_pending' : 'mock_only', real_presentation_verified: false };
+      device_id: s.state.device_id ?? null, adapter: this.adapter.getStatus(),
+      message_evidence: message?.device_events?.some(e => e.kind === 'failed') ? 'failed' : message?.device_events?.some(e => e.kind === 'hidden') ? 'hidden' : message?.device_events?.some(e => e.kind === 'drawn') ? 'drawn' : null,
+      ...this.presentation(id) };
   }
 }

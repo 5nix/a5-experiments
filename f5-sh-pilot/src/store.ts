@@ -12,6 +12,8 @@ export interface State {
   started_at: string; ended_at: string | null; ended_elapsed_ms: number | null; last_elapsed_ms: number;
   break_until_ms: number | null; break_completed: boolean;
   paused_at_ms: number | null; attention: string[]; status: 'active' | 'completed' | 'aborted';
+  device_id?: string; delivery_source?: 'mock' | 'device';
+  deleted?: { deleted_at: string; reason: string };
 }
 export interface Session { id: string; token_hash: string; state: State; snapshot: Snapshot }
 export interface EventRecord {
@@ -24,6 +26,7 @@ export interface Intervention {
   session_id: string; stage_id: string; participant_id: string; message_id: string; condition: string;
   request_id: string; status: string; source: 'mock' | 'device'; duration_ms: number;
   t_event: string; event_elapsed_ms: number; t_send: string | null; t_ack: string | null; t_display: string | null; t_hide: string | null;
+  device_id?: string; device_events?: import('./contracts.ts').GlassesEvent[];
   display_time_source: string; receipt: unknown; error: string | null;
 }
 
@@ -39,8 +42,12 @@ export class Store {
       CREATE INDEX IF NOT EXISTS events_session ON events(session_id,seq);
       CREATE TABLE IF NOT EXISTS commands(session_id TEXT NOT NULL REFERENCES sessions(id), command_id TEXT NOT NULL, fingerprint TEXT NOT NULL, PRIMARY KEY(session_id,command_id));
       CREATE TABLE IF NOT EXISTS interventions(session_id TEXT NOT NULL REFERENCES sessions(id), stage_id TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(session_id,stage_id));
+      CREATE UNIQUE INDEX IF NOT EXISTS intervention_request ON interventions(json_extract(data,'$.request_id'));
+      CREATE TABLE IF NOT EXISTS device_events(event_id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS admin_audit(seq INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT NOT NULL);
+      CREATE TRIGGER IF NOT EXISTS device_events_no_update BEFORE UPDATE ON device_events BEGIN SELECT RAISE(ABORT,'device events are append-only'); END;
+      CREATE TRIGGER IF NOT EXISTS device_events_no_delete BEFORE DELETE ON device_events BEGIN SELECT RAISE(ABORT,'device events are append-only'); END;
       CREATE TRIGGER IF NOT EXISTS events_no_update BEFORE UPDATE ON events BEGIN SELECT RAISE(ABORT,'events are append-only'); END;
       CREATE TRIGGER IF NOT EXISTS events_no_delete BEFORE DELETE ON events BEGIN SELECT RAISE(ABORT,'events are append-only'); END;`);
   }
@@ -60,7 +67,13 @@ export class Store {
     if (!snapshot) { const stored = this.db.prepare('SELECT snapshot FROM sessions WHERE id=?').get(id) as { snapshot: string }; snapshot = JSON.parse(stored.snapshot) as Snapshot; this.snapshots.set(id, snapshot); }
     return { id: row.id, token_hash: row.token_hash, state: JSON.parse(row.state), snapshot };
   }
-  ids() { return (this.db.prepare('SELECT id FROM sessions ORDER BY rowid').all() as { id: string }[]).map(r => r.id); }
+  ids() { return (this.db.prepare("SELECT id FROM sessions WHERE json_extract(state,'$.deleted') IS NULL ORDER BY rowid").all() as { id: string }[]).map(r => r.id); }
+  allIds() { return (this.db.prepare('SELECT id FROM sessions ORDER BY rowid').all() as { id: string }[]).map(r => r.id); }
+  findRequest(requestId: string) {
+    const row = this.db.prepare("SELECT data FROM interventions WHERE json_extract(data,'$.request_id')=?").get(requestId) as { data: string } | undefined;
+    return row ? JSON.parse(row.data) as Intervention : undefined;
+  }
+  deletedIds() { return (this.db.prepare("SELECT id FROM sessions WHERE json_extract(state,'$.deleted') IS NOT NULL ORDER BY rowid").all() as { id: string }[]).map(r => r.id); }
   save(session: Session) { this.db.prepare('UPDATE sessions SET state=? WHERE id=?').run(JSON.stringify(session.state), session.id); }
   event(event: EventRecord) { this.db.prepare('INSERT INTO events(event_id,session_id,data) VALUES (?,?,?)').run(event.event_id, event.session_id, JSON.stringify(event)); }
   events(id: string): EventRecord[] { return (this.db.prepare('SELECT data FROM events WHERE session_id=? ORDER BY seq').all(id) as { data: string }[]).map(r => JSON.parse(r.data)); }
@@ -68,6 +81,9 @@ export class Store {
   acceptCommand(id: string, commandId: string, fingerprint: string) { this.db.prepare('INSERT INTO commands VALUES (?,?,?)').run(id, commandId, fingerprint); }
   interventions(id: string): Intervention[] { return (this.db.prepare('SELECT data FROM interventions WHERE session_id=? ORDER BY stage_id').all(id) as { data: string }[]).map(r => JSON.parse(r.data)); }
   intervention(value: Intervention) { this.db.prepare('INSERT INTO interventions VALUES (?,?,?) ON CONFLICT(session_id,stage_id) DO UPDATE SET data=excluded.data').run(value.session_id, value.stage_id, JSON.stringify(value)); }
+  deviceAudit() {
+    return (this.db.prepare("SELECT data FROM admin_audit WHERE json_extract(data,'$.event_type') IN ('device_status_changed','device_event_rejected') ORDER BY seq DESC LIMIT 100").all() as { data: string }[]).map(row => JSON.parse(row.data));
+  }
   setting<T>(key: string): T | undefined { const row = this.db.prepare('SELECT value FROM settings WHERE key=?').get(key) as { value: string } | undefined; return row ? JSON.parse(row.value) : undefined; }
   setSetting(key: string, value: unknown) { this.db.prepare('INSERT INTO settings VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key, JSON.stringify(value)); }
   close() { this.db.close(); }

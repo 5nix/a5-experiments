@@ -58,6 +58,6 @@ export async function preflight() {
     pilot_errors: pilotErrors,
     source_config_errors: sourceErrors,
     material_errors: materialErrors,
-    remaining: ['真实雷鸟接口与实际呈现验证', '材料最终确认版本替换', 'Windows现场实机验证', '由后续Agent完成可视化设计'],
+    remaining: ['雷鸟显示端真机部署与实际硬件呈现验证', '材料最终确认版本替换', 'Windows现场实机验证', '由后续Agent完成可视化设计'],
   };
 }
