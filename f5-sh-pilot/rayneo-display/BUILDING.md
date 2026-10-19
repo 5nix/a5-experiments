@@ -103,6 +103,10 @@ gradle :app:assembleDebug :app:lintDebug -Pa5LocalRepair=true --console=plain
 
 Gradle Wrapper 会自动获取固定版本的 Gradle，无需另行全局安装 `gradle`。首次构建需联网从 Google Maven、Maven Central 获取依赖；后续复用 `~/.gradle/`。排查依赖时执行 `./gradlew :app:dependencies --configuration debugRuntimeClasspath`。
 
+## 1.0.2 消息样式构建与验证
+
+2026-10-19 消息样式更新为 **1.0.2 / versionCode 3**。固定显示参数见 [RAYNEO.md](../RAYNEO.md)。`qa/StyleRenderCheck.java` 可在独立 QA 应用中离屏验证实际 Android 字体排版、15/16 字换行、1–6 行行高、全部实验消息、遮罩像素和超长正文拒绝，不需要启动实验显示 Activity，也不连接实验协议或修改实验数据。本机构建脚本为 `.a5-local/build-message-style.ps1`，生成独立包 `link.ironip.a5.rayneo.styleqa`；验证脚本为 `.a5-local/check-message-style.mjs`。17 组绘制检查通过，焦点前后一致。正式 APK 的 assembleDebug、lintDebug、签名和 Lifecycle 运行类定义检查通过。
+
 ## 仓库与磁盘维护
 
 提交 Gradle 配置、Wrapper、应用源码、厂商 AAR 和本说明。`.gitignore` 已排除 `.gradle/`、`build/`、`local.properties`；本机 SDK 路径不应提交。安装包校验后可删除下载压缩包，工具目录继续保留。Gradle 缓存随其他项目使用增长；如需释放空间，先 `./gradlew --stop`，再有针对性地清理可重新下载的缓存，勿删除眼镜实验 runtime 或设备去重数据。

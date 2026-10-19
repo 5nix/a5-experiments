@@ -44,6 +44,16 @@ Chrome + Playwright 使用临时 runtime：被试端 1536×864 完成 10 单元�
 
 证据保存在本机 `.a5-local/qa-rayneo/2026-10-19T02-57-57.254Z/` 及 `.a5-local/qa-device-console/`。首次设备控制验收的故障注入尝试直接启动厂商非导出的桌面 Activity，被 Android 正常拒绝；改用标准 HOME 按键后完成恢复复验，没有更改系统权限。
 
+## X3 Pro 消息样式 1.0.2 验收（2026-10-19）
+
+按用户确认的 27 PPD / 0.6° / Medium 500 / 字距 2% / 最大文本宽 9.55° / 内边距 0.5° 更新双眼共用视图。1–4 行使用 135% 行高，5 行及以上使用 150%，文字左对齐，白色遮罩 35%。Android assembleDebug、lintDebug、APK 签名、Lifecycle 运行依赖检查通过。
+
+独立 QA 包离屏执行 17 组实际 Android 绘制检查：1–6 行行高、15 字一行和第 16 字换行、全部 10 条刺激；另核对超长正文拒绝。读取实际参数、白色文字像素、遮罩像素（8 bit alpha 89），截图人工核对，前后焦点一致。QA 不连接实验套接字，不改实验数据。
+
+用户正常结束会话后覆盖安装 `link.ironip.a5.rayneo.localfix` 1.0.2 / 3，新旧签名一致，安装前后去重账本 SHA-256 一致（18 个请求、57 个事件）。启动初期厂商快捷设置覆盖应用，收起后重新连接成功；当前电脑端和眼镜端均就绪，新语音悬浮窗守护已加载。
+
+随后从电脑端后台接口各发送一条独立两行/五行测试通知，回执中的双眼样式版本、行数和参数正确，均有 accepted → drawn → hidden，无 failed，时长分别为 8520 / 8521 ms。测试前后实验会话列表与状态一致。双眼截图在本机 `.a5-local/qa-message-style/live-short.png`、`live-long.png`，排版与通知报告为 `report.json`、`live-report.json`；这些应用绘制证据仍不替代外部光学测量。
+
 ## 未验证
 
 外部光学显示/计时验收（见 [RAYNEO.md](RAYNEO.md)）、Chrome 以外的浏览器、跨电脑访问。
