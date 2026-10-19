@@ -354,3 +354,7 @@ details[open] > summary::before { transform: rotate(45deg); }
   .toast-close { width: 40px; height: 40px; top: 4px; right: 4px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.device-controls { flex-wrap: wrap; margin-block: 12px; }
+.device-notify { display: grid; gap: 10px; margin-top: 18px; }
+.device-notify textarea { width: 100%; min-height: 100px; resize: vertical; }
+.device-debug-record { display: grid; gap: 5px; padding-block: 10px; border-bottom: 1px solid var(--stroke); white-space: pre-wrap; overflow-wrap: anywhere; }

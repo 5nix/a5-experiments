@@ -18,6 +18,10 @@ export interface Command {
 export type Material = Omit<Snapshot, 'participant' | 'config_hash' | 'content_hash'>;
 
 export class Engine {
+  /** 由设备控制器提供互斥状态，阻止在控制或独立通知期间创建会话。 */
+  deviceControlBusy?: () => boolean;
+  /** 优先消费独立通知事件；返回 true 时不写入实验消息记录。 */
+  deviceDebugEvent?: (event: GlassesEvent) => boolean;
   readonly store: Store;
   readonly adapter: GlassesAdapter;
   readonly material: Material;
@@ -90,7 +94,9 @@ export class Engine {
     };
     this.store.event(event); return event;
   }
+  /** 在设备空闲且编号没有活跃会话时，固定材料快照并创建实验会话。 */
   create(participantId: string, metadata: Record<string, unknown> = {}) {
+    if (this.deviceControlBusy?.()) throw new HttpError(409, '眼镜正在执行控制或测试通知，请等待完成后再创建会话。');
     const participant = participantId === '000' ? this.debugParticipant() : this.config().participants.find(p => p.participant_id === participantId);
     if (!participant) throw new HttpError(404, '被试不在当前已导入配置中。');
     if (this.store.ids().some(id => { const s = this.session(id); return s.snapshot.participant.participant_id === participantId && s.state.status === 'active'; })) throw new HttpError(409, '该被试已有未结束会话，请恢复已有会话。');
@@ -280,6 +286,7 @@ export class Engine {
 
   /** 分阶段事件按原 request_id 落盘，允许来自已结束或软删除会话。 */
   receiveDeviceEvent(event: GlassesEvent) {
+    if (this.deviceDebugEvent?.(event)) return;
     this.store.tx(() => {
       const prior = this.store.db.prepare('SELECT data FROM device_events WHERE event_id=?').get(event.event_id) as { data: string } | undefined;
       if (prior) { if (prior.data !== JSON.stringify(event)) throw new Error('device_event_id_conflict'); return; }

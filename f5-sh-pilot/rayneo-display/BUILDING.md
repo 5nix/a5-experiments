@@ -16,6 +16,7 @@
 | Mercury SDK | 0.2.6-20260310143142_94a01a90 | `app/libs/MercuryAndroidSDK-v0.2.6.aar` |
 | AndroidX AppCompat | 1.6.1 | `app/build.gradle.kts` |
 | AndroidX Core KTX | 1.10.1 | `app/build.gradle.kts` |
+| AndroidX Lifecycle ViewModel KTX / Runtime KTX | 2.6.1 | 厂商 AAR 的显式运行依赖；触控 ViewModel 需要 `ViewModelKt` |
 | Material Components | 1.10.0 | `app/build.gradle.kts`，提供应用主题及相关 AndroidX 依赖 |
 
 Mercury AAR 是参考程序提供的厂商二进制，没有 Maven POM；SHA-256 为 `5d408e2c5d80e8ae746c42abbda50012b50617005adfeb397661bec9c9be2676`。已从 `debugRuntimeClasspath` 确认其运行依赖随 APK 打包：Kotlin stdlib 2.2.10、kotlinx-coroutines-android/core 1.6.4。这些由 AGP 和 AndroidX 依赖图解析；排查 SDK 运行问题时应同时检查依赖图与设备日志。
@@ -78,7 +79,33 @@ Windows PowerShell：
 
 APK：`app/build/outputs/apk/debug/app-debug.apk`。这是开发调试签名，正式分发签名另行配置；不要把 keystore 或签名口令提交到仓库。
 
+构建后检查 APK 中实际定义的运行类（不是仅检查 DEX 中出现的引用字符串）：
+
+```sh
+node scripts/verify-apk-runtime.mjs app/build/outputs/apk/debug/app-debug.apk
+```
+
+## Windows 真机修复记录（2026-10-19）
+
+preview.2 真机日志确认：镜腿触控进入厂商 `TempleActionViewModel` 时，缺少 `androidx.lifecycle.ViewModelKt`，导致 `NoClassDefFoundError`、应用退出及 USB 显示连接中断。原 AAR 没有 Maven POM，不能依赖 AndroidX 的间接依赖来补齐厂商的运行需求。现已显式声明 ViewModel KTX 和 Runtime KTX 2.6.1，版本提升为 1.0.1 / 2。
+
+本机 Windows 构建使用 JDK 21、SDK Platform 37.0、Build Tools 36.0.0、AGP 9.3.1 与 Gradle 9.5.0。工具及 ASCII 构建目录位于 `E:/A5Build/`；源码仍在原项目目录。构建及 `lintDebug` 已通过，APK 签名校验、运行类定义检查通过。
+
+发布包没有原作者的调试签名私钥，因此本机使用以下参数生成独立修复版，保留原应用与其数据：
+
+```sh
+gradle :app:assembleDebug :app:lintDebug -Pa5LocalRepair=true --console=plain
+```
+
+此参数将安装包 ID 设为 `link.ironip.a5.rayneo.localfix`，应用名为“A5 雷鸟显示（修复版）”。协议、业务 ID 和设备绑定规则保持一致。未传参数时仍构建原包 ID，正式更新需要原签名私钥。
+
+本机已先备份原设备 `display.sqlite` 并核验 SQLite 完整性，再迁移至首次安装的修复版；迁移前后 SHA-256 一致。旧版保留并停用，避免再次误开旧版或占用同一个 USB 协议端口。电脑端本机启动入口已绑定修复版。设备账本和电脑端实验数据不进入源码或公开报告。
+
 Gradle Wrapper 会自动获取固定版本的 Gradle，无需另行全局安装 `gradle`。首次构建需联网从 Google Maven、Maven Central 获取依赖；后续复用 `~/.gradle/`。排查依赖时执行 `./gradlew :app:dependencies --configuration debugRuntimeClasspath`。
+
+## 1.0.2 消息样式构建与验证
+
+2026-10-19 消息样式更新为 **1.0.2 / versionCode 3**。固定显示参数见 [RAYNEO.md](../RAYNEO.md)。`qa/StyleRenderCheck.java` 可在独立 QA 应用中离屏验证实际 Android 字体排版、15/16 字换行、1–6 行行高、全部实验消息、遮罩像素和超长正文拒绝，不需要启动实验显示 Activity，也不连接实验协议或修改实验数据。本机构建脚本为 `.a5-local/build-message-style.ps1`，生成独立包 `link.ironip.a5.rayneo.styleqa`；验证脚本为 `.a5-local/check-message-style.mjs`。17 组绘制检查通过，焦点前后一致。正式 APK 的 assembleDebug、lintDebug、签名和 Lifecycle 运行类定义检查通过。
 
 ## 仓库与磁盘维护
 

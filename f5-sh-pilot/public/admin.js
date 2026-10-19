@@ -121,6 +121,7 @@ function deviceInfo(status) {
 /* ───────── 状态 ───────── */
 let config = null, debugParticipant = null, prompts = [];
 let sessions = [], deletedSessions = [], adapter = null;
+let deviceControl = null, deviceWorking = false, notificationDraft = null;
 let selected = null, detail = null, controlling = false, offline = false, stopped = false;
 const rowNodes = new Map();
 const noteDrafts = new Map();
@@ -204,6 +205,62 @@ function renderDevice() {
   $('#device').dataset.tone = info.tone; setText($('#device-text'), info.short); $('#device').title = info.long;
   setText($('#device-detail'), info.long);
 }
+
+const DEBUG_STATUS = { sending: '发送中', accepted: '请求已接受，等待绘制证据', drawn: '双眼已绘制，正在展示', hidden: '双眼已绘制并已消失', failed: '显示失败', unknown: '结果待核查', unacknowledged: '未收到接受回执' };
+/** 根据后台快照更新操作可用性、守护状态和独立通知记录。 */
+function renderDeviceControl() {
+  const control = deviceControl;
+  const supported = !!control?.supported;
+  const blocked = deviceWorking || !!control?.working;
+  const host = $('#device-host');
+  host.setAttribute('aria-pressed', String(!!control?.enabled));
+  setText(host, control?.enabled ? '关闭上位机守护' : '开启上位机守护');
+  for (const id of ['device-open', 'device-probe', 'device-reconnect', 'device-host', 'device-scrcpy']) $(`#${id}`).disabled = !supported || blocked;
+  $('#device-notify-send').disabled = !supported || blocked || !control.debug_allowed || !adapter?.ready || !adapter?.connected;
+  const voiceState = { pending: '等待检查', protected: '已限制', restored: '已恢复原设置', error: '限制失败' };
+  setText($('#device-host-state'), !supported ? '当前为 Mock 预演，真机控制不可用。' : `上位机守护：${control.enabled ? '已开启' : '已关闭'} · 语音助手悬浮窗：${voiceState[control.voice_guard?.state] ?? '等待检查'} · 显示应用：${control.package_name}${control.scrcpy?.running ? ' · scrcpy 已打开' : ''}`);
+  setText($('#device-control-error'), control?.error ?? control?.voice_guard?.error ?? control?.scrcpy?.error ?? '');
+  const records = control?.debug_notifications ?? [];
+  const latest = records[0];
+  setText($('#device-debug-result'), control?.active_session ? '当前有进行中的会话，请结束后再发送测试通知。' : latest ? `最近测试：${DEBUG_STATUS[latest.status] ?? latest.status}${latest.error ? ' · ' + latest.error : ''}` : '尚未发送测试通知。');
+  renderOnce($('#device-debug-history'), [records, control?.audit], () => [
+    ...records.slice(0, 10).map(record => el('p', { class: 'device-debug-record' },
+      el('strong', { text: `${when(record.created_at, fmtFull)} · ${DEBUG_STATUS[record.status] ?? record.status}` }),
+      el('span', { text: record.text }), el('span', { class: 'hint', text: `${record.events.map(event => event.kind).join(' → ') || '等待设备事件'}${record.error ? ' · ' + record.error : ''}` }))),
+    ...(control?.audit ?? []).slice(0, 5).map(record => el('p', { class: 'hint', text: `${when(record.timestamp_iso, fmtFull)} · ${record.action} · ${record.detail?.error ?? (record.detail?.ok === false ? '失败' : '已记录')}` })),
+  ]);
+}
+/** 获取设备和控制状态，并同时刷新两处显示。 */
+async function loadDeviceControl() {
+  const data = await api('device'); adapter = data.adapter; deviceControl = data.control;
+  renderDevice(); renderDeviceControl();
+}
+/** 操作期间禁用重复提交，成功后获取后台的最新设备状态。 */
+async function deviceAction(input) {
+  deviceWorking = true; renderDeviceControl();
+  try { const result = await api('device/control', input); await loadDeviceControl(); return result; }
+  finally { deviceWorking = false; renderDeviceControl(); }
+}
+for (const [id, action] of [['device-open', 'open'], ['device-probe', 'probe'], ['device-reconnect', 'reconnect'], ['device-scrcpy', 'scrcpy']]) {
+  $(`#${id}`).addEventListener('click', async () => {
+    try { await deviceAction({ action }); feedback(action === 'scrcpy' ? '已请求打开眼镜左眼画面。' : '设备控制已执行，请查看最新状态。'); }
+    catch (error) { fail(error); }
+  });
+}
+$('#device-host').addEventListener('click', async () => {
+  try { await deviceAction({ action: 'host', enabled: !deviceControl?.enabled }); feedback('上位机守护设置已保存。'); }
+  catch (error) { fail(error); }
+});
+$('#device-notify').addEventListener('submit', async event => {
+  event.preventDefault();
+  const text = $('#device-notify-text').value;
+  if (!text.trim()) { $('#device-notify-text').focus(); return; }
+  if (!notificationDraft || notificationDraft.text !== text) notificationDraft = { action: 'notify', request_id: crypto.randomUUID(), text };
+  try {
+    await deviceAction(notificationDraft); notificationDraft = null;
+    feedback('测试请求已记录。请核对双眼画面及下方绘制、消失证据。');
+  } catch (error) { fail(error); }
+});
 
 /* ───────── 新建会话 ───────── */
 function participantStage(id) { return id === '000' ? debugParticipant : config?.participants.find(p => p.participant_id === id); }
@@ -663,12 +720,13 @@ async function loadConfig() {
   config = data.config; debugParticipant = data.debug_participant; adapter = data.adapter; prompts = data.interview_prompts ?? [];
   renderDevice(); renderParticipantOptions(true); renderPrompts(); renderSetup();
 }
+/** 同步会话列表与当前视图；设置页同时更新设备控制状态。 */
 async function refresh() {
   const data = await api('sessions');
   adapter = data.adapter; sessions = data.sessions; deletedSessions = data.deleted_sessions ?? [];
   if (offline) { offline = false; }
   renderDevice(); renderSessions(); renderDeleted(); renderParticipantOptions();
-  if (document.body.dataset.view === 'setup') renderSetup();
+  if (document.body.dataset.view === 'setup') { renderSetup(); await loadDeviceControl(); }
   if (selected) await loadDetail(selected);
 }
 function pollFailed(error) {
@@ -687,7 +745,7 @@ if (!key) {
   $('#device-text').textContent = '未登录';
 } else {
   setView('sessions');
-  try { await loadConfig(); await refresh(); } catch (error) { if (error.status === 401) stopped = true; fail(error); }
+  try { await loadConfig(); await refresh(); await loadDeviceControl(); } catch (error) { if (error.status === 401) stopped = true; fail(error); }
   setInterval(poll, 2500);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
 }

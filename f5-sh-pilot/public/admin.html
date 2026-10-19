@@ -187,11 +187,30 @@
     </article>
 
     <section id="setup" class="setup" hidden aria-labelledby="setup-title">
-      <header class="setup-head"><h2 id="setup-title" tabindex="-1">准备与检查</h2><p class="hint">开场前确认眼镜、材料和被试配置；这里的操作不影响已开始的会话。</p></header>
+      <header class="setup-head"><h2 id="setup-title" tabindex="-1">准备与检查</h2><p class="hint">检查设备、发送测试通知，再创建实验会话。</p></header>
       <div class="setup-grid">
         <section class="card" aria-labelledby="device-title">
           <h3 id="device-title" class="card-title">眼镜与显示端</h3>
           <p id="device-detail" class="device-detail"></p>
+          <p id="device-host-state" class="hint" aria-live="polite"></p>
+          <div class="action-row device-controls">
+            <button id="device-open" type="button" class="btn primary">唤醒并打开显示端</button>
+            <button id="device-probe" type="button" class="btn">刷新设备状态</button>
+            <button id="device-reconnect" type="button" class="btn">重新连接 USB 通道</button>
+            <button id="device-host" type="button" class="btn" aria-pressed="false">开启上位机守护</button>
+            <button id="device-scrcpy" type="button" class="btn">打开眼镜画面（scrcpy）</button>
+          </div>
+          <p class="hint">上位机守护会在显示端失联或离开前台时自动唤醒并拉回应用。展示期间保留眼镜独立计时；恢复连接不补发旧消息。</p>
+          <p id="device-control-error" class="field-error" role="status"></p>
+          <form id="device-notify" class="device-notify">
+            <label for="device-notify-text" class="field-label">眼镜测试通知</label>
+            <textarea id="device-notify-text" rows="3" maxlength="500" required>这是一条眼镜测试通知。
+请确认双眼文字清晰，消息将在 8.5 秒后自动消失。</textarea>
+            <p class="hint">仅在没有进行中的会话时发送，单独记录，不计入被试实验。</p>
+            <div class="action-row"><button id="device-notify-send" type="submit" class="btn primary">发送测试通知</button></div>
+          </form>
+          <p id="device-debug-result" class="hint" aria-live="polite"></p>
+          <details class="disclosure"><summary>最近的设备控制与测试记录</summary><div id="device-debug-history"></div></details>
           <p class="hint">“模拟（Mock）”只用于软件预演，不会在眼镜上显示任何内容；硬件呈现仍需现场验收。</p>
         </section>
         <section class="card" aria-labelledby="check-title">

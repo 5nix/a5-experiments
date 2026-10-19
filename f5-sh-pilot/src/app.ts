@@ -7,6 +7,7 @@ import { Engine, HttpError } from './engine.ts';
 import { exportData } from './export.ts';
 import { InputError } from './tasks.ts';
 import { experimentRoot, preflight } from './preflight.ts';
+import type { DeviceControl } from './device-control.ts';
 
 export async function body(request: IncomingMessage): Promise<any> {
   if (!request.headers['content-type']?.startsWith('application/json')) throw new HttpError(415, '请使用application/json请求。');
@@ -16,7 +17,8 @@ export async function body(request: IncomingMessage): Promise<any> {
   catch { throw new HttpError(400, 'JSON格式无效。'); }
 }
 const bearer = (request: IncomingMessage) => request.headers.authorization?.replace(/^Bearer /, '') ?? '';
-export function createApp(engine: Engine, adminKey: string, exportRoot: string) {
+/** 建立实验与后台 HTTP 路由；设备控制仅接受后台鉴权请求。 */
+export function createApp(engine: Engine, adminKey: string, exportRoot: string, deviceControl?: DeviceControl) {
   const json = (response: ServerResponse, value: unknown, status = 200) => {
     response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); response.end(JSON.stringify(value));
   };
@@ -38,7 +40,11 @@ export function createApp(engine: Engine, adminKey: string, exportRoot: string) 
       if (path.startsWith('/api/admin/') || path === '/api/preflight') {
         admin(request);
         if (method === 'GET' && ['/api/preflight', '/api/admin/preflight'].includes(path)) { json(response, { ...await preflight(), adapter: engine.adapter.getStatus() }); return; }
-        if (method === 'GET' && path === '/api/admin/device') { json(response, { adapter: engine.adapter.getStatus(), audit: engine.store.deviceAudit() }); return; }
+        if (method === 'GET' && path === '/api/admin/device') { json(response, { adapter: engine.adapter.getStatus(), audit: engine.store.deviceAudit(), control: deviceControl?.status() ?? null }); return; }
+        if (method === 'POST' && path === '/api/admin/device/control') {
+          if (!deviceControl) throw new HttpError(409, '当前服务未配置眼镜控制。');
+          json(response, await deviceControl.action(await body(request))); return;
+        }
         if (method === 'GET' && path === '/api/admin/config') { json(response, { config: engine.config(), debug_participant: engine.debugParticipant(), adapter: engine.adapter.getStatus(), interview_prompts: engine.material.content.interview_prompts }); return; }
         if (method === 'POST' && path === '/api/admin/config') { json(response, { config: engine.importConfig(await body(request)) }); return; }
         if (method === 'GET' && path === '/api/admin/sessions') { json(response, { adapter: engine.adapter.getStatus(), sessions: engine.store.ids().map(id => engine.summary(id)), deleted_sessions: engine.store.deletedIds().map(id => engine.summary(id)) }); return; }

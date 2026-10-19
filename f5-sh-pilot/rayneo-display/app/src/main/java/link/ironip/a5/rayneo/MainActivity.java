@@ -30,13 +30,14 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
     }
     private MessageView left() { return (MessageView) getMBindingPair().getLeft().getRoot(); }
     private MessageView right() { return (MessageView) getMBindingPair().getRight().getRoot(); }
+    /** 处理本地控制协议；状态包含安装包身份，展示请求先经校验与永久去重。 */
     private JSONObject command(JSONObject envelope) throws Exception {
         String command = envelope.getString("command"); JSONObject payload = envelope.getJSONObject("payload");
         if (command.equals("status")) return new JSONObject().put("ready", foreground && !fault && hasWindowFocus() && left().getWidth() > 0 && right().getWidth() > 0)
             .put("busy", active != null).put("ledger_id", ledger.id)
             .put("device_info", new JSONObject().put("model", android.os.Build.MODEL).put("manufacturer", android.os.Build.MANUFACTURER)
                 .put("firmware", android.os.Build.DISPLAY).put("android_api", Integer.toString(android.os.Build.VERSION.SDK_INT))
-                .put("mercury_sdk", "0.2.6-20260310143142_94a01a90"));
+                .put("mercury_sdk", "0.2.6-20260310143142_94a01a90").put("app_package", getPackageName()));
         if (command.equals("events")) return new JSONObject().put("ledger_id", ledger.id).put("events", ledger.events(payload.getLong("after")));
         if (!command.equals("show")) throw new IllegalArgumentException("unknown_command");
         validate(payload);

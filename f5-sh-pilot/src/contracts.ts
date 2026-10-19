@@ -75,8 +75,16 @@ export interface GlassesStatus {
   display_evidence?: string; device_info?: Record<string, string>;
 }
 export interface GlassesAdapter {
+  /** 读取连接与忙碌状态的快照，不触发设备操作。 */
   getStatus(): GlassesStatus;
+  /** 探测显示端；调用方需读取状态确认是否连接成功。 */
+  probe?(): Promise<void>;
+  /** 设备空闲时重建传输连接；完成后仍需检查连接状态。 */
+  reconnect?(): Promise<void>;
+  /** 回收原请求的设备事件，不重发消息。 */
   pollEvents?(receive: (event: GlassesEvent) => void): Promise<void>;
+  /** 释放设备传输资源，可异步完成。 */
   close?(): void | Promise<void>;
+  /** 发送带永久去重编号的消息；接受回执不代表实际光学呈现。 */
   send(request: GlassesRequest): Promise<GlassesReceipt>;
 }

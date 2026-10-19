@@ -16,6 +16,7 @@
 | GET /api/admin/preflight | 材料哈希、配置、软件准备状态、adapter |
 | GET/POST /api/admin/config | 读取或导入完整预分配 JSON（非法时返回 422，保留原配置）；GET 另含 debug_participant（000）、interview_prompts |
 | GET /api/admin/device | 设备连接状态、最近 100 条状态变化与审计 |
+| POST /api/admin/device/control | 管理员设备控制：`{action:"probe"\|"open"\|"reconnect"\|"scrcpy"}`；`{action:"host",enabled:boolean}`；`{action:"notify",request_id:UUID,text:string}` |
 | GET /api/admin/sessions | `sessions` 与 `deleted_sessions` 的摘要 |
 | POST /api/admin/sessions | `{ "participant_id": "001" }` → 201，返回 session_id、token、participant_url；同编号已有未结束会话时返回 409 |
 | GET /api/admin/sessions/:id | summary、公开 view、预分配、消息请求与回执 |
@@ -26,6 +27,10 @@
 | GET /api/admin/export[?session_id=] | ZIP。省略参数 = 本实验全部未删除会话（含 000、未完成、同编号多次）；指定参数 = 仅这一次会话 |
 
 summary 主要字段：`is_debug`、`current_title`、`answered_fields/total_fields`、`reveal_observed`、`remaining_ms`、`message_status`、`message_evidence`（drawn / hidden / failed / null）、`delivery_source`、`device_id`、`available_actions`、`deleted*`。前端按 `available_actions` 显示操作按钮，权限仍由服务端校验。
+
+`GET /api/admin/device` 另返回 `control`：守护开关 `enabled`、执行中 `working`、目标应用 `package_name`、最近操作及错误、独立通知 `debug_notifications`、控制审计 `audit`、`scrcpy.running/crop/error`。测试通知最长 500 字，固定展示 8500 ms；重复 request_id 相同正文只返回原记录，不再次发送，正文冲突返回 409。进行中会话或显示忙碌时拒绝独立通知，Mock 模式拒绝真机操作。恢复连接和唤醒只恢复控制链路，不补发任何消息。
+
+`control.voice_guard` 返回 `state`（pending / protected / restored / error）、`package_name`、`checked_at` 和 `error`。protected 仅说明指定语音包的悬浮窗 AppOps 已读回验证；不表示所有系统覆盖均被禁用。`host` 切换会应用或恢复该设置，显示保护期内返回 409。权限失败仍保存守护意图，具体错误在 `voice_guard.error` 展示，不能将 `enabled=true` 当作权限已生效。
 
 ## 被试 API
 
