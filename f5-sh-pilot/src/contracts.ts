@@ -76,6 +76,8 @@ export interface GlassesStatus {
 }
 export interface GlassesAdapter {
   getStatus(): GlassesStatus;
+  probe?(): Promise<void>;
+  reconnect?(): Promise<void>;
   pollEvents?(receive: (event: GlassesEvent) => void): Promise<void>;
   close?(): void | Promise<void>;
   send(request: GlassesRequest): Promise<GlassesReceipt>;

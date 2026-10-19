@@ -1,6 +1,6 @@
 # 雷鸟眼镜接入
 
-电脑端适配器和专用 Android 显示端都已实现：APK 构建、Lint 检查和签名校验通过，协议也用替身联调过。**真实眼镜尚未实测**，`pilot_ready` 和 `real_presentation_verified` 仍为 false。
+电脑端适配器和专用 Android 显示端都已实现。2026-10-19 已在 Windows + 真实设备验证修复版 1.0.1 的 USB、完整流程、4 条双眼应用绘制/消失事件，以及上位机守护、独立通知和 scrcpy。**外部光学显示和计时仍待验收**，`pilot_ready` 和 `real_presentation_verified` 保留 false。详见 [TESTING.md](TESTING.md)。
 
 ## 设备与构建
 
@@ -31,9 +31,19 @@ PORT=5174 npm run start --workspace=f5-sh-pilot
 - 会话创建时会固定 `device_id=adb:<序列号>`，之后改环境变量也不能把它转到别的设备或转为 Mock。
 - 断线重连后不补发已经触发过的刺激。
 
+## 上位机守护和后台设备调试
+
+真机模式默认启用上位机守护，后台“准备与检查 → 眼镜与显示端”提供：唤醒并打开显示端、刷新状态、USB 重连、守护开关、发送测试通知、打开 scrcpy。守护每秒检查状态，恢复命令最短间隔 5 秒；设备断连、应用退出、离开前台时尝试唤醒和拉回指定应用，不强制结束进程。消息展示期间和发送后的保护期内不打断展示。
+
+配置 `A5_RAYNEO_PACKAGE` 指向实际安装包；本机修复版为 `link.ironip.a5.rayneo.localfix`。`A5_RAYNEO_HOST_MODE=off` 可关闭初始默认守护，后台手动设置会持久保存并优先使用。`A5_SCRCPY_PATH` 指向 scrcpy 可执行文件；本机启动脚本已保存这些配置。
+
+scrcpy 使用 `--serial <绑定设备> --crop 640:480:0:0 --no-audio`，打开独立左眼监看/控制窗口。测试通知使用独立调试 request_id 与设备账本，后台显示接受、双眼绘制、消失和失败证据；不会混入被试会话或导出。进行中会话拒绝发送独立调试通知。
+
+USB 调试授权和数据连接仍是前提；物理断线、未授权或设备系统拦截时，后台记录具体失败，不能承诺无连接时仍能控制。恢复链路不会补发旧刺激。
+
 ## 协议
 
-电脑端通过 `adb forward tcp:0 localabstract:a5-rayneo-v1` 建立持久 TCP 连接，以每行一个 JSON 通信（`protocol: a5-rayneo/1`）。眼镜端只接受 shell 或 root UID 的连接，不联网，同一时间只允许一个控制端。
+电脑端通过 `adb forward tcp:0 localabstract:a5-rayneo-v1` 建立持久 TCP 连接，以每行一个 JSON 通信（`protocol: a5-rayneo/1`）。眼镜端只接受 shell 或 root UID 的连接，不联网，同一时间只允许一个刺激控制端。后台 scrcpy 的画面/触控通道独立于此协议。
 
 | 命令 | 结果 |
 | --- | --- |

@@ -7,6 +7,7 @@ import { createApp } from './app.ts';
 import { loadMaterial } from './tasks.ts';
 import { RayNeoGlassesAdapter } from './adapters/rayneo-glasses.ts';
 import { MockGlassesAdapter } from './adapters/mock-glasses.ts';
+import { DeviceControl } from './device-control.ts';
 import { experimentRoot, preflight, readJson } from './preflight.ts';
 import type { GlassesAdapter, ParticipantConfig } from './contracts.ts';
 
@@ -29,10 +30,12 @@ if (!['mock', 'rayneo'].includes(mode)) throw new Error('A5_GLASSES_MODE 只能�
 const adapter: GlassesAdapter = mode === 'rayneo' ? new RayNeoGlassesAdapter(process.env.A5_RAYNEO_SERIAL ?? '', { adb: process.env.A5_ADB_PATH }) : new MockGlassesAdapter();
 if (adapter instanceof RayNeoGlassesAdapter) await adapter.probe();
 const engine = new Engine(store, adapter, await loadMaterial(), await readJson<ParticipantConfig>('config/participants.pilot.json'));
-const server = createApp(engine, adminKey, resolve(process.env.A5_EXPORT_DIR ?? join(experimentRoot, 'exports')));
+const deviceControl = new DeviceControl(engine, { serial: process.env.A5_RAYNEO_SERIAL, adb: process.env.A5_ADB_PATH,
+  packageName: process.env.A5_RAYNEO_PACKAGE, enabled: process.env.A5_RAYNEO_HOST_MODE !== 'off', scrcpy: process.env.A5_SCRCPY_PATH });
+const server = createApp(engine, adminKey, resolve(process.env.A5_EXPORT_DIR ?? join(experimentRoot, 'exports')), deviceControl);
 engine.pollDevice();
-const ticker = setInterval(() => { engine.pollDevice(); for (const id of store.ids()) engine.tick(id); }, 1000); ticker.unref();
-server.on('error', error => { console.error('服务启动失败：', error.message); clearInterval(ticker); void Promise.resolve(adapter.close?.()).then(() => engine.settle()).finally(() => store.close()); process.exitCode = 1; });
+const ticker = setInterval(() => { engine.pollDevice(); deviceControl.tick(); for (const id of store.ids()) engine.tick(id); }, 1000); ticker.unref();
+server.on('error', error => { console.error('服务启动失败：', error.message); clearInterval(ticker); void deviceControl.close().then(() => adapter.close?.()).then(() => engine.settle()).finally(() => store.close()); process.exitCode = 1; });
 server.listen(port, '127.0.0.1', () => {
   console.log(`实验员后台：http://127.0.0.1:${port}/admin#key=${adminKey}`);
   console.log(`数据库：${join(runtime, 'experiment.sqlite')}`);
@@ -41,7 +44,7 @@ server.listen(port, '127.0.0.1', () => {
 let stopping = false;
 const shutdown = () => {
   if (stopping) return; stopping = true; clearInterval(ticker);
-  const closing = Promise.resolve(adapter.close?.());
+  const closing = deviceControl.close().then(() => adapter.close?.());
   server.closeIdleConnections();
   server.close(() => { void closing.then(() => engine.settle()).finally(() => { store.close(); if (process.connected) process.disconnect?.(); }); });
 };

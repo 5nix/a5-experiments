@@ -36,7 +36,7 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
             .put("busy", active != null).put("ledger_id", ledger.id)
             .put("device_info", new JSONObject().put("model", android.os.Build.MODEL).put("manufacturer", android.os.Build.MANUFACTURER)
                 .put("firmware", android.os.Build.DISPLAY).put("android_api", Integer.toString(android.os.Build.VERSION.SDK_INT))
-                .put("mercury_sdk", "0.2.6-20260310143142_94a01a90"));
+                .put("mercury_sdk", "0.2.6-20260310143142_94a01a90").put("app_package", getPackageName()));
         if (command.equals("events")) return new JSONObject().put("ledger_id", ledger.id).put("events", ledger.events(payload.getLong("after")));
         if (!command.equals("show")) throw new IllegalArgumentException("unknown_command");
         validate(payload);

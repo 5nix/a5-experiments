@@ -40,8 +40,13 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
       independent_duration: true, persistent_deduplication: true, display_evidence: 'android_dual_eye_onDraw; optical_validation_pending' };
   }
   getStatus() { return { ...this.state }; }
+  async reconnect() {
+    if (this.state.busy || this.waiting.size) throw new Error('设备忙碌，暂不能重建连接。');
+    this.disconnect(new Error('device_manual_reconnect'));
+    await this.probe();
+  }
   private disconnect(error: Error) {
-    this.state = { ...this.state, connected: false, ready: false, error: error.message };
+    this.state = { ...this.state, connected: false, ready: false, busy: false, error: error.message };
     this.socket?.destroy(); this.socket = undefined;
     for (const pending of this.waiting.values()) { clearTimeout(pending.timer); pending.reject(error); }
     this.waiting.clear();
