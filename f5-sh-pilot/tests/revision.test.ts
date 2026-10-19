@@ -16,7 +16,7 @@ import { createApp } from '../src/app.ts';
 import type { ParticipantConfig } from '../src/contracts.ts';
 
 const material = await loadMaterial();
-const config = await readJson<ParticipantConfig>('config/participants.pilot.json');
+const config = await readJson<ParticipantConfig>('config/participants.source.json');
 const visible = { visibility_state: 'visible' };
 function fixture() {
   let now = Date.parse('2026-10-19T08:00:00Z');
@@ -91,11 +91,11 @@ test('多个被试会话的进度、草稿、暂停和计时独立，同一编�
   } finally { await f.engine.settle(); f.store.close(); }
 });
 
-test('000可自行往返跳题；正式被试只能由后台跳题且保留正式身份', async () => {
+test('固定000可自行往返跳题；正式被试只能由后台跳题且保留正式身份', async () => {
   const f = fixture();
   try {
     const debug = f.engine.session(f.debug.session_id).snapshot.participant;
-    assert.deepEqual(debug.stages, config.participants[0].stages); assert.equal(debug.copied_from, '001');
+    assert.deepEqual(debug.stages.map(s => [s.stage_id, s.condition, s.message_id]), config.participants[0].stages.map(s => [s.stage_id, s.condition, s.message_id])); assert.equal(debug.copied_from, '001');
     assert.ok(f.engine.view(f.debug.session_id).is_debug);
     for (const stage of material.content.stages) for (const unit of stage.units) {
       const v = f.send('jump', { target: unit.unit_id }); assert.equal(v.title, unit.title); assert.equal(v.phase, 'UNIT');

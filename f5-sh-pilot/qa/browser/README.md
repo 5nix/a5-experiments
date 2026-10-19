@@ -13,6 +13,8 @@ export A5_PLAYWRIGHT=/tmp/a5pw/node_modules/playwright/index.mjs
 
 浏览器使用本机安装的 Google Chrome（`channel: 'chrome'`）。
 
+这些历史验收脚本使用 001—004 等原表编号作为固定夹具。运行前请在独立测试 runtime 的后台导入 `config/participants.source.json`；正式默认配置现为 P01—P20。`admin-import.mjs` 会将配置切回默认文件，之后运行其他历史脚本前需重新导入该测试夹具。
+
 在独立端口和临时 runtime 启动服务，从仓库根目录执行：
 
 ```sh

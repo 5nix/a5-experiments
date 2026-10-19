@@ -68,7 +68,7 @@ const request = (): GlassesRequest => ({ request_id: randomUUID(), session_id: r
   text: '通知：“线上方案评审会”\n调整为13:30开始。🙂 \\ $() `test`', duration_ms: 8500, device_id: 'adb:test-usb' });
 const visible = { visibility_state: 'visible', monotonic_ms: 10, time_origin_ms: 1000, timestamp_iso: '2026-10-19T00:00:00.000Z' };
 async function fixture(adapter: GlassesAdapter, db = ':memory:') {
-  const store = new Store(db), material = await loadMaterial(), config = await readJson<ParticipantConfig>('config/participants.pilot.json');
+  const store = new Store(db), material = await loadMaterial(), config = await readJson<ParticipantConfig>('config/participants.source.json');
   const engine = new Engine(store, adapter, material, config);
   const created = engine.create('000');
   const send = (action: string, extra = {}) => engine.command(created.session_id, { command_id: randomUUID(), page_token: engine.view(created.session_id).page_token, action, client: visible, ...extra });

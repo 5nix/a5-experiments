@@ -8,7 +8,6 @@ import type { GlassesRequest, ParticipantConfig, Stimulus } from '../src/contrac
 const { stimuli } = await readJson<{ stimuli: Stimulus[] }>('content/stimuli.json');
 const pilot = await readJson<ParticipantConfig>('config/participants.pilot.json');
 const source = await readJson<ParticipantConfig>('config/participants.source.json');
-const latinSquare = await readJson<ParticipantConfig>('config/participants.latin-square.P01-P20.json');
 
 test('检出后的源材料通过字节完整性及启动检查（含 Windows 换行规则）', async () => {
   const result = await preflight();
@@ -16,29 +15,12 @@ test('检出后的源材料通过字节完整性及启动检查（含 Windows �
   assert.equal(result.startup_ok, true);
 });
 
-test('执行原表001—004条件，不重新分组', () => {
+test('默认直接使用P01—P20预分配，不重新分组', () => {
   assert.deepEqual(validateConfig(pilot, stimuli), []);
-  assert.deepEqual(pilot.participants.map(p => p.participant_id), ['001', '002', '003', '004']);
+  assert.deepEqual(pilot.participants.map(p => p.participant_id), Array.from({ length: 20 }, (_, i) => `P${String(i + 1).padStart(2, '0')}`));
   assert.deepEqual(pilot.participants[0].stages.map(s => [s.condition, s.message_id]), [
-    ['N-T0', 'N01'], ['N-T1', 'N02'], ['A-T0', 'A03'], ['A-T1', 'A04'], ['NONE', null],
+    ['N-T0', 'N01'], ['N-T1', 'N02'], ['NONE', null], ['A-T0', 'A04'], ['A-T1', 'A05'],
   ]);
-});
-
-test('标准20人拉丁方模板可导入且各任务组条件均衡', () => {
-  assert.deepEqual(validateConfig(latinSquare, stimuli), []);
-  assert.deepEqual(latinSquare.participants.map(p => p.participant_id), Array.from({ length: 20 }, (_, i) => `P${String(i + 1).padStart(2, '0')}`));
-  const stages = ['SH01', 'SH02', 'SH03', 'SH04', 'SH05'];
-  const conditions = ['N-T0', 'N-T1', 'A-T0', 'A-T1', 'NONE'];
-  for (const participant of latinSquare.participants) {
-    assert.equal(new Set(participant.stages.map(stage => stage.condition)).size, conditions.length);
-  }
-  for (const stageId of stages) for (const condition of conditions) {
-    assert.equal(latinSquare.participants.filter(p => p.stages.some(stage => stage.stage_id === stageId && stage.condition === condition)).length, 4, `${stageId} / ${condition}`);
-  }
-  for (let version = 1; version <= 10; version++) {
-    const label = `V${String(version).padStart(2, '0')}`;
-    assert.equal(latinSquare.participants.filter(p => p.version_label === label).length, 2, label);
-  }
 });
 
 test('新版源表V5修订有效；构造错误编号仍报告且不静默修改', () => {
@@ -55,7 +37,7 @@ test('重复被试、重复/缺失任务、NONE绑定消息均拒绝', () => {
   const config = structuredClone(pilot);
   config.participants.push(structuredClone(config.participants[0]));
   config.participants[0].stages[1] = structuredClone(config.participants[0].stages[0]);
-  config.participants[0].stages[4].message_id = 'N05';
+  config.participants[0].stages.find(stage => stage.condition === 'NONE')!.message_id = 'N03';
   const errors = validateConfig(config, stimuli).join('\n');
   for (const keyword of ['编号重复', 'SH01 重复', '缺少 SH02', '必须为 null']) assert.ok(errors.includes(keyword));
 });

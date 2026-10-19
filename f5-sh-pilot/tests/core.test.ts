@@ -16,7 +16,8 @@ import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
 import { exportData } from '../src/export.ts';
 
 const material = await loadMaterial();
-const config = await readJson<ParticipantConfig>('config/participants.pilot.json');
+const config = await readJson<ParticipantConfig>('config/participants.source.json');
+config.participants = config.participants.slice(0, 4); // 此流程用例保留原表的四人固定夹具。
 const visible = { visibility_state: 'visible', monotonic_ms: 10, time_origin_ms: 1000, timestamp_iso: '2026-10-19T00:00:00.000Z' };
 const correct = (unit: Unit) => unit.scoring.type === 'exact' ? structuredClone(unit.scoring.expected) : { checkin: '许宁', guide: '林晨', equipment: unit.unit_id.endsWith('U1') ? '赵禾' : '梁欣' };
 function fixture(path = ':memory:', adapter = new MockGlassesAdapter()) {

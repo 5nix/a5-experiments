@@ -17,6 +17,18 @@ export interface Command {
 }
 export type Material = Omit<Snapshot, 'participant' | 'config_hash' | 'content_hash'>;
 
+/** 固定的 000 调试配置，不随正式被试预分配或后台导入变化。 */
+const DEBUG_PARTICIPANT: Participant = {
+  participant_id: '000', version_label: 'V1', debug: true, copied_from: '001',
+  stages: [
+    { stage_id: 'SH01', condition: 'N-T0', message_id: 'N01' },
+    { stage_id: 'SH02', condition: 'N-T1', message_id: 'N02' },
+    { stage_id: 'SH03', condition: 'A-T0', message_id: 'A03' },
+    { stage_id: 'SH04', condition: 'A-T1', message_id: 'A04' },
+    { stage_id: 'SH05', condition: 'NONE', message_id: null },
+  ],
+};
+
 export class Engine {
   /** 由设备控制器提供互斥状态，阻止在控制或独立通知期间创建会话。 */
   deviceControlBusy?: () => boolean;
@@ -49,10 +61,7 @@ export class Engine {
   }
 
   config(): ParticipantConfig { return this.store.setting<ParticipantConfig>('participants')!; }
-  debugParticipant(): Participant | null {
-    const template = this.config().participants.find(p => p.participant_id === '001');
-    return template ? { ...structuredClone(template), participant_id: '000', debug: true, copied_from: '001' } : null;
-  }
+  debugParticipant(): Participant { return structuredClone(DEBUG_PARTICIPANT); }
   isDebug(s: Session) { return s.snapshot.participant.participant_id === '000' && s.snapshot.participant.debug === true && s.snapshot.participant.copied_from === '001'; }
   importConfig(input: unknown) {
     const errors = validateConfig(input, this.material.stimuli);

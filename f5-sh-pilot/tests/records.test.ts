@@ -14,7 +14,7 @@ import { createApp } from '../src/app.ts';
 import type { ParticipantConfig } from '../src/contracts.ts';
 
 const material = await loadMaterial();
-const config = await readJson<ParticipantConfig>('config/participants.pilot.json');
+const config = await readJson<ParticipantConfig>('config/participants.source.json');
 
 test('删除记录可恢复且跨重启保留；进行中不可删，已删除记录不可作答或修改，原始数据不抹除', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'a5-records-'));

@@ -244,7 +244,7 @@
             <p>先下载当前配置作为模板。顶层保留 experiment_id 为 f5-sh-pilot、schema_version 为 1.0，participants 数组内填写完整被试名单。</p>
             <p>每名被试填写字符串 participant_id（如 "001"，不可重复或使用 "000"）、version_label 和 stages。每人必须恰好包含 SH01—SH05 五组；数组顺序不改变任务呈现顺序。</p>
             <p>每组的 condition 为 N-T0、N-T1、A-T0、A-T1 或 NONE。message_id 的 N/A 与条件一致，数字与任务组一致（如 SH03 的 A-T0 配 A03）；NONE 必须填 null。</p>
-            <p>导入会替换整份预分配，新建会话使用新配置，已有会话保留原快照。保留 001 后，系统会自动派生 000；source_ref、source_value、source_cell 可保留用于追溯。</p>
+            <p>导入会替换整份预分配，新建会话使用新配置，已有会话保留原快照。000 使用独立固定的调试配置，不随导入变化；source_ref、source_value、source_cell 可保留用于追溯。</p>
           </details>
           <div class="action-row"><button id="config-download" type="button" class="btn">下载当前配置（JSON）</button></div>
           <form id="import" class="import-form">

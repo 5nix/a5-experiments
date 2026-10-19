@@ -46,7 +46,7 @@ test('主试直接进入、离线二维码、跨主试页面共享入口、被�
     const network = await (await fetch(base + '/api/admin/network')).json() as { shared: boolean; local_url: string };
     assert.equal(network.shared, true);
     assert.equal(network.local_url, base);
-    const response = await post('/api/admin/sessions', { participant_id: '001' });
+    const response = await post('/api/admin/sessions', { participant_id: 'P01' });
     assert.equal(response.status, 201); const created = await response.json() as { session_id: string; token: string; participant_url: string };
     const path = `/api/admin/sessions/${created.session_id}`;
     let detail = await (await fetch(base + path)).json() as { participant_url: string; connection: { connected: boolean; last_seen_at: string | null } };
