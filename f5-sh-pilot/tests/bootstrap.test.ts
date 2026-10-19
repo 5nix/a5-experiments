@@ -15,11 +15,11 @@ test('检出后的源材料通过字节完整性及启动检查（含 Windows �
   assert.equal(result.startup_ok, true);
 });
 
-test('执行原表001—004条件，不重新分组', () => {
+test('默认直接使用P01—P20预分配，不重新分组', () => {
   assert.deepEqual(validateConfig(pilot, stimuli), []);
-  assert.deepEqual(pilot.participants.map(p => p.participant_id), ['001', '002', '003', '004']);
+  assert.deepEqual(pilot.participants.map(p => p.participant_id), Array.from({ length: 20 }, (_, i) => `P${String(i + 1).padStart(2, '0')}`));
   assert.deepEqual(pilot.participants[0].stages.map(s => [s.condition, s.message_id]), [
-    ['N-T0', 'N01'], ['N-T1', 'N02'], ['A-T0', 'A03'], ['A-T1', 'A04'], ['NONE', null],
+    ['N-T0', 'N01'], ['N-T1', 'N02'], ['NONE', null], ['A-T0', 'A04'], ['A-T1', 'A05'],
   ]);
 });
 
@@ -37,7 +37,7 @@ test('重复被试、重复/缺失任务、NONE绑定消息均拒绝', () => {
   const config = structuredClone(pilot);
   config.participants.push(structuredClone(config.participants[0]));
   config.participants[0].stages[1] = structuredClone(config.participants[0].stages[0]);
-  config.participants[0].stages[4].message_id = 'N05';
+  config.participants[0].stages.find(stage => stage.condition === 'NONE')!.message_id = 'N03';
   const errors = validateConfig(config, stimuli).join('\n');
   for (const keyword of ['编号重复', 'SH01 重复', '缺少 SH02', '必须为 null']) assert.ok(errors.includes(keyword));
 });

@@ -163,7 +163,7 @@ def main():
               "source_ref": {"file": "刺激材料的属性判断.xlsx", "sheet": "每个场景中的试次顺序安排", "range": "B2:G8"},
               "participants": participants}
     save(EXPERIMENT / "config" / "participants.source.json", config)
-    save(EXPERIMENT / "config" / "participants.pilot.json", {**config, "participants": participants[:4]})
+    # 默认预分配由实验配置独立维护；重新提取原表不覆盖 participants.pilot.json。
     source_files = [p for p in sorted(DOCS.iterdir())
                     if p.is_file() and (p.name == "PRD.md" or p.suffix in {".docx", ".xlsx"})]
     files = [{"path": str(p.relative_to(EXPERIMENT)), "sha256": hashlib.sha256(p.read_bytes()).hexdigest(), "bytes": p.stat().st_size}

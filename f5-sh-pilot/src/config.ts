@@ -19,7 +19,7 @@ export function validateConfig(input: unknown, stimuli: Stimulus[]): string[] {
       continue;
     }
     const id = participant.participant_id;
-    if (id === '000') errors.push('000为系统保留调试编号，由001派生，不能作为正式被试导入。');
+    if (id === '000') errors.push('000为系统保留的固定调试编号，不能作为正式被试导入。');
     if (seen.has(id)) errors.push(`被试 ${id} 编号重复。`);
     seen.add(id);
     const stages = new Set<string>();
