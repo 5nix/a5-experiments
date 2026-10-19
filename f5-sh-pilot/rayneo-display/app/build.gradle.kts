@@ -7,8 +7,8 @@ android {
         applicationId = if (localRepair) "link.ironip.a5.rayneo.localfix" else "link.ironip.a5.rayneo"
         minSdk = 31
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
         resValue("string", "app_name", if (localRepair) "A5 雷鸟显示（修复版）" else "A5 雷鸟显示")
     }
     buildFeatures { viewBinding = true; resValues = true }

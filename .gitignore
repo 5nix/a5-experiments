@@ -13,6 +13,7 @@ coverage/
 __pycache__/
 *.pyc
 .launcher/
+.a5-local/
 **/.gradle/
 **/build/
 **/local.properties

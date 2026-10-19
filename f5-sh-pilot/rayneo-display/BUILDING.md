@@ -111,6 +111,12 @@ Gradle Wrapper 会自动获取固定版本的 Gradle，无需另行全局安装 
 
 2026-10-19，显示窗口亮度固定为 `1.0f / 6.0f`，创建及恢复前台时应用；版本为 **1.0.3 / versionCode 4**。macOS 上执行 `./gradlew :app:assembleDebug -Pa5LocalRepair=true --console=plain` 成功，生成 `link.ironip.a5.rayneo.localfix` 修复版 APK。本次未运行测试、未部署真机；约 1000 nits 仅是以最高 6000 nits 为前提的线性估算。
 
+## 1.0.4 行尾空白误判修复
+
+2026-10-19，版本提升为 **1.0.4 / versionCode 5**。后台默认测试通知在设备上被误报 `device_text_does_not_fit`：`StaticLayout.getLineWidth()` 包含自动换行处的行尾空格，该行统计为 260.08 px。边界校验改用排除行尾空白的 `getLineMax()`，字号、宽度、行高、正文与亮度设置保持原值，仍拒绝实际正文超宽或总高度不足。
+
+Windows assembleDebug、lintDebug、APK 签名及 Lifecycle 必需运行类检查通过。独立 Android 离屏回归共 18 组通过，包括完整默认测试通知；同签名覆盖安装，设备账本哈希一致。安装后用后台真实接口复测原文，双眼三行绘制、8515 ms 后消失，无失败。证据在本机 `.a5-local/qa-message-style/fit-fix/`。
+
 ## 仓库与磁盘维护
 
 提交 Gradle 配置、Wrapper、应用源码、厂商 AAR 和本说明。`.gitignore` 已排除 `.gradle/`、`build/`、`local.properties`；本机 SDK 路径不应提交。安装包校验后可删除下载压缩包，工具目录继续保留。Gradle 缓存随其他项目使用增长；如需释放空间，先 `./gradlew --stop`，再有针对性地清理可重新下载的缓存，勿删除眼镜实验 runtime 或设备去重数据。

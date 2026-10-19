@@ -48,7 +48,9 @@ public final class MessageView extends View {
         float lineHeight = TEXT_SIZE * (candidate.getLineCount() >= 5 ? 1.5f : 1.35f);
         if (candidate.getLineCount() * lineHeight + 2 * PADDING > getHeight()) return false;
         for (int i = 0; i < candidate.getLineCount(); i++) {
-            if (candidate.getLineWidth(i) > TEXT_WIDTH) return false;
+            // getLineWidth 包含自动换行处的行尾空白；它可能超宽，但没有可见字形。
+            // getLineMax 排除这段空白，仍拒绝实际正文超宽，不改变原文和字号。
+            if (candidate.getLineMax(i) > TEXT_WIDTH) return false;
             // 固定字号和行高，不能通过缩字、裁切或省略正文来凑进画布。
             if (candidate.getLineDescent(i) - candidate.getLineAscent(i) > lineHeight) return false;
         }
