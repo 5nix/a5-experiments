@@ -1,5 +1,6 @@
 import { execFile, spawn, type ChildProcess } from 'node:child_process';
 import { promisify } from 'node:util';
+import { setTimeout as delay } from 'node:timers/promises';
 import { randomUUID } from 'node:crypto';
 import { Engine, HttpError } from './engine.ts';
 import type { GlassesEvent, GlassesReceipt, GlassesRequest } from './contracts.ts';
@@ -20,6 +21,7 @@ export class DeviceControl {
   private readonly run: Runner;
   private readonly now: () => number;
   private readonly scrcpy: string;
+  private readonly wait: (ms: number) => Promise<void>;
   private mirror?: ChildProcess;
   private mirrorError: string | null = null;
   private enabled: boolean;
@@ -31,13 +33,14 @@ export class DeviceControl {
   private diagnostics: { last_action: string | null; last_at: string | null; error: string | null } = { last_action: null, last_at: null, error: null };
 
   /** 绑定设备、ADB 执行器和持久化记录；重启后的在途通知只标为待核查。 */
-  constructor(engine: Engine, options: { serial?: string; adb?: string; packageName?: string; enabled?: boolean; run?: Runner; now?: () => number; scrcpy?: string } = {}) {
+  constructor(engine: Engine, options: { serial?: string; adb?: string; packageName?: string; enabled?: boolean; run?: Runner; now?: () => number; scrcpy?: string; wait?: (ms: number) => Promise<void> } = {}) {
     this.engine = engine; this.serial = options.serial ?? ''; this.adb = options.adb ?? 'adb';
     this.packageName = options.packageName ?? 'link.ironip.a5.rayneo';
     if (!/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/.test(this.packageName)) throw new Error('A5_RAYNEO_PACKAGE 包名无效。');
     this.run = options.run ?? (async (file, args) => (await execute(file, args, { windowsHide: true, timeout: 5000, maxBuffer: 1024 * 1024 })).stdout);
     this.now = options.now ?? Date.now;
     this.scrcpy = options.scrcpy ?? 'scrcpy';
+    this.wait = options.wait ?? delay;
     this.voiceGuard = new VoiceOverlayGuard(engine.store, { serial: this.serial, adb: this.adb, run: this.run, now: this.now, audit: (action, detail) => this.audit(action, detail) });
     this.engine.store.db.exec('CREATE TABLE IF NOT EXISTS device_debug_requests(request_id TEXT PRIMARY KEY,data TEXT NOT NULL)');
     const saved = this.engine.store.setting<boolean>('device_host_enabled');
@@ -227,10 +230,19 @@ export class DeviceControl {
     this.lastAttempt = this.now();
     void this.action({ action: 'open' }).catch(() => { /* 具体错误已写入控制诊断与审计，下一次限频恢复。 */ });
   }
-  /** 等待在途操作并关闭镜像；安全时恢复原权限，否则保留恢复备份。 */
+  /** 退出时最多等待十五秒回收展示结束证据，安全后恢复原权限；故障时保留备份。 */
   async close() {
     this.closed = true; await this.task?.catch(() => {}); this.mirror?.kill();
-    // 正常退出恢复原设置；正在展示时保留备份，下一次关闭守护后安全恢复。
-    if (this.supported() && !this.displayProtected() && this.voiceGuard.hasBackup()) await this.voiceGuard.sync(false);
+    if (!this.supported() || !this.voiceGuard.hasBackup()) return;
+    // 服务定时器已停止，只回收设备状态和事件，不推进实验或重发刺激。
+    for (let waited = 0; this.displayProtected() && waited < 15000; waited += 250) {
+      this.engine.pollDevice();
+      await this.wait(250);
+    }
+    if (this.displayProtected()) {
+      this.audit('voice_overlay_restore_deferred', { ok: false, error: '关闭等待展示结束超时，原权限备份已保留。' });
+      return;
+    }
+    await this.voiceGuard.sync(false);
   }
 }

@@ -120,7 +120,7 @@ export async function stopExperiment(name, root = repositoryRoot) {
   if (current.status === 'unmanaged') throw new Error(current.message);
   if (['stopped', 'failed'].includes(current.status)) return current;
   if (!state) return { status: 'stopped' };
-  return rpc(state, 'stop', 14000);
+  return rpc(state, 'stop', 47000);
 }
 export async function readLogs(name, root = repositoryRoot) {
   const path = paths(root, name).log;
@@ -153,7 +153,7 @@ async function runWorker(name, root, port) {
       else if (process.platform !== 'win32') service.kill('SIGTERM');
       else throw new Error('服务缺少正常停止通道，请检查实验入口的IPC支持。');
       let timeout;
-      try { await Promise.race([exitPromise, new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('服务尚未正常退出，请查看日志；启动器不会强制结束数据进程。')), 12000); })]); }
+      try { await Promise.race([exitPromise, new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('服务尚未正常退出，请查看日志；启动器不会强制结束数据进程。')), 45000); })]); }
       finally { clearTimeout(timeout); }
     }
     state.status = 'stopped'; state.stopped_at = new Date().toISOString(); await persist(); return publicStatus();

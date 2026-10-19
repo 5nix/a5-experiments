@@ -13,6 +13,7 @@ import type { GlassesAdapter, GlassesEvent, GlassesRequest, ParticipantConfig } 
 async function fixture() {
   const store = new Store(':memory:');
   let connected = true, ready = true, busy = false, sends = 0, clock = 20000, overlay = false, voiceMode = 'allow', voiceWritable = true;
+  let waitHook: (() => void) | undefined;
   const calls: string[][] = [];
   const requests: GlassesRequest[] = [];
   const adapter: GlassesAdapter = {
@@ -27,7 +28,7 @@ async function fixture() {
     },
   };
   const engine = new Engine(store, adapter, await loadMaterial(), await readJson<ParticipantConfig>('config/participants.pilot.json'));
-  const control = new DeviceControl(engine, { serial: 'fixture', packageName: 'link.ironip.a5.rayneo.localfix', now: () => clock,
+  const control = new DeviceControl(engine, { serial: 'fixture', packageName: 'link.ironip.a5.rayneo.localfix', now: () => clock, wait: async ms => { clock += ms; waitHook?.(); },
     /** 模拟 ADB 权限读写与前台窗口，记录操作以验证恢复边界。 */
     run: async (_file, args) => {
       calls.push(args);
@@ -37,7 +38,7 @@ async function fixture() {
       }
       return args.includes('get-state') ? 'device\n' : args.includes('dumpsys') && overlay ? 'mCurrentFocus=Window com.ffalconxr.mercury.launcher\nmFocusedApp=link.ironip.a5.rayneo.localfix' : 'Starting';
     } });
-  return { store, engine, control, requests, calls, sends: () => sends,
+  return { store, engine, control, requests, calls, onWait: (hook: () => void) => { waitHook = hook; }, sends: () => sends,
     connected: (value: boolean) => { connected = value; }, ready: (value: boolean) => { ready = value; }, busy: (value: boolean) => { busy = value; }, overlay: (value: boolean) => { overlay = value; }, advance: (ms: number) => { clock += ms; },
     voiceMode: () => voiceMode, voiceWritable: (value: boolean) => { voiceWritable = value; } };
 }
@@ -257,4 +258,36 @@ test('权限审计写入失败的异步拒绝被捕获，释放工作锁并保�
     assert.equal(f.voiceMode(), 'allow');
     assert.equal(f.control.status().error, null);
   } finally { f.store.db.exec('DROP TRIGGER IF EXISTS reject_device_audit'); await f.control.close(); f.store.close(); }
+});
+
+
+test('退出期间等待展示结束证据后恢复原权限，等待中不改权限或重发刺激', async () => {
+  const f = await fixture();
+  try {
+    await f.control.action({ action: 'host', enabled: true });
+    f.busy(true);
+    let waits = 0;
+    f.engine.adapter.pollEvents = async () => { f.busy(false); };
+    f.onWait(() => { waits++; assert.equal(f.voiceMode(), 'ignore'); });
+    await f.control.close();
+    assert.equal(waits, 1);
+    assert.equal(f.voiceMode(), 'allow');
+    assert.equal(f.store.setting('device_voice_overlay_backup:fixture'), null);
+    assert.equal(f.sends(), 0);
+  } finally { await f.control.close(); await f.engine.settle(); f.store.close(); }
+});
+
+test('退出等待展示最多十五秒，设备持续忙碌时保留原权限备份并记录待恢复', async () => {
+  const f = await fixture();
+  try {
+    await f.control.action({ action: 'host', enabled: true });
+    f.busy(true);
+    let waits = 0; f.onWait(() => { waits++; });
+    await f.control.close();
+    assert.equal(waits, 60);
+    assert.equal(f.voiceMode(), 'ignore');
+    assert.deepEqual(f.store.setting('device_voice_overlay_backup:fixture'), { mode: 'allow' });
+    assert.equal(f.control.status().audit[0].action, 'voice_overlay_restore_deferred');
+    assert.equal(f.sends(), 0);
+  } finally { f.busy(false); await f.control.close(); f.store.close(); }
 });
