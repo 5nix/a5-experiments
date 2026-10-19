@@ -4,6 +4,12 @@
 
 仓库初始配置为 [config/participants.pilot.json](config/participants.pilot.json)，包含 001—004。后台导入的配置保存在运行数据库中，下载按钮取得的是数据库中的当前配置；修改仓库文件不会覆盖已导入的配置。
 
+## 标准 20 人拉丁方模板
+
+[config/participants.latin-square.P01-P20.json](config/participants.latin-square.P01-P20.json) 是标准 20 人完整预分配模板，编号为 P01—P20，版本标签 V01—V10 各使用两次。每名被试在 SH01—SH05 中各接受五种条件一次；每个任务组的每种条件均分配给 4 人。自动化测试会校验模板结构和分配平衡。
+
+该模板可通过后台的“被试预分配配置”导入。导入会替换运行数据库中的整份名单；仓库默认 Pilot 仍为 001—004，原工作簿来源配置 `config/participants.source.json` 保留原样。
+
 ## 可导入的最小示例
 
 ```json

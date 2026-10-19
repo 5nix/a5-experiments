@@ -8,6 +8,7 @@ import type { GlassesRequest, ParticipantConfig, Stimulus } from '../src/contrac
 const { stimuli } = await readJson<{ stimuli: Stimulus[] }>('content/stimuli.json');
 const pilot = await readJson<ParticipantConfig>('config/participants.pilot.json');
 const source = await readJson<ParticipantConfig>('config/participants.source.json');
+const latinSquare = await readJson<ParticipantConfig>('config/participants.latin-square.P01-P20.json');
 
 test('检出后的源材料通过字节完整性及启动检查（含 Windows 换行规则）', async () => {
   const result = await preflight();
@@ -21,6 +22,23 @@ test('执行原表001—004条件，不重新分组', () => {
   assert.deepEqual(pilot.participants[0].stages.map(s => [s.condition, s.message_id]), [
     ['N-T0', 'N01'], ['N-T1', 'N02'], ['A-T0', 'A03'], ['A-T1', 'A04'], ['NONE', null],
   ]);
+});
+
+test('标准20人拉丁方模板可导入且各任务组条件均衡', () => {
+  assert.deepEqual(validateConfig(latinSquare, stimuli), []);
+  assert.deepEqual(latinSquare.participants.map(p => p.participant_id), Array.from({ length: 20 }, (_, i) => `P${String(i + 1).padStart(2, '0')}`));
+  const stages = ['SH01', 'SH02', 'SH03', 'SH04', 'SH05'];
+  const conditions = ['N-T0', 'N-T1', 'A-T0', 'A-T1', 'NONE'];
+  for (const participant of latinSquare.participants) {
+    assert.equal(new Set(participant.stages.map(stage => stage.condition)).size, conditions.length);
+  }
+  for (const stageId of stages) for (const condition of conditions) {
+    assert.equal(latinSquare.participants.filter(p => p.stages.some(stage => stage.stage_id === stageId && stage.condition === condition)).length, 4, `${stageId} / ${condition}`);
+  }
+  for (let version = 1; version <= 10; version++) {
+    const label = `V${String(version).padStart(2, '0')}`;
+    assert.equal(latinSquare.participants.filter(p => p.version_label === label).length, 2, label);
+  }
 });
 
 test('新版源表V5修订有效；构造错误编号仍报告且不静默修改', () => {
