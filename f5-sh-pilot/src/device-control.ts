@@ -3,6 +3,7 @@ import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
 import { Engine, HttpError } from './engine.ts';
 import type { GlassesEvent, GlassesReceipt, GlassesRequest } from './contracts.ts';
+import { VoiceOverlayGuard } from './voice-overlay-guard.ts';
 
 const execute = promisify(execFile);
 type Runner = (file: string, args: string[]) => Promise<string>;
@@ -25,6 +26,7 @@ export class DeviceControl {
   private closed = false;
   private lastAttempt = 0;
   private task?: Promise<unknown>;
+  private readonly voiceGuard: VoiceOverlayGuard;
   private diagnostics: { last_action: string | null; last_at: string | null; error: string | null } = { last_action: null, last_at: null, error: null };
 
   constructor(engine: Engine, options: { serial?: string; adb?: string; packageName?: string; enabled?: boolean; run?: Runner; now?: () => number; scrcpy?: string } = {}) {
@@ -34,6 +36,7 @@ export class DeviceControl {
     this.run = options.run ?? (async (file, args) => (await execute(file, args, { windowsHide: true, timeout: 5000, maxBuffer: 1024 * 1024 })).stdout);
     this.now = options.now ?? Date.now;
     this.scrcpy = options.scrcpy ?? 'scrcpy';
+    this.voiceGuard = new VoiceOverlayGuard(engine.store, { serial: this.serial, adb: this.adb, run: this.run, now: this.now, audit: (action, detail) => this.audit(action, detail) });
     this.engine.store.db.exec('CREATE TABLE IF NOT EXISTS device_debug_requests(request_id TEXT PRIMARY KEY,data TEXT NOT NULL)');
     const saved = this.engine.store.setting<boolean>('device_host_enabled');
     this.enabled = saved ?? options.enabled ?? true;
@@ -56,7 +59,7 @@ export class DeviceControl {
   }
   status() {
     return { supported: this.supported(), enabled: this.supported() && this.enabled, working: this.working,
-      package_name: this.packageName, ...this.diagnostics, active_session: this.activeSession(),
+      package_name: this.packageName, ...this.diagnostics, active_session: this.activeSession(), voice_guard: this.voiceGuard.status(),
       scrcpy: { running: !!this.mirror && this.mirror.exitCode === null, crop: '640:480:0:0', error: this.mirrorError },
       debug_allowed: this.supported() && !this.activeSession() && !this.working && !this.hasLiveDebug() && !this.engine.adapter.getStatus().busy,
       debug_notifications: this.records(), audit: (this.engine.store.db.prepare("SELECT data FROM admin_audit WHERE json_extract(data,'$.event_type')='device_control' ORDER BY seq DESC LIMIT 30").all() as { data: string }[]).map(row => JSON.parse(row.data)) };
@@ -80,19 +83,22 @@ export class DeviceControl {
     if (!['host', 'probe', 'open', 'reconnect', 'notify', 'scrcpy'].includes(input.action)) throw new HttpError(422, '不支持的眼镜控制操作。');
     if (input.action === 'host') {
       if (typeof input.enabled !== 'boolean') throw new HttpError(422, '请指定是否启用上位机守护。');
-      this.enabled = input.enabled; this.engine.store.setSetting('device_host_enabled', this.enabled); this.audit('host', { enabled: this.enabled });
-      return { control: this.status(), adapter: this.engine.adapter.getStatus() };
+      if (this.displayProtected()) throw new HttpError(409, '眼镜消息尚未展示结束，暂不能变更系统悬浮窗保护。');
     }
     this.working = true;
     const work = this.perform(input);
     this.task = work;
     try { return await work; } finally { this.working = false; }
   }
-  private async perform(input: { action: string; text?: string; request_id?: string }) {
+  private async perform(input: { action: string; enabled?: boolean; text?: string; request_id?: string }) {
     this.diagnostics = { last_action: input.action, last_at: new Date(this.now()).toISOString(), error: null };
     try {
       let notification: DebugRecord | undefined;
-      if (input.action === 'notify') notification = await this.notify(input);
+      if (input.action === 'host') {
+        this.enabled = input.enabled!; this.engine.store.setSetting('device_host_enabled', this.enabled);
+        await this.voiceGuard.sync(this.enabled);
+      }
+      else if (input.action === 'notify') notification = await this.notify(input);
       else if (input.action === 'scrcpy') await this.openMirror();
       else if (input.action === 'probe') await this.engine.adapter.probe?.();
       else {
@@ -128,6 +134,7 @@ export class DeviceControl {
     try { state = (await this.run(this.adb, ['-s', this.serial, 'get-state'])).trim(); }
     catch { throw new Error('ADB 设备不可用：请检查 USB 数据线及眼镜调试授权。'); }
     if (state !== 'device') throw new Error('ADB 设备尚未授权或未连接。');
+    await this.voiceGuard.sync(this.enabled);
     if (this.closed) return;
     await this.run(this.adb, ['-s', this.serial, 'shell', 'input', 'keyevent', 'KEYCODE_WAKEUP']);
     if (this.closed) return;
@@ -173,12 +180,23 @@ export class DeviceControl {
     }
   }
   tick() {
-    if (this.closed || !this.supported() || !this.enabled || this.working || this.displayProtected()) return;
+    if (this.closed || !this.supported() || this.working || this.displayProtected()) return;
+    const voiceDue = this.voiceGuard.due(this.enabled);
+    if (!this.enabled && !voiceDue) return;
     const state = this.engine.adapter.getStatus();
-    if (state.connected && state.ready) return;
+    if (state.connected && state.ready || !this.enabled) {
+      if (!voiceDue || this.now() - this.lastAttempt < 5000) return;
+      this.lastAttempt = this.now(); this.working = true;
+      this.task = this.voiceGuard.sync(this.enabled).finally(() => { this.working = false; });
+      return;
+    }
     if (this.now() - this.lastAttempt < 5000) return;
     this.lastAttempt = this.now();
     void this.action({ action: 'open' }).catch(() => { /* 具体错误已写入控制诊断与审计，下一次限频恢复。 */ });
   }
-  async close() { this.closed = true; await this.task?.catch(() => {}); this.mirror?.kill(); }
+  async close() {
+    this.closed = true; await this.task?.catch(() => {}); this.mirror?.kill();
+    // 正常退出恢复原设置；正在展示时保留备份，下一次关闭守护后安全恢复。
+    if (this.supported() && !this.displayProtected() && this.voiceGuard.hasBackup()) await this.voiceGuard.sync(false);
+  }
 }

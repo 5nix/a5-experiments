@@ -216,8 +216,9 @@ function renderDeviceControl() {
   setText(host, control?.enabled ? '关闭上位机守护' : '开启上位机守护');
   for (const id of ['device-open', 'device-probe', 'device-reconnect', 'device-host', 'device-scrcpy']) $(`#${id}`).disabled = !supported || blocked;
   $('#device-notify-send').disabled = !supported || blocked || !control.debug_allowed || !adapter?.ready || !adapter?.connected;
-  setText($('#device-host-state'), !supported ? '当前为 Mock 预演，真机控制不可用。' : `上位机守护：${control.enabled ? '已开启' : '已关闭'} · 显示应用：${control.package_name}${control.scrcpy?.running ? ' · scrcpy 已打开' : ''}`);
-  setText($('#device-control-error'), control?.error ?? control?.scrcpy?.error ?? '');
+  const voiceState = { pending: '等待检查', protected: '已限制', restored: '已恢复原设置', error: '限制失败' };
+  setText($('#device-host-state'), !supported ? '当前为 Mock 预演，真机控制不可用。' : `上位机守护：${control.enabled ? '已开启' : '已关闭'} · 语音助手悬浮窗：${voiceState[control.voice_guard?.state] ?? '等待检查'} · 显示应用：${control.package_name}${control.scrcpy?.running ? ' · scrcpy 已打开' : ''}`);
+  setText($('#device-control-error'), control?.error ?? control?.voice_guard?.error ?? control?.scrcpy?.error ?? '');
   const records = control?.debug_notifications ?? [];
   const latest = records[0];
   setText($('#device-debug-result'), control?.active_session ? '当前有进行中的会话，请结束后再发送测试通知。' : latest ? `最近测试：${DEBUG_STATUS[latest.status] ?? latest.status}${latest.error ? ' · ' + latest.error : ''}` : '尚未发送测试通知。');

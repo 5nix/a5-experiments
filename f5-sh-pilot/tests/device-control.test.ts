@@ -11,7 +11,7 @@ import type { GlassesAdapter, GlassesEvent, GlassesRequest, ParticipantConfig } 
 
 async function fixture() {
   const store = new Store(':memory:');
-  let ready = true, busy = false, sends = 0, clock = 20000, overlay = false;
+  let ready = true, busy = false, sends = 0, clock = 20000, overlay = false, voiceMode = 'allow', voiceWritable = true;
   const calls: string[][] = [];
   const requests: GlassesRequest[] = [];
   const adapter: GlassesAdapter = {
@@ -24,9 +24,17 @@ async function fixture() {
   };
   const engine = new Engine(store, adapter, await loadMaterial(), await readJson<ParticipantConfig>('config/participants.pilot.json'));
   const control = new DeviceControl(engine, { serial: 'fixture', packageName: 'link.ironip.a5.rayneo.localfix', now: () => clock,
-    run: async (_file, args) => { calls.push(args); return args.includes('get-state') ? 'device\n' : args.includes('dumpsys') && overlay ? 'mCurrentFocus=Window com.ffalconxr.mercury.launcher\nmFocusedApp=link.ironip.a5.rayneo.localfix' : 'Starting'; } });
+    run: async (_file, args) => {
+      calls.push(args);
+      if (args.includes('appops')) {
+        if (args.includes('set') && voiceWritable) voiceMode = args.at(-1)!;
+        return args.includes('get') ? `SYSTEM_ALERT_WINDOW: ${voiceMode}` : '';
+      }
+      return args.includes('get-state') ? 'device\n' : args.includes('dumpsys') && overlay ? 'mCurrentFocus=Window com.ffalconxr.mercury.launcher\nmFocusedApp=link.ironip.a5.rayneo.localfix' : 'Starting';
+    } });
   return { store, engine, control, requests, calls, sends: () => sends,
-    ready: (value: boolean) => { ready = value; }, busy: (value: boolean) => { busy = value; }, overlay: (value: boolean) => { overlay = value; }, advance: (ms: number) => { clock += ms; } };
+    ready: (value: boolean) => { ready = value; }, busy: (value: boolean) => { busy = value; }, overlay: (value: boolean) => { overlay = value; }, advance: (ms: number) => { clock += ms; },
+    voiceMode: () => voiceMode, voiceWritable: (value: boolean) => { voiceWritable = value; } };
 }
 
 test('独立测试通知：幂等、双眼事件关联、重启不重发，且不写入实验会话', async () => {
@@ -77,15 +85,65 @@ test('上位机守护限频恢复并固定目标应用，可关闭；不重放�
     f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
     assert.equal(f.calls.length, initial);
     f.advance(5001); f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
-    assert.equal(f.calls.length, initial * 2);
+    // 第二次无需重复设置已经受限的权限，但仍核对并恢复前台。
+    assert.equal(f.calls.filter(args => args.includes('KEYCODE_WAKEUP')).length, 2);
     await f.control.action({ action: 'host', enabled: false });
     f.advance(5001); f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
-    assert.equal(f.calls.length, initial * 2);
+    assert.equal(f.calls.filter(args => args.includes('KEYCODE_WAKEUP')).length, 2);
     await f.control.close();
     const next = new DeviceControl(f.engine, { serial: 'fixture', enabled: false, run: async () => { throw new Error('不应执行'); } });
     next.tick(); await next.close();
     assert.equal(f.sends(), 0);
   } finally { f.store.close(); }
+});
+
+test('就绪时也预防语音悬浮窗：按包限制、持久备份，关闭守护恢复原权限', async () => {
+  const f = await fixture();
+  try {
+    f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
+    assert.equal(f.voiceMode(), 'ignore');
+    assert.equal(f.control.status().voice_guard.state, 'protected');
+    assert.ok(f.calls.every(args => !args.includes('--uid') && !args.includes('force-stop')));
+    assert.equal(f.calls.some(args => args.includes('KEYCODE_WAKEUP')), false);
+    const count = f.calls.length;
+    f.advance(1000); f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
+    assert.equal(f.calls.length, count);
+    f.busy(true);
+    await assert.rejects(f.control.action({ action: 'host', enabled: false }), /尚未展示结束/);
+    assert.equal(f.voiceMode(), 'ignore');
+    f.busy(false);
+    await f.control.action({ action: 'host', enabled: false });
+    assert.equal(f.voiceMode(), 'allow');
+    assert.equal(f.control.status().voice_guard.state, 'restored');
+    assert.equal(f.store.setting('device_voice_overlay_backup:fixture'), null);
+    assert.equal(f.sends(), 0);
+  } finally { await f.control.close(); f.store.close(); }
+});
+
+test('权限限制必须读回验证；失败保留备份，进程恢复不会用受限值覆盖原权限', async () => {
+  const f = await fixture();
+  try {
+    f.voiceWritable(false);
+    await f.control.action({ action: 'host', enabled: true });
+    assert.equal(f.control.status().voice_guard.state, 'error');
+    assert.match(f.control.status().voice_guard.error!, /未生效/);
+    assert.deepEqual(f.store.setting('device_voice_overlay_backup:fixture'), { mode: 'allow' });
+    f.voiceWritable(true);
+    await f.control.action({ action: 'host', enabled: true });
+    assert.equal(f.voiceMode(), 'ignore');
+    // 模拟被终止后遗留的限制；新控制器复用持久备份，而不是将 ignore 备份为原权限。
+    const resumedCalls: string[][] = [];
+    const resumed = new DeviceControl(f.engine, { serial: 'fixture', run: async (_file, args) => {
+      resumedCalls.push(args);
+      return args.includes('get') ? 'SYSTEM_ALERT_WINDOW: ignore' : '';
+    } });
+    await resumed.action({ action: 'host', enabled: true });
+    assert.deepEqual(f.store.setting('device_voice_overlay_backup:fixture'), { mode: 'allow' });
+    // 验证进程关闭也尝试恢复，设备未执行时不能误删备份。
+    await resumed.close();
+    assert.ok(resumedCalls.some(args => args.includes('set') && args.at(-1) === 'allow'));
+    assert.deepEqual(f.store.setting('device_voice_overlay_backup:fixture'), { mode: 'allow' });
+  } finally { await f.control.close(); f.store.close(); }
 });
 
 test('设备控制API需后台鉴权，拒绝未知操作和不合法通知', async () => {

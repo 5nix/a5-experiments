@@ -30,6 +30,8 @@ summary 主要字段：`is_debug`、`current_title`、`answered_fields/total_fie
 
 `GET /api/admin/device` 另返回 `control`：守护开关 `enabled`、执行中 `working`、目标应用 `package_name`、最近操作及错误、独立通知 `debug_notifications`、控制审计 `audit`、`scrcpy.running/crop/error`。测试通知最长 500 字，固定展示 8500 ms；重复 request_id 相同正文只返回原记录，不再次发送，正文冲突返回 409。进行中会话或显示忙碌时拒绝独立通知，Mock 模式拒绝真机操作。恢复连接和唤醒只恢复控制链路，不补发任何消息。
 
+`control.voice_guard` 返回 `state`（pending / protected / restored / error）、`package_name`、`checked_at` 和 `error`。protected 仅说明指定语音包的悬浮窗 AppOps 已读回验证；不表示所有系统覆盖均被禁用。`host` 切换会应用或恢复该设置，显示保护期内返回 409。权限失败仍保存守护意图，具体错误在 `voice_guard.error` 展示，不能将 `enabled=true` 当作权限已生效。
+
 ## 被试 API
 
 `GET /api/participant/sessions/:id` 返回当前公开 view。读取 view 本身不会触发任何显示事件，也不会返回答案或评分。
