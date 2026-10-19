@@ -29,6 +29,7 @@ export class DeviceControl {
   private readonly voiceGuard: VoiceOverlayGuard;
   private diagnostics: { last_action: string | null; last_at: string | null; error: string | null } = { last_action: null, last_at: null, error: null };
 
+  /** 绑定设备、ADB 执行器和持久化记录；重启后的在途通知只标为待核查。 */
   constructor(engine: Engine, options: { serial?: string; adb?: string; packageName?: string; enabled?: boolean; run?: Runner; now?: () => number; scrcpy?: string } = {}) {
     this.engine = engine; this.serial = options.serial ?? ''; this.adb = options.adb ?? 'adb';
     this.packageName = options.packageName ?? 'link.ironip.a5.rayneo';
@@ -46,17 +47,25 @@ export class DeviceControl {
     engine.deviceControlBusy = () => this.working || this.hasLiveDebug();
     engine.deviceDebugEvent = event => this.receive(event);
   }
+  /** 只允许真实设备适配器和有效序列号执行主机操作。 */
   private supported() { return this.engine.adapter.getStatus().source === 'device' && /^[A-Za-z0-9_.:-]{1,128}$/.test(this.serial); }
+  /** 按通知编号保存幂等记录，不写入实验会话。 */
   private save(record: DebugRecord) { this.engine.store.db.prepare('INSERT INTO device_debug_requests VALUES (?,?) ON CONFLICT(request_id) DO UPDATE SET data=excluded.data').run(record.request_id, JSON.stringify(record)); }
+  /** 读取最近五十条独立通知，供互斥保护与后台展示使用。 */
   private records(): DebugRecord[] { return (this.engine.store.db.prepare('SELECT data FROM device_debug_requests ORDER BY rowid DESC LIMIT 50').all() as { data: string }[]).map(row => JSON.parse(row.data)); }
+  /** 记录设备操作结果，保留时间和诊断供后台核查。 */
   private audit(action: string, detail: unknown) { this.engine.store.db.prepare('INSERT INTO admin_audit(data) VALUES (?)').run(JSON.stringify({ event_type: 'device_control', action, timestamp_iso: new Date(this.now()).toISOString(), detail })); }
+  /** 检查是否存在禁止独立测试通知的活跃实验会话。 */
   private activeSession() { return this.engine.store.ids().some(id => this.engine.session(id).state.status === 'active'); }
+  /** 在通知结束证据到达或安全窗口过期前保护显示端。 */
   private hasLiveDebug() { return this.records().some(record => !['failed', 'hidden'].includes(record.status) && this.now() - Date.parse(record.created_at) < 15000); }
+  /** 合并设备忙碌、调试通知和实验消息的展示保护窗口。 */
   private displayProtected() {
     if (this.engine.adapter.getStatus().busy || this.hasLiveDebug()) return true;
     return this.engine.store.ids().some(id => this.engine.store.interventions(id).some(message =>
       ['scheduled', 'send_requested'].includes(message.status) || !!message.t_send && this.now() - Date.parse(message.t_send) < 11000 && !message.device_events?.some(event => event.kind === 'hidden')));
   }
+  /** 返回后台设备控制快照，包括守护诊断、独立通知与审计。 */
   status() {
     return { supported: this.supported(), enabled: this.supported() && this.enabled, working: this.working,
       package_name: this.packageName, ...this.diagnostics, active_session: this.activeSession(), voice_guard: this.voiceGuard.status(),
@@ -64,6 +73,7 @@ export class DeviceControl {
       debug_allowed: this.supported() && !this.activeSession() && !this.working && !this.hasLiveDebug() && !this.engine.adapter.getStatus().busy,
       debug_notifications: this.records(), audit: (this.engine.store.db.prepare("SELECT data FROM admin_audit WHERE json_extract(data,'$.event_type')='device_control' ORDER BY seq DESC LIMIT 30").all() as { data: string }[]).map(row => JSON.parse(row.data)) };
   }
+  /** 消费绑定设备的独立通知事件，按事件编号去重并保留终态。 */
   private receive(event: GlassesEvent) {
     const row = this.engine.store.db.prepare('SELECT data FROM device_debug_requests WHERE request_id=?').get(event.request_id) as { data: string } | undefined;
     if (!row) return false;
@@ -76,6 +86,7 @@ export class DeviceControl {
     else if (record.status !== 'failed') record.status = record.events.some(item => item.kind === 'hidden') ? 'hidden' : record.events.some(item => item.kind === 'drawn') ? 'drawn' : 'accepted';
     this.save(record); return true;
   }
+  /** 校验允许的操作并串行执行，关闭或展示保护期间拒绝冲突操作。 */
   async action(input: { action: string; enabled?: boolean; text?: string; request_id?: string }) {
     if (this.closed) throw new HttpError(409, '显示控制正在关闭。');
     if (!this.supported()) throw new HttpError(409, '当前为 Mock 模式，不能执行真机控制或发送眼镜通知。');
@@ -90,6 +101,7 @@ export class DeviceControl {
     this.task = work;
     try { return await work; } finally { this.working = false; }
   }
+  /** 执行一次控制操作；失败写入诊断与审计并转换为 HTTP 错误。 */
   private async perform(input: { action: string; enabled?: boolean; text?: string; request_id?: string }) {
     this.diagnostics = { last_action: input.action, last_at: new Date(this.now()).toISOString(), error: null };
     try {
@@ -105,6 +117,8 @@ export class DeviceControl {
         if (this.displayProtected()) throw new HttpError(409, '眼镜消息尚未展示结束，暂不能重建连接或切换前台。');
         if (input.action === 'reconnect') await this.engine.adapter.reconnect?.();
         else await this.recover();
+        const after = this.engine.adapter.getStatus();
+        if (!this.closed && !after.connected) throw new Error(`显示端连接未恢复：${after.error ?? 'device_disconnected'}`);
       }
       this.audit(input.action, { ok: true, request_id: notification?.request_id });
       return { notification, adapter: this.engine.adapter.getStatus(), control: this.status() };
@@ -115,6 +129,7 @@ export class DeviceControl {
       throw new HttpError(503, this.diagnostics.error);
     }
   }
+  /** 为绑定设备打开左眼镜像，复用仍在运行的 scrcpy 进程。 */
   private async openMirror() {
     if (this.mirror && this.mirror.exitCode === null) return;
     this.mirrorError = null;
@@ -129,6 +144,7 @@ export class DeviceControl {
       child.once('error', () => { this.mirror = undefined; this.mirrorError = '未找到或无法启动 scrcpy，请配置 A5_SCRCPY_PATH。'; reject(new HttpError(503, this.mirrorError)); });
     });
   }
+  /** 核对 ADB、恢复前台并探测显示端；各异步步骤之间检查关闭状态。 */
   private async recover() {
     let state: string;
     try { state = (await this.run(this.adb, ['-s', this.serial, 'get-state'])).trim(); }
@@ -153,6 +169,7 @@ export class DeviceControl {
     if (this.closed) return;
     await this.engine.adapter.probe?.();
   }
+  /** 以请求编号去重发送独立通知，未知结果保留记录且不自动重发。 */
   private async notify(input: { text?: string; request_id?: string }) {
     if (typeof input.text !== 'string' || !input.text.trim() || input.text.length > 500) throw new HttpError(422, '请填写 1—500 字的测试通知。');
     if (typeof input.request_id !== 'string' || !/^[a-f0-9-]{36}$/.test(input.request_id)) throw new HttpError(422, '测试通知必须带有效的 request_id。');
@@ -179,7 +196,19 @@ export class DeviceControl {
       record.status = 'unknown'; record.error = '测试通知发送结果待核查，不会自动重发。'; this.save(record); return record;
     }
   }
+  /** 隔离定时入口的同步异常；即使数据库不可读也让服务继续处理实验。 */
   tick() {
+    try {
+      this.tickGuard();
+    } catch (error) {
+      // 数据库本身可能不可读，不能在此依赖数据库审计来处理异常。
+      this.diagnostics = { last_action: 'tick', last_at: new Date(this.now()).toISOString(),
+        error: (error instanceof Error ? error.message : String(error)).replaceAll(this.serial, '[已绑定设备]') };
+      console.error('设备控制定时任务失败：', this.diagnostics.error);
+    }
+  }
+  /** 按展示保护和限频规则触发权限核对或前台恢复，不重放消息。 */
+  private tickGuard() {
     if (this.closed || !this.supported() || this.working || this.displayProtected()) return;
     const voiceDue = this.voiceGuard.due(this.enabled);
     if (!this.enabled && !voiceDue) return;
@@ -194,6 +223,7 @@ export class DeviceControl {
     this.lastAttempt = this.now();
     void this.action({ action: 'open' }).catch(() => { /* 具体错误已写入控制诊断与审计，下一次限频恢复。 */ });
   }
+  /** 等待在途操作并关闭镜像；安全时恢复原权限，否则保留恢复备份。 */
   async close() {
     this.closed = true; await this.task?.catch(() => {}); this.mirror?.kill();
     // 正常退出恢复原设置；正在展示时保留备份，下一次关闭守护后安全恢复。

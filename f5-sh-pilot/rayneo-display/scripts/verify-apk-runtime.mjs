@@ -7,6 +7,7 @@ const apk = process.argv[2];
 if (!apk) throw new Error('请提供 APK 路径。');
 const files = unzipSync(new Uint8Array(await readFile(resolve(apk))));
 const dex = Object.entries(files).filter(([name]) => /^classes\d*\.dex$/.test(name)).map(([, data]) => Buffer.from(data));
+/** 读取 DEX 类定义表，避免把仅出现在字符串池中的类误判为已打包。 */
 function definedClasses(data) {
   if (data.toString('ascii', 0, 4) !== 'dex\n') throw new Error('未知 DEX 格式');
   const strings = data.readUInt32LE(60);

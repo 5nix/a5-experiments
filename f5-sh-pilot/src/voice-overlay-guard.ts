@@ -13,14 +13,21 @@ export class VoiceOverlayGuard {
   private checkedAt = -Infinity;
   private value = { state: 'pending', package_name: 'com.rayneo.aispeech', checked_at: null as string | null, error: null as string | null };
 
+  /** 绑定设备级权限备份、ADB 执行器和审计回调。 */
   constructor(store: Store, options: { serial: string; adb: string; run: Runner; now: () => number; audit: (action: string, detail: unknown) => void }) {
     this.store = store; this.serial = options.serial; this.adb = options.adb; this.run = options.run; this.now = options.now; this.audit = options.audit;
   }
+  /** 将权限备份按设备序列号隔离，防止跨设备恢复。 */
   private key() { return `device_voice_overlay_backup:${this.serial}`; }
+  /** 读取持久化的原权限；解析失败交给调用边界处理。 */
   private backup() { return this.store.setting<{ mode: string } | null>(this.key()); }
+  /** 检查是否仍有需要恢复的原权限。 */
   hasBackup() { return !!this.backup(); }
+  /** 开启时每三十秒核对，关闭后持续尝试恢复尚存的备份。 */
   due(enabled: boolean) { return enabled ? this.now() - this.checkedAt >= 30000 : this.hasBackup(); }
+  /** 返回最近一次权限核对的结果快照。 */
   status() { return { ...this.value }; }
+  /** 读取目标包的悬浮窗 AppOps 模式，无法确认时拒绝猜测。 */
   private async mode() {
     const output = await this.run(this.adb, ['-s', this.serial, 'shell', 'cmd', 'appops', 'get', '--user', '0', this.value.package_name, 'SYSTEM_ALERT_WINDOW']);
     const match = /(?:SYSTEM_ALERT_WINDOW|android:system_alert_window):\s*(allow|ignore|deny|default|foreground)\b/.exec(output);
@@ -28,6 +35,7 @@ export class VoiceOverlayGuard {
     if (/No operations\./.test(output)) return 'default';
     throw new Error('无法读取语音助手悬浮窗权限；未修改系统配置。');
   }
+  /** 先备份再设置并读回确认；恢复成功后才清除原权限备份。 */
   async sync(enabled: boolean) {
     this.checkedAt = this.now(); this.value.checked_at = new Date(this.now()).toISOString();
     try {

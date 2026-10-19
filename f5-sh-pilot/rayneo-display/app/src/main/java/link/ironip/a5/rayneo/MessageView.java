@@ -26,10 +26,12 @@ public final class MessageView extends View {
     private float preparedLineHeight, visibleLineHeight;
     private final Paint mask = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Runnable drawn;
+    /** 初始化双眼共用的固定显示样式与遮罩。 */
     public MessageView(Context context, AttributeSet attrs) {
         super(context, attrs); setBackgroundColor(Color.BLACK);
         mask.setColor(Color.WHITE); mask.setAlpha(Math.round(255 * MASK_OPACITY));
     }
+    /** 按固定字级排版全文；画布或行高不足时拒绝展示，不缩字或截断。 */
     public boolean prepare(String text) {
         prepared = null;
         if (getWidth() < TEXT_WIDTH + 2 * PADDING || getHeight() <= 2 * PADDING) return false;
@@ -52,6 +54,7 @@ public final class MessageView extends View {
         }
         prepared = candidate; preparedLineHeight = lineHeight; return true;
     }
+    /** 返回最近成功准备的排版参数，供设备回执与离屏验收核对。 */
     public org.json.JSONObject metrics() throws org.json.JSONException {
         return new org.json.JSONObject().put("canvas_width_px", getWidth()).put("canvas_height_px", getHeight())
             .put("text_size_px", prepared.getPaint().getTextSize()).put("line_count", prepared.getLineCount())
@@ -64,8 +67,10 @@ public final class MessageView extends View {
             .put("mask_opacity", MASK_OPACITY).put("mask_alpha_8bit", mask.getAlpha())
             .put("card_width_px", TEXT_WIDTH + 2 * PADDING).put("card_height_px", prepared.getLineCount() * preparedLineHeight + 2 * PADDING);
     }
+    /** 展示已准备的排版，在下一次绘制后回调。 */
     public void show(Runnable callback) { visible = prepared; visibleLineHeight = preparedLineHeight; drawn = callback; invalidate(); }
     public void hide(Runnable callback) { visible = null; drawn = callback; invalidate(); }
+    /** 绘制固定遮罩和逐行基线，提交绘制后再通知调用方。 */
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (visible != null) {

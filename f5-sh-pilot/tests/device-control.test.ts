@@ -11,11 +11,11 @@ import type { GlassesAdapter, GlassesEvent, GlassesRequest, ParticipantConfig } 
 
 async function fixture() {
   const store = new Store(':memory:');
-  let ready = true, busy = false, sends = 0, clock = 20000, overlay = false, voiceMode = 'allow', voiceWritable = true;
+  let connected = true, ready = true, busy = false, sends = 0, clock = 20000, overlay = false, voiceMode = 'allow', voiceWritable = true;
   const calls: string[][] = [];
   const requests: GlassesRequest[] = [];
   const adapter: GlassesAdapter = {
-    getStatus: () => ({ source: 'device', connected: true, ready, busy, device_id: 'adb:fixture' }),
+    getStatus: () => ({ source: 'device', connected, ready, busy, device_id: 'adb:fixture', error: connected ? undefined : 'fixture_disconnected' }),
     probe: async () => {}, reconnect: async () => { calls.push(['reconnect']); },
     send: async request => {
       sends++; requests.push(request);
@@ -33,7 +33,7 @@ async function fixture() {
       return args.includes('get-state') ? 'device\n' : args.includes('dumpsys') && overlay ? 'mCurrentFocus=Window com.ffalconxr.mercury.launcher\nmFocusedApp=link.ironip.a5.rayneo.localfix' : 'Starting';
     } });
   return { store, engine, control, requests, calls, sends: () => sends,
-    ready: (value: boolean) => { ready = value; }, busy: (value: boolean) => { busy = value; }, overlay: (value: boolean) => { overlay = value; }, advance: (ms: number) => { clock += ms; },
+    connected: (value: boolean) => { connected = value; }, ready: (value: boolean) => { ready = value; }, busy: (value: boolean) => { busy = value; }, overlay: (value: boolean) => { overlay = value; }, advance: (ms: number) => { clock += ms; },
     voiceMode: () => voiceMode, voiceWritable: (value: boolean) => { voiceWritable = value; } };
 }
 
@@ -170,5 +170,49 @@ test('只收起覆盖显示应用的系统面板；正常显示时不发送返�
     await f.control.action({ action: 'open' });
     assert.equal(f.calls.filter(args => args.includes('android.intent.action.CLOSE_SYSTEM_DIALOGS')).length, 1);
     assert.equal(f.calls.some(args => args.includes('KEYCODE_BACK') || args.includes('force-stop')), false);
+  } finally { await f.control.close(); f.store.close(); }
+});
+
+test('重连或唤醒后仍断线时 API 返回503，诊断与审计记录失败；恢复后才记录成功', async () => {
+  const f = await fixture();
+  const server = createApp(f.engine, 'secret', '', f.control);
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const port = (server.address() as { port: number }).port;
+  try {
+    for (const action of ['reconnect', 'open']) {
+      f.connected(false);
+      const post = () => fetch(`http://127.0.0.1:${port}/api/admin/device/control`, { method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer secret' }, body: JSON.stringify({ action }) });
+      const response = await post();
+      assert.equal(response.status, 503);
+      assert.match(await response.text(), /显示端连接未恢复/);
+      assert.match(f.control.status().error!, /\[已绑定设备\]_disconnected/);
+      assert.equal(f.control.status().error!.includes('fixture'), false);
+      const failed = f.control.status().audit[0];
+      assert.equal(failed.action, action);
+      assert.equal(failed.detail.ok, false);
+      f.connected(true);
+      assert.equal((await post()).status, 200);
+      assert.equal(f.control.status().error, null);
+      assert.equal(f.control.status().audit[0].detail.ok, true);
+    }
+  } finally { await new Promise<void>(resolve => server.close(() => resolve())); await f.control.close(); f.store.close(); }
+});
+
+test('守护关闭时备份解析异常不会逃出定时入口，修复数据后仍可继续控制', async t => {
+  const f = await fixture();
+  const log = t.mock.method(console, 'error', () => {});
+  try {
+    await f.control.action({ action: 'host', enabled: false });
+    f.store.db.prepare('INSERT INTO settings VALUES (?,?)').run('device_voice_overlay_backup:fixture', '{invalid');
+    assert.doesNotThrow(() => f.control.tick());
+    assert.equal(log.mock.callCount(), 1);
+    assert.equal(f.control.status().last_action, 'tick');
+    assert.ok(f.control.status().error);
+    f.store.setSetting('device_voice_overlay_backup:fixture', null);
+    assert.doesNotThrow(() => f.control.tick());
+    assert.equal(log.mock.callCount(), 1);
+    await f.control.action({ action: 'probe' });
+    assert.equal(f.control.status().error, null);
   } finally { await f.control.close(); f.store.close(); }
 });

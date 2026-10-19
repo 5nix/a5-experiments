@@ -207,6 +207,7 @@ function renderDevice() {
 }
 
 const DEBUG_STATUS = { sending: '发送中', accepted: '请求已接受，等待绘制证据', drawn: '双眼已绘制，正在展示', hidden: '双眼已绘制并已消失', failed: '显示失败', unknown: '结果待核查', unacknowledged: '未收到接受回执' };
+/** 根据后台快照更新操作可用性、守护状态和独立通知记录。 */
 function renderDeviceControl() {
   const control = deviceControl;
   const supported = !!control?.supported;
@@ -229,10 +230,12 @@ function renderDeviceControl() {
     ...(control?.audit ?? []).slice(0, 5).map(record => el('p', { class: 'hint', text: `${when(record.timestamp_iso, fmtFull)} · ${record.action} · ${record.detail?.error ?? (record.detail?.ok === false ? '失败' : '已记录')}` })),
   ]);
 }
+/** 获取设备和控制状态，并同时刷新两处显示。 */
 async function loadDeviceControl() {
   const data = await api('device'); adapter = data.adapter; deviceControl = data.control;
   renderDevice(); renderDeviceControl();
 }
+/** 操作期间禁用重复提交，成功后获取后台的最新设备状态。 */
 async function deviceAction(input) {
   deviceWorking = true; renderDeviceControl();
   try { const result = await api('device/control', input); await loadDeviceControl(); return result; }
@@ -717,6 +720,7 @@ async function loadConfig() {
   config = data.config; debugParticipant = data.debug_participant; adapter = data.adapter; prompts = data.interview_prompts ?? [];
   renderDevice(); renderParticipantOptions(true); renderPrompts(); renderSetup();
 }
+/** 同步会话列表与当前视图；设置页同时更新设备控制状态。 */
 async function refresh() {
   const data = await api('sessions');
   adapter = data.adapter; sessions = data.sessions; deletedSessions = data.deleted_sessions ?? [];

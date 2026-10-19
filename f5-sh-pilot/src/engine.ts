@@ -92,6 +92,7 @@ export class Engine {
     };
     this.store.event(event); return event;
   }
+  /** 在设备空闲且编号没有活跃会话时，固定材料快照并创建实验会话。 */
   create(participantId: string, metadata: Record<string, unknown> = {}) {
     if (this.deviceControlBusy?.()) throw new HttpError(409, '眼镜正在执行控制或测试通知，请等待完成后再创建会话。');
     const participant = participantId === '000' ? this.debugParticipant() : this.config().participants.find(p => p.participant_id === participantId);

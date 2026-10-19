@@ -30,6 +30,7 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
     }
     private MessageView left() { return (MessageView) getMBindingPair().getLeft().getRoot(); }
     private MessageView right() { return (MessageView) getMBindingPair().getRight().getRoot(); }
+    /** 处理本地控制协议；状态包含安装包身份，展示请求先经校验与永久去重。 */
     private JSONObject command(JSONObject envelope) throws Exception {
         String command = envelope.getString("command"); JSONObject payload = envelope.getJSONObject("payload");
         if (command.equals("status")) return new JSONObject().put("ready", foreground && !fault && hasWindowFocus() && left().getWidth() > 0 && right().getWidth() > 0)

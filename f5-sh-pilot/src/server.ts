@@ -42,6 +42,7 @@ server.listen(port, '127.0.0.1', () => {
   console.log(mode === 'mock' ? '当前为 Mock 预演模式，不能用于真实消息呈现实验。' : `当前为雷鸟 USB 模式，设备：${adapter.getStatus().device_id}；硬件呈现仍需现场验收。`);
 });
 let stopping = false;
+/** 先停止定时任务并等待设备控制退出，再正常关闭连接与数据库。 */
 const shutdown = () => {
   if (stopping) return; stopping = true; clearInterval(ticker);
   const closing = deviceControl.close().then(() => adapter.close?.());

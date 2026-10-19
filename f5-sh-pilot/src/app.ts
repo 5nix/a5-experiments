@@ -17,6 +17,7 @@ export async function body(request: IncomingMessage): Promise<any> {
   catch { throw new HttpError(400, 'JSON格式无效。'); }
 }
 const bearer = (request: IncomingMessage) => request.headers.authorization?.replace(/^Bearer /, '') ?? '';
+/** 建立实验与后台 HTTP 路由；设备控制仅接受后台鉴权请求。 */
 export function createApp(engine: Engine, adminKey: string, exportRoot: string, deviceControl?: DeviceControl) {
   const json = (response: ServerResponse, value: unknown, status = 200) => {
     response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); response.end(JSON.stringify(value));
