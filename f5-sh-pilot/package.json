@@ -11,8 +11,7 @@
       "entry": "src/server.ts",
       "port": 5173,
       "health_path": "/api/health",
-      "admin_path": "/admin",
-      "admin_key_file": "runtime/admin-key"
+      "admin_path": "/admin"
     }
   },
   "scripts": {
@@ -24,6 +23,7 @@
     "test": "node --test tests/*.test.ts"
   },
   "dependencies": {
-    "fflate": "^0.8.3"
+    "fflate": "^0.8.3",
+    "qrcode-generator": "^2.0.4"
   }
 }

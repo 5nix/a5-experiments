@@ -21,6 +21,20 @@
   </nav>
 </header>
 
+        <details class="card network-entry" id="network-card" open>
+          <summary id="network-title">手机扫码进入主试后台</summary>
+          <div class="network-content"><div class="network-fields">
+          <p class="hint">手机连接电脑热点后，扫码打开主试后台。电脑上选好会话，再点击“在本机打开被试页面”。</p>
+          <label class="field-label" for="share-address">其他设备访问地址</label>
+          <select id="share-address"></select>
+          <p id="network-hint" class="hint" aria-live="polite"></p>
+          <label class="field-label" for="network-url">主试后台（直接进入）</label>
+          <input id="network-url" readonly>
+          <div class="action-row"><button id="copy-network" type="button" class="btn primary">复制主试地址</button><button id="refresh-network" type="button" class="btn">刷新网卡地址</button></div>
+          <details class="disclosure"><summary>其他设备打不开？</summary><ol><li>确认已连接这台电脑的热点或同一局域网。</li><li>网卡较多时切换上方地址后重试；不要在另一设备输入 127.0.0.1。</li><li>在 Windows 或 macOS 防火墙提示中允许 Node.js 接收入站连接。切换网络后点击刷新地址。</li></ol><p class="hint">电脑本机能打开，不代表另一设备已连通；请以另一设备实际打开页面为准。</p></details>
+          </div><img id="network-qr" class="connection-qr" alt="主试后台二维码"></div>
+        </details>
+
 <main id="main" class="layout">
   <!-- 左栏：新建会话 + 会话列表 + 已删除会话 -->
   <aside class="pane-list" aria-label="会话列表">
@@ -63,7 +77,7 @@
       <p class="hint">左侧列表中选择会话后，这里显示实时状态、干预操作、被试入口和访谈备注。</p>
       <ol class="flow">
         <li><strong>开场前</strong><span>在“准备与检查”中确认眼镜状态、材料与被试配置。</span></li>
-        <li><strong>创建会话</strong><span>选择被试编号，创建后复制或打开被试入口。</span></li>
+        <li><strong>创建会话</strong><span>选择被试编号，创建后在本机打开被试页面。</span></li>
         <li><strong>实验进行中</strong><span>查看当前页面、作答进度和消息状态，必要时暂停或跳过休息。</span></li>
         <li><strong>访谈</strong><span>结束后在会话中记录访谈与观察。</span></li>
         <li><strong>导出</strong><span>导出当前会话，或导出全部会话。</span></li>
@@ -115,7 +129,7 @@
                 <button type="submit" value="skip_break" class="btn">跳过休息</button>
               </div>
               <div id="admin-debug" class="debug-box" hidden>
-                <label for="admin-debug-target" class="field-label">调试跳转（仅 000）</label>
+                <label for="admin-debug-target" class="field-label">题目跳转调试（主试）</label>
                 <div class="create-row"><select id="admin-debug-target"></select><button type="submit" value="debug_jump" class="btn">跳转</button></div>
               </div>
               <div id="danger" class="danger-zone">
@@ -157,7 +171,9 @@
             <div id="access-link" hidden>
               <label for="access-url" class="field-label">被试链接（仅限本次会话）</label>
               <input id="access-url" readonly>
-              <div class="action-row"><button id="copy-link" type="button" class="btn primary">复制链接</button><a id="open-link" class="btn" target="_blank" rel="noopener noreferrer" href="/experiment">在新窗口打开</a></div>
+              <img id="access-qr" class="connection-qr" alt="当前被试会话二维码">
+              <p id="participant-connection" class="hint" aria-live="polite"></p>
+              <div class="action-row"><button id="copy-link" type="button" class="btn primary">复制链接</button><a id="open-link" class="btn" target="_blank" rel="noopener noreferrer" href="/experiment">在本机打开被试页面</a></div>
             </div>
             <p id="access-empty" class="hint" hidden>本标签页没有保存此会话的入口。如需重新打开被试页面，请生成恢复入口。</p>
             <p id="access-ended" class="hint" hidden>会话已结束，被试页面只会显示结束页。</p>
@@ -189,6 +205,7 @@
     <section id="setup" class="setup" hidden aria-labelledby="setup-title">
       <header class="setup-head"><h2 id="setup-title" tabindex="-1">准备与检查</h2><p class="hint">检查设备、发送测试通知，再创建实验会话。</p></header>
       <div class="setup-grid">
+
         <section class="card" aria-labelledby="device-title">
           <h3 id="device-title" class="card-title">眼镜与显示端</h3>
           <p id="device-detail" class="device-detail"></p>
@@ -223,6 +240,13 @@
           <div class="card-head"><h3 id="config-title" class="card-title">被试预分配配置</h3><span id="config-count" class="count-pill">0</span></div>
           <div class="table-scroll"><table class="data-table config-table"><thead id="config-head"></thead><tbody id="config-body"></tbody></table></div>
           <p class="hint">N＝通知型消息，A＝AI 主动服务型消息；T0＝补充资料首次展示时，T1＝第2单元首次展示时；无消息＝本组不发送消息。000 调试测试者由系统提供，仅用于预演。</p>
+          <details class="disclosure"><summary>JSON 格式与导入说明</summary>
+            <p>先下载当前配置作为模板。顶层保留 experiment_id 为 f5-sh-pilot、schema_version 为 1.0，participants 数组内填写完整被试名单。</p>
+            <p>每名被试填写字符串 participant_id（如 "001"，不可重复或使用 "000"）、version_label 和 stages。每人必须恰好包含 SH01—SH05 五组；数组顺序不改变任务呈现顺序。</p>
+            <p>每组的 condition 为 N-T0、N-T1、A-T0、A-T1 或 NONE。message_id 的 N/A 与条件一致，数字与任务组一致（如 SH03 的 A-T0 配 A03）；NONE 必须填 null。</p>
+            <p>导入会替换整份预分配，新建会话使用新配置，已有会话保留原快照。保留 001 后，系统会自动派生 000；source_ref、source_value、source_cell 可保留用于追溯。</p>
+          </details>
+          <div class="action-row"><button id="config-download" type="button" class="btn">下载当前配置（JSON）</button></div>
           <form id="import" class="import-form">
             <label for="config" class="field-label">导入新的预分配配置（JSON）</label>
             <div class="create-row"><input id="config" type="file" accept=".json,application/json" required><button type="submit" class="btn">校验并导入</button></div>

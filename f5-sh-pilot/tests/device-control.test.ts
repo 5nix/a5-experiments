@@ -152,15 +152,15 @@ test('权限限制必须读回验证；失败保留备份，进程恢复不会�
   } finally { await f.control.close(); f.store.close(); }
 });
 
-test('设备控制API需后台鉴权，拒绝未知操作和不合法通知', async () => {
+test('设备控制API直接进入，拒绝未知操作和不合法通知', async () => {
   const f = await fixture();
-  const server = createApp(f.engine, 'secret', '', f.control);
+  const server = createApp(f.engine, '', f.control);
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const port = (server.address() as { port: number }).port;
   try {
     /** 向临时服务器发送真实 HTTP 请求，覆盖鉴权和响应码。 */
     const post = (body: object, authorized = true) => fetch(`http://127.0.0.1:${port}/api/admin/device/control`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(authorized ? { Authorization: 'Bearer secret' } : {}) }, body: JSON.stringify(body) });
-    assert.equal((await post({ action: 'open' }, false)).status, 401);
+    assert.equal((await post({ action: 'open' }, false)).status, 200);
     assert.equal((await post({ action: 'shell', text: 'arbitrary' })).status, 422);
     assert.equal((await post({ action: 'notify', request_id: randomUUID(), text: '' })).status, 422);
     assert.equal((await post({ action: 'host', enabled: false })).status, 200);
@@ -182,7 +182,7 @@ test('只收起覆盖显示应用的系统面板；正常显示时不发送返�
 
 test('重连或唤醒后仍断线时 API 返回503，诊断与审计记录失败；恢复后才记录成功', async () => {
   const f = await fixture();
-  const server = createApp(f.engine, 'secret', '', f.control);
+  const server = createApp(f.engine, '', f.control);
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const port = (server.address() as { port: number }).port;
   try {

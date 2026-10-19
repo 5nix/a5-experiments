@@ -145,7 +145,6 @@ export class Engine {
   draftKey(s: Session) { return `${s.state.stage}:${s.state.phase}:${s.state.unit}`; }
   transition(s: Session, phase: Phase) { s.state.phase = phase; s.state.page_token = randomUUID(); }
   debugTargets(s: Session) {
-    if (!this.isDebug(s)) return [];
     const targets: { id: string; label: string; phase: Phase; stage: number; unit: number }[] = [{ id: 'INTRO', label: '情景导入', phase: 'INTRO', stage: 0, unit: 0 }];
     for (const [index, stage] of s.snapshot.content.stages.entries()) {
       targets.push({ id: `${stage.stage_id}_CARD`, label: `${stage.stage_id} 说明卡`, phase: 'CARD', stage: index, unit: 0 });
@@ -160,10 +159,10 @@ export class Engine {
     return targets;
   }
   private jump(s: Session, targetId: unknown, actor: 'admin' | 'participant', reason: string) {
-    if (!this.isDebug(s)) throw new HttpError(403, '只有调试测试者000可以自由跳转。');
+    if (actor === 'participant' && !this.isDebug(s)) throw new HttpError(403, '只有调试测试者000可以自由跳转。');
     const target = this.debugTargets(s).find(t => t.id === targetId);
     if (!target) throw new HttpError(422, '调试跳转目标无效。');
-    this.log(s, 'debug_jump', { from_phase: s.state.phase, from_stage: s.state.stage, from_unit: s.state.unit, target: target.id, actor, reason, is_debug: true });
+    this.log(s, 'debug_jump', { from_phase: s.state.phase, from_stage: s.state.stage, from_unit: s.state.unit, target: target.id, actor, reason, is_debug: this.isDebug(s) });
     s.state.stage = target.stage; s.state.unit = target.unit; s.state.paused_at_ms = null;
     s.state.status = target.phase === 'COMPLETED' ? 'completed' : 'active';
     s.state.ended_at = target.phase === 'COMPLETED' ? this.iso() : null;
@@ -205,7 +204,7 @@ export class Engine {
       title: '', paragraphs: [] as string[], fields: [] as Field[], assets: [] as { id: string; label: string }[], answer: {} as Record<string, unknown>,
       reveal: null as null | { button_label: string; open: boolean; observed: boolean; paragraphs: string[]; assets: { id: string; label: string }[]; tables: DataTable[] },
       tables: [] as DataTable[], scratchpad: null as null | { label: string; placeholder: string; max_length: number; text: string },
-      is_debug: this.isDebug(s), debug_targets: this.debugTargets(s).map(t => ({ id: t.id, label: t.label })),
+      is_debug: this.isDebug(s), debug_targets: this.isDebug(s) ? this.debugTargets(s).map(t => ({ id: t.id, label: t.label })) : [],
       remaining_ms: 0, can_continue: true, can_skip_break: false,
       // 当前任务组说明卡中的情景时间，被试端在任务栏固定显示；旧快照无此字段时为null。
       scene_time: state.phase === 'INTRO' ? null : content.stages[state.stage]?.scene_time ?? null };
@@ -452,7 +451,7 @@ export class Engine {
       }
       if (action === 'debug_jump') {
         this.jump(s, target, 'admin', reason);
-        this.log(s, 'admin_intervention', { action, reason, target, is_debug: true }); this.store.save(s); return;
+        this.log(s, 'admin_intervention', { action, reason, target, is_debug: this.isDebug(s) }); this.store.save(s); return;
       }
       if (s.state.status !== 'active') throw new HttpError(409, '会话已结束。');
       const elapsed = this.elapsed(s);
@@ -485,7 +484,7 @@ export class Engine {
       if (s.state.phase === 'BREAK' && s.state.paused_at_ms === null && s.snapshot.content.allow_break_skip !== false) actions.push('skip_break');
     }
     else actions.push('delete');
-    if (this.isDebug(s) && !s.state.deleted) actions.push('debug_jump');
+    if (!s.state.deleted) actions.push('debug_jump');
     const message = this.store.interventions(id).find(m => m.stage_id === this.assignment(s).stage_id);
     return { session_id: id, participant_id: s.snapshot.participant.participant_id, version_label: s.snapshot.participant.version_label,
       is_debug: this.isDebug(s), copied_from: s.snapshot.participant.copied_from ?? null, current_title: this.view(id).title,

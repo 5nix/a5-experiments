@@ -15,8 +15,7 @@
       "entry": "src/server.ts",
       "port": 5173,
       "health_path": "/api/health",
-      "admin_path": "/admin",
-      "admin_key_file": "runtime/admin-key"
+      "admin_path": "/admin"
     }
   }
 }
@@ -26,10 +25,10 @@ entry相对于实验目录，由当前Node进程的同版本可执行文件运�
 
 服务入口需遵守：
 
-- 从PORT读取端口，绑定本机127.0.0.1。启动器支持 `start 其他端口`，不同实验可同时使用不同端口。
+- 从PORT读取端口；SH 默认绑定0.0.0.0供热点设备访问，健康检查与管理通道使用本机127.0.0.1。启动器支持 `start 其他端口`，不同实验可同时使用不同端口。
 - 健康接口返回 `{ "ok": true, "experiment_id": "与实验目录名相同" }`；健康检查通过后才显示“运行中”。
 - 使用A5_RUNTIME_DIR、A5_EXPORT_DIR保存运行数据与导出。管理器将其分别设为所选实验的runtime和exports，不与其他实验混用。
-- 如配置admin_key_file，打开后台时读取该文件并以 `#key=...` 附到URL；未配置则只打开后台地址。文件路径必须在实验目录内。
+- SH 直接打开 `/admin`；其他实验如配置admin_key_file，打开后台时读取该文件并以 `#key=...` 附到URL；未配置则只打开后台地址。文件路径必须在实验目录内。
 - 监听Node进程IPC消息 `{ "type": "a5:shutdown" }`，收到后停止接受请求、保存并关闭数据，最后调用 `process.disconnect?.()`。管理进程意外断开时也应正常关闭。SH实验入口已实现此约定。
 - 8.5秒眼镜计时等实验规则仍由实验自身负责，公共启动器不介入。
 

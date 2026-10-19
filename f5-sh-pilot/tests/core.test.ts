@@ -182,17 +182,17 @@ test('暂停时拒绝作答，休息暂停不计时；停止会话留下人工�
   } finally { await f.engine.settle(); f.store.close(); }
 });
 
-test('HTTP角色隔离、输入错误、图片权限、配置导入和恢复入口', async () => {
+test('后台直接进入、被试会话绑定、输入错误、图片权限、配置导入和恢复入口', async () => {
   const f = fixture(); const directory = await mkdtemp(join(tmpdir(), 'a5-http-'));
-  const server = createApp(f.engine, 'test-admin', directory); await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const server = createApp(f.engine, directory); await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const address = server.address() as { port: number }; const base = `http://127.0.0.1:${address.port}`;
   const auth = { Authorization: 'Bearer test-admin', 'Content-Type': 'application/json' };
   const participantAuth = { Authorization: `Bearer ${f.created.token}`, 'Content-Type': 'application/json' };
   try {
     assert.equal((await fetch(base + '/admin')).status, 200);
     assert.equal((await fetch(base + '/experiment')).status, 200);
-    assert.equal((await fetch(base + '/api/admin/config')).status, 401);
-    assert.equal((await fetch(base + '/api/admin/config', { headers: participantAuth })).status, 401);
+    assert.equal((await fetch(base + '/api/admin/config')).status, 200);
+    assert.equal((await fetch(base + '/api/admin/config', { headers: participantAuth })).status, 200);
     const path = `/api/participant/sessions/${f.created.session_id}`;
     assert.equal((await fetch(base + path)).status, 401);
     const response = await fetch(base + path, { headers: participantAuth }); assert.equal(response.status, 200);

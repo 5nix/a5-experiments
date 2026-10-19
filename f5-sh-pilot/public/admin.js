@@ -1,10 +1,10 @@
 // 实验员后台。原生 ES module，无构建步骤；遵守 CSP（无 inline 脚本/样式字符串、无 eval）。
-// 后台凭据只保存在 sessionStorage，并立即从地址栏移除；不得写入 localStorage、被试链接或页面文字。
-const KEY_STORE = 'a5-admin-key', LINK_STORE = 'a5-admin-links';
-const fragment = new URLSearchParams(location.hash.slice(1));
-if (fragment.get('key')) sessionStorage.setItem(KEY_STORE, fragment.get('key'));
+// 受控实验现场直接进入后台；清理旧版本留下的后台凭据。
+const LINK_STORE = 'a5-admin-links';
+sessionStorage.removeItem('a5-admin-key');
 history.replaceState(null, '', location.pathname);
-const key = sessionStorage.getItem(KEY_STORE);
+let shareOrigin = location.origin;
+const uuid = () => crypto.randomUUID ? crypto.randomUUID() : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
 
 /* ───────── 小工具 ───────── */
 const $ = selector => document.querySelector(selector);
@@ -149,7 +149,7 @@ for (const button of $$('[data-close]')) button.addEventListener('click', () => 
 async function api(path, data, { raw = false } = {}) {
   const response = await fetch('/api/admin/' + path, {
     method: data === undefined ? 'GET' : 'POST', cache: 'no-store',
-    headers: { Authorization: `Bearer ${key}`, ...(data === undefined ? {} : { 'Content-Type': 'application/json' }) },
+    headers: data === undefined ? {} : { 'Content-Type': 'application/json' },
     body: data === undefined ? undefined : JSON.stringify(data),
   });
   if (!response.ok) {
@@ -255,11 +255,40 @@ $('#device-notify').addEventListener('submit', async event => {
   event.preventDefault();
   const text = $('#device-notify-text').value;
   if (!text.trim()) { $('#device-notify-text').focus(); return; }
-  if (!notificationDraft || notificationDraft.text !== text) notificationDraft = { action: 'notify', request_id: crypto.randomUUID(), text };
+  if (!notificationDraft || notificationDraft.text !== text) notificationDraft = { action: 'notify', request_id: uuid(), text };
   try {
     await deviceAction(notificationDraft); notificationDraft = null;
     feedback('测试请求已记录。请核对双眼画面及下方绘制、消失证据。');
   } catch (error) { fail(error); }
+});
+
+
+/** 刷新地址列表，优先使用当前设备已访问成功的网卡，再保留手选地址。 */
+async function loadNetwork() {
+  const info = await api('network');
+  const options = info.addresses;
+  const list = $('#share-address');
+  const signature = JSON.stringify(options);
+  const saved = sessionStorage.getItem('a5-share-origin');
+  const chosen = options.find(item => item.base_url === saved) ?? options.find(item => item.base_url === location.origin) ?? options[0];
+  if (list.dataset.options !== signature) {
+    list.replaceChildren(...options.map(item => new Option(`${item.address} · ${item.name}`, item.base_url)));
+    if (!options.length) list.append(new Option('尚无可供其他设备连接的地址', info.local_url));
+    list.dataset.options = signature;
+  }
+  shareOrigin = chosen?.base_url ?? info.local_url;
+  list.value = shareOrigin;
+  const url = shareOrigin + '/admin';
+  if ($('#network-url').value !== url) { $('#network-url').value = url; $('#network-qr').src = '/api/admin/qr?text=' + encodeURIComponent(url); }
+  setText($('#network-hint'), options.length ? '请选择其他设备能打开的地址；此地址也用于生成被试链接和二维码。' : info.shared ? '请先开启热点或连接局域网，再刷新地址。' : '服务当前仅监听本机，请使用默认局域网启动方式后重试。');
+  renderAccess();
+}
+$('#share-address').addEventListener('change', () => { sessionStorage.setItem('a5-share-origin', $('#share-address').value); void loadNetwork().catch(fail); });
+$('#refresh-network').addEventListener('click', () => { void loadNetwork().catch(fail); });
+$('#copy-network').addEventListener('click', async () => {
+  const input = $('#network-url');
+  try { await navigator.clipboard.writeText(input.value); feedback('主试地址已复制。'); }
+  catch { input.focus(); input.select(); if (document.execCommand('copy')) feedback('主试地址已复制。'); else feedback('地址已选中，请按 Ctrl/⌘ + C 复制。'); }
 });
 
 /* ───────── 新建会话 ───────── */
@@ -473,7 +502,7 @@ function renderDetail(data) {
   setHidden($('#message-steps'), !steps.length);
   renderOnce($('#message-steps'), steps, () => steps.map(([label, value, tone]) => el('li', { 'data-tone': tone }, el('span', { class: 'step-name', text: label }), el('span', { class: 'step-value', text: value }))));
 
-  renderControls(s, actions, data.view?.debug_targets ?? []);
+  renderControls(s, actions, data.debug_targets ?? []);
   renderAccess();
   setText($('#export-one-scope'), `只导出这一次会话（${listName(s)}${isDebug(s) ? ' 调试' : ''}，开始于 ${when(s.started_at)}），不包括同一编号的其他会话。${s.status === 'active' ? '会话仍在进行中，导出的是截至此刻的记录。' : ''}`);
 
@@ -567,15 +596,22 @@ $('#control').addEventListener('submit', async event => {
 
 /* ───────── 被试入口 ───────── */
 function renderAccess() {
-  const card = $('#access-card'), url = selected ? links.get(selected) ?? '' : '';
+  const card = $('#access-card');
+  if (detail?.participant_url && selected === detail.summary.session_id) { links.set(selected, detail.participant_url); saveLinks(); }
+  const savedUrl = selected ? links.get(selected) ?? '' : '';
+  const seen = detail?.connection;
+  setText($('#participant-connection'), seen?.connected ? '被试页面已连接' : seen?.last_seen_at ? `被试页面暂未连接 · 最近在线 ${when(seen.last_seen_at, fmtFull)}` : '等待被试打开此会话页面');
   const ended = detail?.summary.session_id === selected && detail.summary.status !== 'active';
   setHidden($('#access-ended'), !ended);
+  const url = savedUrl ? new URL(savedUrl, shareOrigin).href : '';
   if (card.dataset.session === selected && card.dataset.url === url) return;
   card.dataset.session = selected ?? ''; card.dataset.url = url;
   closeRecover();
   setHidden($('#access-link'), !url); setHidden($('#access-empty'), !!url);
-  $('#access-url').value = url ? new URL(url, location.origin).href : '';
-  $('#open-link').href = url || '/experiment';
+  $('#access-url').value = url;
+  $('#access-qr').src = url ? '/api/admin/qr?text=' + encodeURIComponent(url) : '';
+  $('#access-qr').hidden = !url;
+  $('#open-link').href = savedUrl || '/experiment';
   setText($('#recover'), url ? '重新生成入口…' : '生成恢复入口…');
   setText($('#copy-link'), '复制链接');
 }
@@ -702,6 +738,13 @@ $('#preflight').addEventListener('click', async () => {
     } catch (error) { fail(error); }
   });
 });
+$('#config-download').addEventListener('click', () => {
+  if (!config) return;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(config, null, 2) + '\n'], { type: 'application/json' }));
+  const link = el('a', { href: url, download: 'participants.json' });
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+});
 $('#import').addEventListener('submit', async event => {
   event.preventDefault(); feedback();
   const file = $('#config').files[0];
@@ -723,6 +766,7 @@ async function loadConfig() {
 /** 同步会话列表与当前视图；设置页同时更新设备控制状态。 */
 async function refresh() {
   const data = await api('sessions');
+  await loadNetwork();
   adapter = data.adapter; sessions = data.sessions; deletedSessions = data.deleted_sessions ?? [];
   if (offline) { offline = false; }
   renderDevice(); renderSessions(); renderDeleted(); renderParticipantOptions();
@@ -739,13 +783,8 @@ async function poll() {
   polling = true;
   try { await refresh(); } catch (error) { pollFailed(error); } finally { polling = false; }
 }
-if (!key) {
-  stopped = true;
-  $('#main').replaceChildren(el('section', { class: 'card fatal', role: 'alert' }, el('h2', { class: 'card-title', text: '缺少后台凭据' }), el('p', { text: '请使用启动器打开后台，或打开启动终端中带凭据的完整后台链接。' })));
-  $('#device-text').textContent = '未登录';
-} else {
-  setView('sessions');
-  try { await loadConfig(); await refresh(); await loadDeviceControl(); } catch (error) { if (error.status === 401) stopped = true; fail(error); }
-  setInterval(poll, 2500);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
-}
+$('#network-card').open = !narrow.matches;
+setView('sessions');
+try { await loadNetwork(); await loadConfig(); await refresh(); await loadDeviceControl(); } catch (error) { fail(error); }
+setInterval(poll, 2500);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });

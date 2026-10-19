@@ -34,9 +34,9 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
   private closed = false;
   private polling = false;
   constructor(serial: string, options: { adb?: string; run?: AdbRunner } = {}) {
-    if (!/^[A-Za-z0-9_.:-]{1,128}$/.test(serial)) throw new Error('必须配置明确且有效的 A5_RAYNEO_SERIAL。');
+    if (serial && !/^[A-Za-z0-9_.:-]{1,128}$/.test(serial)) throw new Error('必须配置明确且有效的 A5_RAYNEO_SERIAL。');
     this.serial = serial; this.adb = options.adb ?? 'adb'; this.run = options.run ?? runAdb;
-    this.state = { source: 'device', connected: false, ready: false, device_id: `adb:${serial}`, error: 'device_not_probed', protocol: rayneoProtocol,
+    this.state = { source: 'device', connected: false, ready: false, device_id: serial ? `adb:${serial}` : undefined, error: serial ? 'device_not_probed' : 'device_serial_missing', protocol: rayneoProtocol,
       independent_duration: true, persistent_deduplication: true, display_evidence: 'android_dual_eye_onDraw; optical_validation_pending' };
   }
   /** 返回适配器状态副本，供后台判断连接恢复结果。 */
@@ -56,6 +56,7 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
   }
   private async connect() {
     if (this.closed) throw new Error('device_transport_closed');
+    if (!this.serial) throw new Error('device_serial_missing');
     if (this.socket) return;
     if (this.connecting) return this.connecting;
     this.connecting = (async () => {

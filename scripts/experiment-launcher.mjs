@@ -10,6 +10,7 @@ const printStatus = result => {
   console.log(`状态：${states[result.status] ?? result.status}`);
   if (result.port) console.log(`端口：${result.port}`);
   if (result.base_url) console.log(`地址：${result.base_url}`);
+  for (const url of result.lan_urls ?? []) console.log(`其他设备：${url}`);
   if (result.message) console.log(result.message);
 };
 async function runNpm(item, script) {
@@ -34,7 +35,7 @@ async function perform(item, line) {
   if (extra || (portText && !['start', 'restart'].includes(action))) throw new Error('指令格式无效；只有start/restart可附加端口，例如start 5174。');
   const port = portText === undefined ? undefined : Number(portText);
   if (portText !== undefined && (!Number.isInteger(port) || port < 1 || port > 65535)) throw new Error('端口必须是1—65535的整数。');
-  if (action === 'start') printStatus(await startExperiment(item.name, port));
+  if (action === 'start') { printStatus(await startExperiment(item.name, port)); if (process.stdin.isTTY) await openUrl(await adminUrl(item.name)); }
   else if (action === 'stop') printStatus(await stopExperiment(item.name));
   else if (action === 'restart') { const previous = await getStatus(item.name); await stopExperiment(item.name); printStatus(await startExperiment(item.name, port ?? previous.port ?? undefined)); }
   else if (action === 'status') printStatus(await getStatus(item.name));

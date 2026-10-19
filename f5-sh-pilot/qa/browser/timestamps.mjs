@@ -8,8 +8,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(new URL('../../../package.json', import.meta.url));
 const { unzipSync, strFromU8 } = require('fflate');
 const base = (process.env.A5_BASE ?? 'http://127.0.0.1:5174');
-const key = readFileSync(`${process.env.A5_RUNTIME_DIR ?? '/tmp/a5-frontend-runtime'}/admin-key`, 'utf8').trim();
-const H = { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+const H = { 'Content-Type': 'application/json' };
 const A = async (path, init = {}) => (await fetch(base + path, { ...init, headers: H })).json();
 const results = []; const check = (name, ok, detail) => { results.push({ ok, name, detail }); };
 const near = (value, target, tolerance) => Math.abs(value - target) <= tolerance;
@@ -50,7 +49,7 @@ await page.waitForSelector('#countdown'); marks.breakSeen = Date.now(); await pa
 const breakView = await view(); const shown = await page.textContent('#countdown');
 const [mm, ss] = shown.split(':').map(Number); const shownSeconds = mm * 60 + ss;
 // 后台显示的开始时间
-const admin = await ctx.newPage(); await admin.goto(`${base}/admin#key=${key}`); await admin.waitForTimeout(1500);
+const admin = await ctx.newPage(); await admin.goto(`${base}/admin`); await admin.waitForTimeout(1500);
 const adminText = await admin.textContent('body');
 await page.click('#skip-break'); await page.waitForTimeout(600);
 await browser.close();

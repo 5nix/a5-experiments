@@ -17,6 +17,10 @@ adb -s <序列号> shell am start -n link.ironip.a5.rayneo/.MainActivity
 
 显示程序必须保持在前台，空闲时为纯黑画面。正式展示期间不要重装、更新或卸载；卸载或清除应用数据会丢失设备端的去重记录。
 
+### 固定亮度（1.0.3）
+
+显示端在窗口创建及每次回到前台时，将 `WindowManager.LayoutParams.screenBrightness` 固定为 `1.0f / 6.0f`（约 16.67%）。采用雷鸟最高亮度 6000 nits 的实验假设，按线性比例估算为约 1000 nits；该估算未作光学标定，不表示实测出光亮度。该设置作用于实验显示窗口，须更新眼镜端 APK 后生效。
+
 ## 运行模式
 
 默认 `mock`。真实模式需显式指定（PowerShell 用 `$env:变量='值'`）：

@@ -2,11 +2,13 @@
 
 业务规则、评分、状态和时长都由服务端控制，前端只负责呈现和调用接口。不得把 `content/` 公开为静态资源，里面有正确答案和刺激全文。
 
-## 鉴权
+## 入口与会话绑定
 
-- **实验员**：入口为 `/admin#key=<凭据>`。前端把凭据存入 sessionStorage 并清除地址片段；请求带 `Authorization: Bearer <凭据>`。
+- **实验员**：直接访问 `/admin`，后台 API 不要求管理员 key。
 - **被试**：入口为 `/experiment#session=<ID>&token=<凭据>`。生成恢复入口会作废旧 token，不重置进度。
-- 服务只监听 127.0.0.1。后台凭据不得进入 localStorage、被试页面或日志。
+- 默认监听 `0.0.0.0`，支持热点或同一局域网设备；被试 API 仍使用本次会话 token。
+- `GET /api/admin/network` 返回当前网卡地址；`GET /api/admin/qr?text=<网址>` 返回本机生成的 SVG 二维码。
+- 会话详情包含 `participant_url` 和 `connection`（`connected`、`last_seen_at`）；被试通过鉴权的请求更新最近连接时间，十秒内视为连接中。
 
 ## 实验员 API
 
@@ -19,10 +21,10 @@
 | POST /api/admin/device/control | 管理员设备控制：`{action:"probe"\|"open"\|"reconnect"\|"scrcpy"}`；`{action:"host",enabled:boolean}`；`{action:"notify",request_id:UUID,text:string}` |
 | GET /api/admin/sessions | `sessions` 与 `deleted_sessions` 的摘要 |
 | POST /api/admin/sessions | `{ "participant_id": "001" }` → 201，返回 session_id、token、participant_url；同编号已有未结束会话时返回 409 |
-| GET /api/admin/sessions/:id | summary、公开 view、预分配、消息请求与回执 |
+| GET /api/admin/sessions/:id | summary、公开 view、后台专用 debug_targets、预分配、消息请求与回执 |
 | GET /api/admin/sessions/:id/events | 完整原始事件 |
 | GET/POST /api/admin/sessions/:id/notes | 备注：category 为 interview / observation / anomaly，stage_id 可选 |
-| POST /api/admin/sessions/:id/control | `{ action, reason }`；action 为 pause / resume / stop / skip_break / debug_jump（另传 target，仅 000）/ delete / restore；reason 必填 |
+| POST /api/admin/sessions/:id/control | `{ action, reason }`；action 为 pause / resume / stop / skip_break / debug_jump（另传 target，所有未删除会话可用）/ delete / restore；reason 必填 |
 | POST /api/admin/sessions/:id/access | 生成恢复入口，旧 token 失效 |
 | GET /api/admin/export[?session_id=] | ZIP。省略参数 = 本实验全部未删除会话（含 000、未完成、同编号多次）；指定参数 = 仅这一次会话 |
 

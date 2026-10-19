@@ -1,3 +1,4 @@
+import { lanAddresses } from './network.mjs';
 import { spawn } from 'node:child_process';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { createServer, connect } from 'node:net';
@@ -90,9 +91,9 @@ export async function startExperiment(name, port, root = repositoryRoot) {
     const current = await getStatus(name, root);
     if (['running', 'starting', 'stopping'].includes(current.status)) return current;
     if (current.status === 'unmanaged' && current.port === chosenPort) throw new Error(current.message);
-    await new Promise((resolveFree, reject) => {
+    for (const host of ['127.0.0.1', '0.0.0.0']) await new Promise((resolveFree, reject) => {
       const probe = createServer(); probe.once('error', error => reject(new Error(error.code === 'EADDRINUSE' ? `端口${chosenPort}已被占用，可输入“start 5174”等指定其他端口。` : error.message)));
-      probe.listen(chosenPort, '127.0.0.1', () => probe.close(resolveFree));
+      probe.listen(chosenPort, host, () => probe.close(resolveFree));
     });
     const log = await open(location.log, 'a', 0o600);
     let child, spawned;
@@ -143,7 +144,7 @@ async function runWorker(name, root, port) {
   if (!item.launcher) throw new Error(item.problem);
   const state = { worker_id: randomBytes(16).toString('hex'), token: randomBytes(32).toString('hex'), manager_pid: process.pid, server_pid: null, control_port: null, name, port, started_at: new Date().toISOString(), status: 'starting', error: null };
   let service, exitPromise, shutdownPromise;
-  const publicStatus = () => ({ worker_id: state.worker_id, status: state.status, name, port, manager_pid: state.manager_pid, server_pid: state.server_pid, started_at: state.started_at, base_url: `http://127.0.0.1:${port}`, log_file: location.log, message: state.error });
+  const publicStatus = () => ({ worker_id: state.worker_id, status: state.status, name, port, manager_pid: state.manager_pid, server_pid: state.server_pid, started_at: state.started_at, base_url: `http://127.0.0.1:${port}`, lan_urls: (process.env.HOST && process.env.HOST !== '0.0.0.0' ? [] : lanAddresses(port)).map(item => `${item.base_url}/admin`), log_file: location.log, message: state.error });
   let writes = Promise.resolve();
   const persist = () => { const snapshot = { ...state }; writes = writes.then(() => saveState(location.state, snapshot)); return writes; };
   const shutdown = () => shutdownPromise ??= (async () => {
@@ -167,7 +168,7 @@ async function runWorker(name, root, port) {
         const request = JSON.parse(data.split('\n')[0]); const supplied = Buffer.from(typeof request.token === 'string' ? request.token : ''); const expected = Buffer.from(state.token);
         if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) throw new Error('管理凭据无效。');
         if (!['status', 'stop'].includes(request.action)) throw new Error('未知管理指令。');
-        if (request.action === 'stop') socket.setTimeout(16000, () => socket.destroy());
+        if (request.action === 'stop') socket.setTimeout(49000, () => socket.destroy());
         const result = request.action === 'stop' ? await shutdown() : publicStatus(); socket.end(JSON.stringify(result) + '\n');
         if (request.action === 'stop') control.close();
       } catch (error) { socket.end(JSON.stringify({ worker_id: state.worker_id, error: error.message }) + '\n'); }

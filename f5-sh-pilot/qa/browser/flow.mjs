@@ -4,12 +4,11 @@ const __out = process.env.A5_QA_OUT ?? '/tmp/a5-qa'; __mkdir(__out, { recursive:
 const { chromium } = await import(process.env.A5_PLAYWRIGHT ?? 'playwright');
 import { readFileSync, mkdirSync } from 'node:fs';
 const base = (process.env.A5_BASE ?? 'http://127.0.0.1:5174');
-const key = readFileSync(`${process.env.A5_RUNTIME_DIR ?? '/tmp/a5-frontend-runtime'}/admin-key`, 'utf8').trim();
 const out = process.env.OUT ?? __out + '/shots'; mkdirSync(out, { recursive: true });
 const pid = process.env.PID ?? '000';
 const W = Number(process.env.W ?? 1536), H = Number(process.env.H ?? 864);
 const full = process.env.FULL !== '0';
-const adminApi = async (path, init = {}) => { const r = await fetch(base + path, { ...init, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' } }); return r.json(); };
+const adminApi = async (path, init = {}) => { const r = await fetch(base + path, { ...init, headers: { 'Content-Type': 'application/json' } }); return r.json(); };
 const created = await adminApi('/api/admin/sessions', { method: 'POST', body: JSON.stringify({ participant_id: pid }) });
 if (!created.participant_url) { console.log(created); process.exit(1); }
 const browser = await chromium.launch({ channel: 'chrome' });
@@ -19,7 +18,7 @@ page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') er
 page.on('pageerror', e => errors.push(String(e)));
 await page.goto(base + created.participant_url);
 const shot = async name => { await page.waitForTimeout(250); await page.screenshot({ path: `${out}/${name}.png` }); };
-const phase = async () => (await (await fetch(`${base}/api/admin/sessions/${created.session_id}`, { headers: { Authorization: `Bearer ${key}` } })).json()).view;
+const phase = async () => (await (await fetch(`${base}/api/admin/sessions/${created.session_id}`, { headers: { } })).json()).view;
 const waitEnabled = async sel => { await page.waitForSelector(`${sel}:not([disabled])`, { timeout: 10000 }); };
 await waitEnabled('.cmd-actions .btn');
 await shot('01-intro');
@@ -66,7 +65,7 @@ for (let guard = 0; guard < 60; guard++) {
   console.log('unexpected', view.phase); break;
   if (!full) break;
 }
-const events = await (await fetch(`${base}/api/admin/sessions/${created.session_id}/events`, { headers: { Authorization: `Bearer ${key}` } })).json();
+const events = await (await fetch(`${base}/api/admin/sessions/${created.session_id}/events`, { headers: { } })).json();
 const types = events.events.map(e => e.event_type);
 console.log('final', (await phase()).phase, 'units', n);
 console.log('events', JSON.stringify(types.filter(t => /reveal_displayed|u2_displayed|message|scratch|rejected|submit/.test(t)).reduce((a, t) => (a[t] = (a[t] ?? 0) + 1, a), {})));

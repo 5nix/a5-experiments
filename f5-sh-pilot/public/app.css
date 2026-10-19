@@ -358,3 +358,15 @@ details[open] > summary::before { transform: rotate(45deg); }
 .device-notify { display: grid; gap: 10px; margin-top: 18px; }
 .device-notify textarea { width: 100%; min-height: 100px; resize: vertical; }
 .device-debug-record { display: grid; gap: 5px; padding-block: 10px; border-bottom: 1px solid var(--stroke); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* 热点连接入口 */
+.connection-qr { display:block; width:180px; height:180px; max-width:100%; background:#fff; margin:12px 0; }
+#share-address, #network-url { width:100%; max-width:100%; }
+
+.network-entry { margin:16px 24px; }
+.network-entry > summary { font-weight:600; cursor:pointer; }
+@media(max-width:899px) { .network-entry { margin:12px; } }
+
+.network-content { display:grid; grid-template-columns:minmax(0,1fr) 180px; gap:20px; align-items:start; padding-top:12px; }
+.network-fields { min-width:0; }
+@media(max-width:899px) { .network-content { grid-template-columns:minmax(0,1fr); } }

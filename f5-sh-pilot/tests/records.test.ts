@@ -60,7 +60,7 @@ test('删除记录可恢复且跨重启保留；进行中不可删，已删除�
 test('HTTP删除/恢复仅后台可用；全部导出含同一被试多次及未完成会话，排除已删除，单次导出隔离', async () => {
   const store = new Store(':memory:'), engine = new Engine(store, new MockGlassesAdapter(), material, config);
   const directory = await mkdtemp(join(tmpdir(), 'a5-records-http-'));
-  const server = createApp(engine, 'admin-key', directory); await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const server = createApp(engine, directory); await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as { port:number }).port}`;
   const headers = { Authorization:'Bearer admin-key', 'Content-Type':'application/json' };
   const control = (id: string, action: string, auth = headers) => fetch(`${base}/api/admin/sessions/${id}/control`, { method:'POST', headers:auth, body:JSON.stringify({ action, reason:'软件验收记录操作' }) });
@@ -68,7 +68,7 @@ test('HTTP删除/恢复仅后台可用；全部导出含同一被试多次及未
   try {
     const first = engine.create('001'); engine.adminAction(first.session_id, 'stop', '第一次预演结束');
     const second = engine.create('001'), debug = engine.create('000'); engine.adminAction(debug.session_id, 'stop', '调试结束');
-    assert.equal((await control(debug.session_id, 'delete', { ...headers, Authorization:`Bearer ${debug.token}` })).status, 401);
+    assert.equal((await fetch(base + '/api/admin/sessions')).status, 200);
     assert.equal((await control(second.session_id, 'delete')).status, 409);
     assert.equal((await control(debug.session_id, 'delete')).status, 200);
     const list = await (await fetch(base + '/api/admin/sessions', { headers })).json() as { sessions:{ session_id:string }[]; deleted_sessions:{ session_id:string }[] };

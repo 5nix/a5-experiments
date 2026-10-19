@@ -4,7 +4,6 @@ const __out = process.env.A5_QA_OUT ?? '/tmp/a5-qa'; __mkdir(__out, { recursive:
 const { chromium } = await import(process.env.A5_PLAYWRIGHT ?? 'playwright');
 import { readFileSync, mkdirSync } from 'node:fs';
 const base = (process.env.A5_BASE ?? 'http://127.0.0.1:5174');
-const key = readFileSync(`${process.env.A5_RUNTIME_DIR ?? '/tmp/a5-frontend-runtime'}/admin-key`, 'utf8').trim();
 const out = process.env.OUT ?? __out; mkdirSync(out, { recursive: true });
 const results = []; const ok = (name, cond, extra = '') => { results.push(`${cond ? 'PASS' : 'FAIL'} ${name}${extra ? ' — ' + extra : ''}`); };
 const errors = [];
@@ -39,10 +38,10 @@ page.on('pageerror', e => errors.push('desktop pageerror: ' + e));
 const shot = async (name, opts = {}) => { await page.evaluate(() => { document.activeElement?.blur?.(); window.scrollTo(0, 0); }); await page.waitForTimeout(300); await page.screenshot({ path: `${out}/admin-v2-${name}.png`, ...opts }); };
 const waitPoll = () => page.waitForTimeout(2900);
 
-await page.goto(`${base}/admin#key=${key}`);
+await page.goto(`${base}/admin`);
 await page.waitForSelector('#participant option[value="001"]', { state: 'attached' });
 ok('地址片段已清除', !page.url().includes('#') && !page.url().includes(key));
-ok('凭据在 sessionStorage 而非 localStorage', await page.evaluate(k => sessionStorage.getItem('a5-admin-key') === k && !JSON.stringify(localStorage).includes(k), key));
+ok('后台直接进入且不保存管理员密钥', await page.evaluate(() => !sessionStorage.getItem('a5-admin-key')));
 ok('页面文字不含凭据', !(await page.textContent('body')).includes(key));
 await shot('desktop-empty');
 
@@ -221,7 +220,7 @@ const mp = await m.newPage();
 mp.on('console', msg => { if (msg.type() === 'error') errors.push('mobile: ' + msg.text()); });
 mp.on('pageerror', e => errors.push('mobile pageerror: ' + e));
 const mshot = async (name, opts = {}) => { await mp.waitForTimeout(300); await mp.screenshot({ path: `${out}/admin-v2-${name}.png`, ...opts }); };
-await mp.goto(`${base}/admin#key=${key}`);
+await mp.goto(`${base}/admin`);
 await mp.waitForSelector('.session-row');
 await mshot('mobile-list');
 ok('手机：详情初始隐藏', !(await mp.isVisible('#selected')));

@@ -4,8 +4,7 @@ const __out = process.env.A5_QA_OUT ?? '/tmp/a5-qa'; __mkdir(__out, { recursive:
 const { chromium } = await import(process.env.A5_PLAYWRIGHT ?? 'playwright');
 import { readFileSync } from 'node:fs';
 const base = (process.env.A5_BASE ?? 'http://127.0.0.1:5174');
-const key = readFileSync(`${process.env.A5_RUNTIME_DIR ?? '/tmp/a5-frontend-runtime'}/admin-key`, 'utf8').trim();
-const A = async (path, init = {}) => (await fetch(base + path, { ...init, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' } })).json();
+const A = async (path, init = {}) => (await fetch(base + path, { ...init, headers: { 'Content-Type': 'application/json' } })).json();
 const c = await A('/api/admin/sessions', { method: 'POST', body: JSON.stringify({ participant_id: '000' }) });
 const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1536, height: 864 } });

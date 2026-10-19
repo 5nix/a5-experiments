@@ -23,7 +23,7 @@ PORT=5174 A5_RUNTIME_DIR=/tmp/a5-frontend-runtime A5_EXPORT_DIR=/tmp/a5-frontend
 | 环境变量 | 默认值 | 用途 |
 | --- | --- | --- |
 | `A5_BASE` | `http://127.0.0.1:5174` | 服务地址 |
-| `A5_RUNTIME_DIR` | `/tmp/a5-frontend-runtime` | 从这里读取 `admin-key` |
+| `A5_RUNTIME_DIR` | `/tmp/a5-frontend-runtime` | 预演运行目录（后台不再读取管理员 key） |
 | `A5_QA_OUT` | `/tmp/a5-qa` | 截图和临时文件输出目录 |
 | `A5_PLAYWRIGHT` | `playwright` | Playwright 模块路径 |
 

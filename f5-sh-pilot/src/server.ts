@@ -1,5 +1,5 @@
-import { randomBytes } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
+import { lanAddresses } from '../../scripts/network.mjs';
 import { join, resolve } from 'node:path';
 import { Store } from './store.ts';
 import { Engine } from './engine.ts';
@@ -17,30 +17,23 @@ const checked = await preflight();
 if (!checked.startup_ok) throw new Error(`启动检查失败：${[...checked.pilot_errors, ...checked.material_errors].join('；')}`);
 const runtime = resolve(process.env.A5_RUNTIME_DIR ?? join(experimentRoot, 'runtime'));
 await mkdir(runtime, { recursive: true });
-const keyPath = join(runtime, 'admin-key');
-let adminKey: string;
-try { adminKey = (await readFile(keyPath, 'utf8')).trim(); }
-catch (error) {
-  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-  adminKey = randomBytes(32).toString('hex'); await writeFile(keyPath, adminKey, { mode: 0o600, flag: 'wx' });
-}
 const store = new Store(join(runtime, 'experiment.sqlite'));
 const mode = process.env.A5_GLASSES_MODE ?? 'mock';
 if (!['mock', 'rayneo'].includes(mode)) throw new Error('A5_GLASSES_MODE 只能是 mock 或 rayneo。');
 const adapter: GlassesAdapter = mode === 'rayneo' ? new RayNeoGlassesAdapter(process.env.A5_RAYNEO_SERIAL ?? '', { adb: process.env.A5_ADB_PATH }) : new MockGlassesAdapter();
-if (adapter instanceof RayNeoGlassesAdapter) await adapter.probe();
 const engine = new Engine(store, adapter, await loadMaterial(), await readJson<ParticipantConfig>('config/participants.pilot.json'));
 const deviceControl = new DeviceControl(engine, { serial: process.env.A5_RAYNEO_SERIAL, adb: process.env.A5_ADB_PATH,
   packageName: process.env.A5_RAYNEO_PACKAGE, enabled: process.env.A5_RAYNEO_HOST_MODE !== 'off', scrcpy: process.env.A5_SCRCPY_PATH });
-const server = createApp(engine, adminKey, resolve(process.env.A5_EXPORT_DIR ?? join(experimentRoot, 'exports')), deviceControl);
+const server = createApp(engine, resolve(process.env.A5_EXPORT_DIR ?? join(experimentRoot, 'exports')), deviceControl);
 engine.pollDevice();
 /** 每秒回收设备事件、执行已隔离异常的控制任务并推进实验。 */
 const ticker = setInterval(() => { engine.pollDevice(); deviceControl.tick(); for (const id of store.ids()) engine.tick(id); }, 1000); ticker.unref();
 server.on('error', error => { console.error('服务启动失败：', error.message); clearInterval(ticker); void deviceControl.close().then(() => adapter.close?.()).then(() => engine.settle()).finally(() => store.close()); process.exitCode = 1; });
-server.listen(port, '127.0.0.1', () => {
-  console.log(`实验员后台：http://127.0.0.1:${port}/admin#key=${adminKey}`);
+server.listen(port, process.env.HOST ?? '0.0.0.0', () => {
+  console.log(`实验员后台：http://127.0.0.1:${port}/admin`);
+  if ((process.env.HOST ?? '0.0.0.0') === '0.0.0.0') for (const item of lanAddresses(port)) console.log(`其他设备（${item.name}）：${item.base_url}/admin`);
   console.log(`数据库：${join(runtime, 'experiment.sqlite')}`);
-  console.log(mode === 'mock' ? '当前为 Mock 预演模式，不能用于真实消息呈现实验。' : `当前为雷鸟 USB 模式，设备：${adapter.getStatus().device_id}；硬件呈现仍需现场验收。`);
+  console.log(mode === 'mock' ? '当前为 Mock 预演模式，不能用于真实消息呈现实验。' : `当前为雷鸟 USB 模式，设备：${adapter.getStatus().device_id ?? '尚未配置序列号'}；硬件呈现仍需现场验收。`);
 });
 let stopping = false;
 /** 先停止定时任务并等待设备控制退出，再正常关闭连接与数据库。 */

@@ -1,8 +1,10 @@
 import { createServer } from 'node:http';
+import qrcode from 'qrcode-generator';
+import { lanAddresses } from '../../scripts/network.mjs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Engine, HttpError } from './engine.ts';
 import { exportData } from './export.ts';
 import { InputError } from './tasks.ts';
@@ -17,16 +19,17 @@ export async function body(request: IncomingMessage): Promise<any> {
   catch { throw new HttpError(400, 'JSON格式无效。'); }
 }
 const bearer = (request: IncomingMessage) => request.headers.authorization?.replace(/^Bearer /, '') ?? '';
-/** 建立实验与后台 HTTP 路由；设备控制仅接受后台鉴权请求。 */
-export function createApp(engine: Engine, adminKey: string, exportRoot: string, deviceControl?: DeviceControl) {
+/** 建立实验与后台 HTTP 路由；后台直接进入，被试请求仍按会话标识绑定。 */
+export function createApp(engine: Engine, exportRoot: string, deviceControl?: DeviceControl) {
   const json = (response: ServerResponse, value: unknown, status = 200) => {
     response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); response.end(JSON.stringify(value));
   };
-  const admin = (request: IncomingMessage) => {
-    const a = Buffer.from(bearer(request)), b = Buffer.from(adminKey);
-    if (a.length !== b.length || !timingSafeEqual(a, b)) throw new HttpError(401, '实验员凭据无效，请使用启动终端提供的后台链接。');
+  const connections = new Map<string, { seen: number }>();
+  const connection = (id: string) => {
+    const client = connections.get(id);
+    return { connected: !!client && Date.now() - client.seen < 10000, last_seen_at: client ? new Date(client.seen).toISOString() : null };
   };
-  return createServer(async (request, response) => {
+  const server = createServer(async (request, response) => {
     response.setHeader('Cache-Control', 'no-store'); response.setHeader('X-Content-Type-Options', 'nosniff'); response.setHeader('Referrer-Policy', 'no-referrer');
     response.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
     try {
@@ -38,7 +41,18 @@ export function createApp(engine: Engine, adminKey: string, exportRoot: string, 
       }
       if (method === 'GET' && path === '/api/health') { json(response, { ok: true, repository: 'a5-experiments', experiment_id: 'f5-sh-pilot', phase: 'core', mock_only: engine.adapter.getStatus().source === 'mock', real_presentation_verified: false, adapter: engine.adapter.getStatus() }); return; }
       if (path.startsWith('/api/admin/') || path === '/api/preflight') {
-        admin(request);
+        if (method === 'GET' && path === '/api/admin/network') {
+          const port = request.socket.localPort!;
+          const binding = server.address();
+          const shared = typeof binding === 'object' && binding && !['127.0.0.1', '::1'].includes(binding.address);
+          json(response, { addresses: shared ? lanAddresses(port) : [], local_url: `http://127.0.0.1:${port}`, shared }); return;
+        }
+        if (method === 'GET' && path === '/api/admin/qr') {
+          const text = url.searchParams.get('text') ?? '';
+          if (text.length > 1500 || !/^https?:\/\//.test(text)) throw new HttpError(422, '二维码网址无效。');
+          const code = qrcode(0, 'M'); code.addData(text); code.make();
+          response.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' }); response.end(code.createSvgTag({ scalable: true, margin: 4 })); return;
+        }
         if (method === 'GET' && ['/api/preflight', '/api/admin/preflight'].includes(path)) { json(response, { ...await preflight(), adapter: engine.adapter.getStatus() }); return; }
         if (method === 'GET' && path === '/api/admin/device') { json(response, { adapter: engine.adapter.getStatus(), audit: engine.store.deviceAudit(), control: deviceControl?.status() ?? null }); return; }
         if (method === 'POST' && path === '/api/admin/device/control') {
@@ -47,16 +61,18 @@ export function createApp(engine: Engine, adminKey: string, exportRoot: string, 
         }
         if (method === 'GET' && path === '/api/admin/config') { json(response, { config: engine.config(), debug_participant: engine.debugParticipant(), adapter: engine.adapter.getStatus(), interview_prompts: engine.material.content.interview_prompts }); return; }
         if (method === 'POST' && path === '/api/admin/config') { json(response, { config: engine.importConfig(await body(request)) }); return; }
-        if (method === 'GET' && path === '/api/admin/sessions') { json(response, { adapter: engine.adapter.getStatus(), sessions: engine.store.ids().map(id => engine.summary(id)), deleted_sessions: engine.store.deletedIds().map(id => engine.summary(id)) }); return; }
+        if (method === 'GET' && path === '/api/admin/sessions') { json(response, { adapter: engine.adapter.getStatus(), sessions: engine.store.ids().map(id => ({ ...engine.summary(id), connection: connection(id) })), deleted_sessions: engine.store.deletedIds().map(id => engine.summary(id)) }); return; }
         if (method === 'POST' && path === '/api/admin/sessions') {
           const input = await body(request); if (typeof input.participant_id !== 'string') throw new HttpError(422, '请选择被试。');
           const created = engine.create(input.participant_id, { user_agent: request.headers['user-agent'] ?? null });
-          json(response, { ...created, participant_url: `/experiment#session=${created.session_id}&token=${created.token}` }, 201); return;
+          const participant_url = `/experiment#session=${created.session_id}&token=${created.token}`;
+          engine.store.setSetting(`participant_entry:${created.session_id}`, participant_url);
+          json(response, { ...created, participant_url }, 201); return;
         }
         const sessionPath = /^\/api\/admin\/sessions\/([a-f0-9-]+)(?:\/(events|notes|control|access))?$/.exec(path);
         if (sessionPath) {
           const [, id, resource] = sessionPath;
-          if (method === 'GET' && !resource) { json(response, { summary: engine.summary(id), view: engine.view(id), assignment: engine.session(id).snapshot.participant, interventions: engine.store.interventions(id) }); return; }
+          if (method === 'GET' && !resource) { json(response, { summary: engine.summary(id), connection: connection(id), participant_url: engine.store.setting<string>(`participant_entry:${id}`) ?? null, debug_targets: engine.debugTargets(engine.session(id)).map(({ id, label }) => ({ id, label })), view: engine.view(id), assignment: engine.session(id).snapshot.participant, interventions: engine.store.interventions(id) }); return; }
           if (method === 'GET' && resource === 'events') { json(response, { events: engine.store.events(id) }); return; }
           if (method === 'GET' && resource === 'notes') { json(response, { notes: engine.store.events(id).filter(e => e.event_type === 'note_saved') }); return; }
           if (method === 'POST' && resource === 'notes') { const input = await body(request); engine.note(id, input.category, input.text, input.stage_id ?? null); json(response, { saved: true }); return; }
@@ -64,7 +80,7 @@ export function createApp(engine: Engine, adminKey: string, exportRoot: string, 
             const input = await body(request); if (typeof input.reason !== 'string') throw new HttpError(422, '请填写干预原因。');
             engine.adminAction(id, input.action, input.reason, input.target); json(response, engine.summary(id)); return;
           }
-          if (method === 'POST' && resource === 'access') { engine.session(id); const token = engine.rotateToken(id); json(response, { participant_url: `/experiment#session=${id}&token=${token}` }); return; }
+          if (method === 'POST' && resource === 'access') { engine.session(id); const token = engine.rotateToken(id); const participant_url = `/experiment#session=${id}&token=${token}`; engine.store.setSetting(`participant_entry:${id}`, participant_url); json(response, { participant_url }); return; }
         }
         if (method === 'GET' && path === '/api/admin/export') {
           const id = url.searchParams.get('session_id'); const ids = id ? [engine.session(id).id] : engine.store.ids();
@@ -76,6 +92,7 @@ export function createApp(engine: Engine, adminKey: string, exportRoot: string, 
       const participantPath = /^\/api\/participant\/sessions\/([a-f0-9-]+)(?:\/(commands|assets\/image\d+\.png))?$/.exec(path);
       if (participantPath) {
         const [, id, resource] = participantPath; engine.authenticate(id, bearer(request));
+        connections.set(id, { seen: Date.now() });
         if (method === 'GET' && !resource) { json(response, engine.view(id)); return; }
         if (method === 'POST' && resource === 'commands') { json(response, engine.command(id, await body(request))); return; }
         if (method === 'GET' && resource?.startsWith('assets/')) {
@@ -92,4 +109,5 @@ export function createApp(engine: Engine, adminKey: string, exportRoot: string, 
       else response.end();
     }
   });
+  return server;
 }

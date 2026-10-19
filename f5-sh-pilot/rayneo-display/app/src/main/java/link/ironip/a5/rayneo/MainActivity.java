@@ -10,6 +10,8 @@ import link.ironip.a5.rayneo.databinding.ActivityMainBinding;
 import org.json.JSONObject;
 
 public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> {
+    // 按雷鸟最高亮度 6000 nits 线性假设，1/6 对应约 1000 nits；不是实测光学亮度。
+    private static final float FIXED_BRIGHTNESS = 1.0f / 6.0f;
     private final Handler main = new Handler(Looper.getMainLooper());
     private Ledger ledger;
     private BridgeServer bridge;
@@ -24,6 +26,7 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        applyFixedBrightness();
         getWindow().getDecorView().setSystemUiVisibility(5894);
         try { ledger = new Ledger(this); bridge = new BridgeServer(main, this::command); }
         catch (Exception error) { fault = true; android.util.Log.e("A5", "显示端初始化失败", error); }
@@ -93,7 +96,13 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
         if (display.drawn) event(display, "hidden", null);
         active = null;
     }
-    @Override protected void onResume() { super.onResume(); foreground = true; }
+    /** 固定当前显示窗口的亮度，重新进入前台时再次应用。 */
+    private void applyFixedBrightness() {
+        WindowManager.LayoutParams attributes = getWindow().getAttributes();
+        attributes.screenBrightness = FIXED_BRIGHTNESS;
+        getWindow().setAttributes(attributes);
+    }
+    @Override protected void onResume() { super.onResume(); applyFixedBrightness(); foreground = true; }
     @Override protected void onPause() {
         foreground = false;
         if (active != null) fail(active, "device_foreground_lost");

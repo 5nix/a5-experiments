@@ -91,7 +91,7 @@ test('多个被试会话的进度、草稿、暂停和计时独立，同一编�
   } finally { await f.engine.settle(); f.store.close(); }
 });
 
-test('000复制当前001配置，可往返跳题；正式被试和伪造调试标志不能跳题', async () => {
+test('000可自行往返跳题；正式被试只能由后台跳题且保留正式身份', async () => {
   const f = fixture();
   try {
     const debug = f.engine.session(f.debug.session_id).snapshot.participant;
@@ -106,8 +106,13 @@ test('000复制当前001配置，可往返跳题；正式被试和伪造调试�
     const normal = f.engine.create('001');
     assert.equal(normal.view.is_debug, false); assert.deepEqual(normal.view.debug_targets, []);
     assert.throws(() => f.engine.command(normal.session_id, { command_id: randomUUID(), page_token: normal.view.page_token, action: 'jump', target: 'SH05_U2' }), /只有调试/);
-    assert.throws(() => f.engine.adminAction(normal.session_id, 'debug_jump', '尝试跳题', 'SH05_U2'), /只有调试/);
-    assert.equal(f.engine.summary(normal.session_id).phase, 'INTRO');
+    f.engine.adminAction(normal.session_id, 'debug_jump', '主试定位题目', 'SH05_U2');
+    assert.equal(f.engine.summary(normal.session_id).phase, 'UNIT');
+    assert.equal(f.engine.summary(normal.session_id).stage_id, 'SH05');
+    assert.equal(f.engine.summary(normal.session_id).is_debug, false);
+    assert.deepEqual(f.engine.view(normal.session_id).debug_targets, []);
+    assert.ok(f.store.events(normal.session_id).every(e => !e.is_debug));
+    assert.equal(f.store.events(normal.session_id).find(e => e.event_type === 'debug_jump')?.payload.actor, 'admin');
     const reserved = structuredClone(config); reserved.participants[0].participant_id = '000';
     assert.ok(validateConfig(reserved, material.stimuli).some(e => e.includes('系统保留')));
     assert.ok(f.store.events(f.debug.session_id).every(e => e.is_debug === true));
@@ -133,7 +138,7 @@ test('跳过休息由被试或管理员记录，不伪造180秒完成；状态�
     f.engine.adminAction(f.debug.session_id, 'resume', '继续预演'); f.engine.adminAction(f.debug.session_id, 'skip_break', '现场结束休息');
     assert.equal(f.engine.summary(f.debug.session_id).stage_id, 'SH03');
     assert.equal(f.store.events(f.debug.session_id).filter(e => e.event_type === 'break_skipped').at(-1)?.payload.actor, 'admin');
-    // 正式被试也可跳过休息，仍不开放跳题。
+    // 正式被试也可跳过休息。
     const formal = f.engine.create('001');
     f.store.tx(() => { const s = f.engine.session(formal.session_id); s.state.phase = 'BREAK'; s.state.break_until_ms = f.engine.elapsed(s) + 180000; f.store.save(s); });
     f.engine.adminAction(formal.session_id, 'skip_break', '正式流程允许跳过休息');
@@ -159,15 +164,17 @@ test('计算草稿按单元保存，不是正式答案，不执行计算；调�
   } finally { await f.engine.settle(); f.store.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
-test('HTTP提供调试被试、状态操作和文本表格；后台跳题仍有独立权限校验', async () => {
+test('HTTP后台为所有被试提供跳转目标，正式被试view不提供目标', async () => {
   const f = fixture(); const directory = await mkdtemp(join(tmpdir(), 'a5-revision-http-'));
-  const server = createApp(f.engine, 'admin-key', directory); await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const server = createApp(f.engine, directory); await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-  const headers = { Authorization: 'Bearer admin-key', 'Content-Type': 'application/json' };
+  const headers = { 'Content-Type': 'application/json' };
   try {
     const cfg = await (await fetch(base + '/api/admin/config', { headers })).json() as { debug_participant: { participant_id: string } }; assert.equal(cfg.debug_participant.participant_id, '000');
     const normal = f.engine.create('001');
-    const denied = await fetch(base + `/api/admin/sessions/${normal.session_id}/control`, { method: 'POST', headers, body: JSON.stringify({ action: 'debug_jump', reason: '检验权限', target: 'SH05_U2' }) }); assert.equal(denied.status, 403);
+    const normalDetail = await (await fetch(base + `/api/admin/sessions/${normal.session_id}`, { headers })).json() as { debug_targets: { id: string }[]; view: ReturnType<Engine['view']> };
+    assert.ok(normalDetail.debug_targets.some(t => t.id === 'SH05_U2')); assert.deepEqual(normalDetail.view.debug_targets, []);
+    const formalJump = await fetch(base + `/api/admin/sessions/${normal.session_id}/control`, { method: 'POST', headers, body: JSON.stringify({ action: 'debug_jump', reason: '主试定位题目', target: 'SH05_U2' }) }); assert.equal(formalJump.status, 200);
     const detail = await (await fetch(base + `/api/admin/sessions/${f.debug.session_id}`, { headers })).json() as { summary: ReturnType<Engine['summary']> }; assert.ok(detail.summary.available_actions.includes('debug_jump'));
     const jump = await fetch(base + `/api/admin/sessions/${f.debug.session_id}/control`, { method: 'POST', headers, body: JSON.stringify({ action: 'debug_jump', reason: '调试表格', target: 'SH05_U2' }) }); assert.equal(jump.status, 200);
     const view = await (await fetch(base + `/api/participant/sessions/${f.debug.session_id}`, { headers: { Authorization: `Bearer ${f.debug.token}` } })).json() as ReturnType<Engine['view']>;
