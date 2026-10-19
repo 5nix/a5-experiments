@@ -9,14 +9,18 @@ import { DeviceControl } from '../src/device-control.ts';
 import { createApp } from '../src/app.ts';
 import type { GlassesAdapter, GlassesEvent, GlassesRequest, ParticipantConfig } from '../src/contracts.ts';
 
+/** 建立独立内存数据库和可控设备替身，避免测试触碰真实眼镜。 */
 async function fixture() {
   const store = new Store(':memory:');
   let connected = true, ready = true, busy = false, sends = 0, clock = 20000, overlay = false, voiceMode = 'allow', voiceWritable = true;
   const calls: string[][] = [];
   const requests: GlassesRequest[] = [];
   const adapter: GlassesAdapter = {
+    /** 提供可独立切换的连接、就绪和忙碌状态，模拟探测失败。 */
     getStatus: () => ({ source: 'device', connected, ready, busy, device_id: 'adb:fixture', error: connected ? undefined : 'fixture_disconnected' }),
+    /** 探测与重连不替测试自动恢复连接，以验证调用方检查状态。 */
     probe: async () => {}, reconnect: async () => { calls.push(['reconnect']); },
+    /** 记录发送次数和原始请求，只模拟接受而不伪造绘制事件。 */
     send: async request => {
       sends++; requests.push(request);
       return { request_id: request.request_id, device_id: request.device_id, source: 'device', status: 'accepted', t_send: new Date().toISOString(), t_ack: new Date().toISOString(), t_display: null, t_hide: null, display_time_source: 'unavailable', error: null };
@@ -24,6 +28,7 @@ async function fixture() {
   };
   const engine = new Engine(store, adapter, await loadMaterial(), await readJson<ParticipantConfig>('config/participants.pilot.json'));
   const control = new DeviceControl(engine, { serial: 'fixture', packageName: 'link.ironip.a5.rayneo.localfix', now: () => clock,
+    /** 模拟 ADB 权限读写与前台窗口，记录操作以验证恢复边界。 */
     run: async (_file, args) => {
       calls.push(args);
       if (args.includes('appops')) {
@@ -152,6 +157,7 @@ test('设备控制API需后台鉴权，拒绝未知操作和不合法通知', as
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const port = (server.address() as { port: number }).port;
   try {
+    /** 向临时服务器发送真实 HTTP 请求，覆盖鉴权和响应码。 */
     const post = (body: object, authorized = true) => fetch(`http://127.0.0.1:${port}/api/admin/device/control`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(authorized ? { Authorization: 'Bearer secret' } : {}) }, body: JSON.stringify(body) });
     assert.equal((await post({ action: 'open' }, false)).status, 401);
     assert.equal((await post({ action: 'shell', text: 'arbitrary' })).status, 422);
@@ -181,6 +187,7 @@ test('重连或唤醒后仍断线时 API 返回503，诊断与审计记录失败
   try {
     for (const action of ['reconnect', 'open']) {
       f.connected(false);
+      /** 复用同一操作请求，对比连接失败和恢复后的接口结果。 */
       const post = () => fetch(`http://127.0.0.1:${port}/api/admin/device/control`, { method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer secret' }, body: JSON.stringify({ action }) });
       const response = await post();
@@ -199,20 +206,55 @@ test('重连或唤醒后仍断线时 API 返回503，诊断与审计记录失败
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); await f.control.close(); f.store.close(); }
 });
 
-test('守护关闭时备份解析异常不会逃出定时入口，修复数据后仍可继续控制', async t => {
+test('定时入口的同步读取异常被隔离，修复后仍可继续控制', async t => {
   const f = await fixture();
   const log = t.mock.method(console, 'error', () => {});
   try {
-    await f.control.action({ action: 'host', enabled: false });
-    f.store.db.prepare('INSERT INTO settings VALUES (?,?)').run('device_voice_overlay_backup:fixture', '{invalid');
+    const ids = t.mock.method(f.store, 'ids', () => { throw new Error('fixture read failed'); });
     assert.doesNotThrow(() => f.control.tick());
+    ids.mock.restore();
     assert.equal(log.mock.callCount(), 1);
     assert.equal(f.control.status().last_action, 'tick');
-    assert.ok(f.control.status().error);
-    f.store.setSetting('device_voice_overlay_backup:fixture', null);
-    assert.doesNotThrow(() => f.control.tick());
-    assert.equal(log.mock.callCount(), 1);
+    assert.match(f.control.status().error!, /read failed/);
     await f.control.action({ action: 'probe' });
     assert.equal(f.control.status().error, null);
   } finally { await f.control.close(); f.store.close(); }
+});
+
+test('损坏的权限备份进入守护诊断和审计，并按五秒间隔重试', async () => {
+  const f = await fixture();
+  try {
+    await f.control.action({ action: 'host', enabled: false });
+    f.store.db.prepare('INSERT INTO settings VALUES (?,?)').run('device_voice_overlay_backup:fixture', '{invalid');
+    f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
+    assert.equal(f.control.status().voice_guard.state, 'error');
+    assert.equal(f.control.status().audit[0].action, 'voice_overlay');
+    assert.equal(f.control.status().audit[0].detail.ok, false);
+    const count = f.control.status().audit.length;
+    f.advance(1000); f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
+    assert.equal(f.control.status().audit.length, count);
+    f.advance(4001); f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
+    assert.equal(f.control.status().audit.length, count + 1);
+    assert.equal(f.store.db.prepare('SELECT value FROM settings WHERE key=?').get('device_voice_overlay_backup:fixture')!.value, '{invalid');
+    f.store.setSetting('device_voice_overlay_backup:fixture', null);
+    f.advance(5001); assert.doesNotThrow(() => f.control.tick());
+  } finally { await f.control.close(); f.store.close(); }
+});
+
+test('权限审计写入失败的异步拒绝被捕获，释放工作锁并保留诊断', async t => {
+  const f = await fixture();
+  const log = t.mock.method(console, 'error', () => {});
+  try {
+    f.store.db.exec("CREATE TRIGGER reject_device_audit BEFORE INSERT ON admin_audit BEGIN SELECT RAISE(FAIL, 'fixture audit unavailable'); END");
+    f.control.tick(); await new Promise<void>(resolve => setImmediate(resolve));
+    f.store.db.exec('DROP TRIGGER reject_device_audit');
+    assert.equal(log.mock.callCount(), 1);
+    assert.equal(f.control.status().working, false);
+    assert.equal(f.control.status().last_action, 'tick');
+    assert.match(f.control.status().error!, /audit unavailable/);
+    assert.deepEqual(f.store.setting('device_voice_overlay_backup:fixture'), { mode: 'allow' });
+    await f.control.action({ action: 'host', enabled: false });
+    assert.equal(f.voiceMode(), 'allow');
+    assert.equal(f.control.status().error, null);
+  } finally { f.store.db.exec('DROP TRIGGER IF EXISTS reject_device_audit'); await f.control.close(); f.store.close(); }
 });

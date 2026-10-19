@@ -18,7 +18,9 @@ export interface Command {
 export type Material = Omit<Snapshot, 'participant' | 'config_hash' | 'content_hash'>;
 
 export class Engine {
+  /** 由设备控制器提供互斥状态，阻止在控制或独立通知期间创建会话。 */
   deviceControlBusy?: () => boolean;
+  /** 优先消费独立通知事件；返回 true 时不写入实验消息记录。 */
   deviceDebugEvent?: (event: GlassesEvent) => boolean;
   readonly store: Store;
   readonly adapter: GlassesAdapter;

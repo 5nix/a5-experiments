@@ -11,6 +11,7 @@ interface DebugRecord {
   request_id: string; text: string; device_id?: string; created_at: string;
   status: string; error: string | null; receipt?: GlassesReceipt; events: GlassesEvent[];
 }
+/** 协调上位机恢复、独立通知与权限守护，不重放实验刺激。 */
 export class DeviceControl {
   private readonly engine: Engine;
   private readonly serial: string;
@@ -201,11 +202,14 @@ export class DeviceControl {
     try {
       this.tickGuard();
     } catch (error) {
-      // 数据库本身可能不可读，不能在此依赖数据库审计来处理异常。
-      this.diagnostics = { last_action: 'tick', last_at: new Date(this.now()).toISOString(),
-        error: (error instanceof Error ? error.message : String(error)).replaceAll(this.serial, '[已绑定设备]') };
-      console.error('设备控制定时任务失败：', this.diagnostics.error);
+      this.reportTickError(error);
     }
+  }
+  /** 不依赖数据库审计记录定时任务错误，供同步与异步异常共用。 */
+  private reportTickError(error: unknown) {
+    this.diagnostics = { last_action: 'tick', last_at: new Date(this.now()).toISOString(),
+      error: (error instanceof Error ? error.message : String(error)).replaceAll(this.serial, '[已绑定设备]') };
+    console.error('设备控制定时任务失败：', this.diagnostics.error);
   }
   /** 按展示保护和限频规则触发权限核对或前台恢复，不重放消息。 */
   private tickGuard() {
@@ -216,7 +220,7 @@ export class DeviceControl {
     if (state.connected && state.ready || !this.enabled) {
       if (!voiceDue || this.now() - this.lastAttempt < 5000) return;
       this.lastAttempt = this.now(); this.working = true;
-      this.task = this.voiceGuard.sync(this.enabled).finally(() => { this.working = false; });
+      this.task = this.voiceGuard.sync(this.enabled).catch(error => this.reportTickError(error)).finally(() => { this.working = false; });
       return;
     }
     if (this.now() - this.lastAttempt < 5000) return;

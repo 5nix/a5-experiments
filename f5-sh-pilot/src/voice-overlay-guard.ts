@@ -21,8 +21,11 @@ export class VoiceOverlayGuard {
   private key() { return `device_voice_overlay_backup:${this.serial}`; }
   /** 读取持久化的原权限；解析失败交给调用边界处理。 */
   private backup() { return this.store.setting<{ mode: string } | null>(this.key()); }
-  /** 检查是否仍有需要恢复的原权限。 */
-  hasBackup() { return !!this.backup(); }
+  /** 无法读取备份时保留恢复责任，交由限频后的 sync 记录错误而不猜测权限。 */
+  hasBackup() {
+    try { return !!this.backup(); }
+    catch { return true; }
+  }
   /** 开启时每三十秒核对，关闭后持续尝试恢复尚存的备份。 */
   due(enabled: boolean) { return enabled ? this.now() - this.checkedAt >= 30000 : this.hasBackup(); }
   /** 返回最近一次权限核对的结果快照。 */

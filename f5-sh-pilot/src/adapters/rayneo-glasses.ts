@@ -39,6 +39,7 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
     this.state = { source: 'device', connected: false, ready: false, device_id: `adb:${serial}`, error: 'device_not_probed', protocol: rayneoProtocol,
       independent_duration: true, persistent_deduplication: true, display_evidence: 'android_dual_eye_onDraw; optical_validation_pending' };
   }
+  /** 返回适配器状态副本，供后台判断连接恢复结果。 */
   getStatus() { return { ...this.state }; }
   /** 空闲时重建 USB 隧道；连接结果保存在适配器状态中供调用方检查。 */
   async reconnect() {
@@ -46,6 +47,7 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
     this.disconnect(new Error('device_manual_reconnect'));
     await this.probe();
   }
+  /** 清理连接与在途 RPC，将设备标为离线且保留故障原因。 */
   private disconnect(error: Error) {
     this.state = { ...this.state, connected: false, ready: false, busy: false, error: error.message };
     this.socket?.destroy(); this.socket = undefined;
