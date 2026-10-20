@@ -2,7 +2,13 @@
 
 根目录的macOS `.command`、Windows `.bat`和 `npm run launcher` 都运行 `experiment-launcher.mjs`。它只提供终端选择和管理，不包含任何实验题目或业务流程。
 
+Windows 本机若存在 `.a5-local/device.json`，SH 菜单的启动和重启会调用仓库内的 `scripts/rayneo-control.mjs`：优先使用 `.a5-local/android/platform-tools/adb.exe`，检查绑定设备授权，打开眼镜应用并传入 rayneo 真机环境。已有 Mock 服务在启动真机前正常停止；设备检查失败会报错，不会降级为 Mock。`4/status` 显示实际运行模式和设备状态，只有显式选择 `9/mock` 才进入模拟预演。`start/restart 端口` 仍传递自定义端口。其他实验和未配置本机设备的环境保持通用启动行为。
+
 ## 新实验接入
+
+本机设备启动脚本也优先检查 `.a5-local/scrcpy/scrcpy.exe`，运行配置将该路径作为 `A5_SCRCPY_PATH` 传入电脑端；scrcpy 的 DLL 和 server 文件须与可执行文件一并保存。修改本机路径配置后需正常重启服务才会加载新环境。
+
+在另一台 Windows 主机上，将完整 Android platform-tools 放到 `.a5-local/android/platform-tools/`，将完整 scrcpy 放到 `.a5-local/scrcpy/`；这些工具和设备配置不提交 Git。创建 `.a5-local/device.json`，最小内容为 `{"packageName":"link.ironip.a5.rayneo.localfix"}`（按实际安装包名填写）。仅连接一副已授权眼镜时自动绑定并保存序列号；多设备时需设置 `serial`。若显示端尚未安装，先按 Android 构建说明安装，或配置 `apkPath` 与 `apkSha256` 供启动脚本校验后安装。已有工具可用 `adbPath`、`scrcpyPath` 指定完整路径。
 
 启动器按名称自动发现根目录的 `f5-sh-*`、`f5-sl-*`、`f5-mh-*`、`f5-ml-*` 目录。没有配置启动方式的目录也会列出，并提示需要配置的内容。
 

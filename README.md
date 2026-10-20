@@ -16,6 +16,8 @@ A5 实验程序仓库（[5nix/a5-experiments](https://github.com/5nix/a5-experim
 
 启动器只管理由它自己启动的服务，状态和日志保存在 `.launcher/<实验>/`。
 
+Windows 本机已配置 `.a5-local/device.json` 时，选择 SH 的 `1` 启动或 `3` 重启会自动使用项目内 ADB 和 USB 真机模式，设备不可用会明确报错。`4` 可核对实际模式和连接状态；`9/mock` 是显式模拟入口。
+
 ## 命令
 
 ```bash
