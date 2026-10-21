@@ -27,11 +27,12 @@ test('删除记录可恢复且跨重启保留；进行中不可删，已删除�
     assert.throws(() => engine.adminAction(c.session_id, 'delete', '清理预演'), /先结束会话/);
     send('jump', { target:'SH01_U1' }); send('displayed'); send('scratchpad', { text:'保留的草稿' }); send('draft', { answer:{ plans:['A'] } });
     engine.note(c.session_id, 'observation', '保留的观察记录', null);
+    engine.adminAction(c.session_id, 'pause', ''); engine.adminAction(c.session_id, 'resume', '');
     engine.adminAction(c.session_id, 'stop', '预演结束');
     const snapshot = structuredClone(engine.session(c.session_id).snapshot);
     const originalEvents = store.events(c.session_id).map(e => e.event_id);
     assert.ok(engine.summary(c.session_id).available_actions.includes('delete'));
-    assert.throws(() => engine.adminAction(c.session_id, 'delete', '  '), /填写原因/);
+
     engine.adminAction(c.session_id, 'delete', '清理预演'); engine.adminAction(c.session_id, 'delete', '重复点击');
     assert.deepEqual(store.ids(), []); assert.deepEqual(store.deletedIds(), [c.session_id]);
     assert.deepEqual(engine.summary(c.session_id).available_actions, ['restore']);

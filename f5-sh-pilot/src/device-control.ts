@@ -3,12 +3,13 @@ import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
 import { randomUUID } from 'node:crypto';
 import { Engine, HttpError } from './engine.ts';
-import type { GlassesEvent, GlassesReceipt, GlassesRequest } from './contracts.ts';
+import type { DisplayMode, GlassesEvent, GlassesReceipt, GlassesRequest } from './contracts.ts';
 import { VoiceOverlayGuard } from './voice-overlay-guard.ts';
 
 const execute = promisify(execFile);
 type Runner = (file: string, args: string[]) => Promise<string>;
 interface DebugRecord {
+  display_mode?: DisplayMode;
   request_id: string; text: string; device_id?: string; created_at: string;
   status: string; error: string | null; receipt?: GlassesReceipt; events: GlassesEvent[];
 }
@@ -62,7 +63,7 @@ export class DeviceControl {
   /** 检查是否存在禁止独立测试通知的活跃实验会话。 */
   private activeSession() { return this.engine.store.ids().some(id => this.engine.session(id).state.status === 'active'); }
   /** 在通知结束证据到达或安全窗口过期前保护显示端。 */
-  private hasLiveDebug() { return this.records().some(record => !['failed', 'hidden'].includes(record.status) && this.now() - Date.parse(record.created_at) < 15000); }
+  private hasLiveDebug() { return this.records().some(record => !['failed', 'hidden'].includes(record.status) && (record.display_mode==='confirm_until_ack' ? !record.events.some(e=>e.kind==='hidden') : this.now() - Date.parse(record.created_at) < 15000)); }
   /** 合并设备忙碌、调试通知和实验消息的展示保护窗口。 */
   private displayProtected() {
     if (this.engine.adapter.getStatus().busy || this.hasLiveDebug()) return true;
@@ -74,8 +75,8 @@ export class DeviceControl {
     return { supported: this.supported(), enabled: this.supported() && this.enabled, working: this.working,
       package_name: this.packageName, ...this.diagnostics, active_session: this.activeSession(), voice_guard: this.voiceGuard.status(),
       scrcpy: { running: !!this.mirror && this.mirror.exitCode === null, crop: '640:480:0:0', error: this.mirrorError },
-      debug_allowed: this.supported() && !this.activeSession() && !this.working && !this.hasLiveDebug() && !this.engine.adapter.getStatus().busy,
-      debug_notifications: this.records(), audit: (this.engine.store.db.prepare("SELECT data FROM admin_audit WHERE json_extract(data,'$.event_type')='device_control' ORDER BY seq DESC LIMIT 30").all() as { data: string }[]).map(row => JSON.parse(row.data)) };
+      debug_allowed: this.supported() && !this.working && !this.hasLiveDebug() && !this.engine.adapter.getStatus().busy,
+      debug_notifications: [...this.engine.store.ids().flatMap(id=>this.engine.store.interventions(id).filter(m=>m.data_kind==='manual').map(m=>({...m,events:m.device_events??[],created_at:m.t_event,status:m.device_events?.some(e=>e.kind==='hidden')?'hidden':m.status}))),...this.records()].sort((a,b)=>b.created_at.localeCompare(a.created_at)), audit: (this.engine.store.db.prepare("SELECT data FROM admin_audit WHERE json_extract(data,'$.event_type')='device_control' ORDER BY seq DESC LIMIT 30").all() as { data: string }[]).map(row => JSON.parse(row.data)) };
   }
   /** 消费绑定设备的独立通知事件，按事件编号去重并保留终态。 */
   private receive(event: GlassesEvent) {
@@ -86,16 +87,16 @@ export class DeviceControl {
     const prior = record.events.find(item => item.event_id === event.event_id);
     if (prior) { if (JSON.stringify(prior) !== JSON.stringify(event)) throw new Error('device_debug_event_conflict'); return true; }
     record.events.push(event);
-    if (event.kind === 'failed') { record.status = 'failed'; record.error = event.error; }
+    if (event.kind === 'failed' || event.kind === 'cue_failed') { record.status = 'failed'; record.error = event.error; }
     else if (record.status !== 'failed') record.status = record.events.some(item => item.kind === 'hidden') ? 'hidden' : record.events.some(item => item.kind === 'drawn') ? 'drawn' : 'accepted';
     this.save(record); return true;
   }
   /** 校验允许的操作并串行执行，关闭或展示保护期间拒绝冲突操作。 */
-  async action(input: { action: string; enabled?: boolean; text?: string; request_id?: string }) {
+  async action(input: { action: string; enabled?: boolean; text?: string; request_id?: string; display_mode?: DisplayMode }) {
     if (this.closed) throw new HttpError(409, '显示控制正在关闭。');
     if (!this.supported()) throw new HttpError(409, '当前为 Mock 模式，不能执行真机控制或发送眼镜通知。');
     if (this.working) throw new HttpError(409, '另一项眼镜控制正在执行，请稍后重试。');
-    if (!['host', 'probe', 'open', 'reconnect', 'notify', 'scrcpy'].includes(input.action)) throw new HttpError(422, '不支持的眼镜控制操作。');
+    if (!['host', 'probe', 'open', 'reconnect', 'notify', 'confirm_notify', 'scrcpy'].includes(input.action)) throw new HttpError(422, '不支持的眼镜控制操作。');
     if (input.action === 'host') {
       if (typeof input.enabled !== 'boolean') throw new HttpError(422, '请指定是否启用上位机守护。');
       if (this.displayProtected()) throw new HttpError(409, '眼镜消息尚未展示结束，暂不能变更系统悬浮窗保护。');
@@ -106,13 +107,18 @@ export class DeviceControl {
     try { return await work; } finally { this.working = false; }
   }
   /** 执行一次控制操作；失败写入诊断与审计并转换为 HTTP 错误。 */
-  private async perform(input: { action: string; enabled?: boolean; text?: string; request_id?: string }) {
+  private async perform(input: { action: string; enabled?: boolean; text?: string; request_id?: string; display_mode?: DisplayMode }) {
     this.diagnostics = { last_action: input.action, last_at: new Date(this.now()).toISOString(), error: null };
     try {
       let notification: DebugRecord | undefined;
       if (input.action === 'host') {
         this.enabled = input.enabled!; this.engine.store.setSetting('device_host_enabled', this.enabled);
         await this.voiceGuard.sync(this.enabled);
+      }
+      else if(input.action==='confirm_notify') {
+        const m=this.engine.store.findRequest(input.request_id??'');
+        if(m?.data_kind==='manual') await this.engine.confirmMessage(m.session_id,m.request_id);
+        else { const record=this.records().find(r=>r.request_id===input.request_id); if(!record || record.display_mode!=='confirm_until_ack' || !record.events.some(e=>e.kind==='drawn')) throw new HttpError(409,'没有可确认的手动通知。'); if(!this.engine.adapter.confirm) throw new HttpError(409,'设备不支持确认。');await this.engine.adapter.confirm({request_id:record.request_id,device_id:record.device_id}); }
       }
       else if (input.action === 'notify') notification = await this.notify(input);
       else if (input.action === 'scrcpy') await this.openMirror();
@@ -174,22 +180,25 @@ export class DeviceControl {
     await this.engine.adapter.probe?.();
   }
   /** 以请求编号去重发送独立通知，未知结果保留记录且不自动重发。 */
-  private async notify(input: { text?: string; request_id?: string }) {
+  private async notify(input: { text?: string; request_id?: string; display_mode?: DisplayMode }) {
     if (typeof input.text !== 'string' || !input.text.trim() || input.text.length > 500) throw new HttpError(422, '请填写 1—500 字的测试通知。');
     if (typeof input.request_id !== 'string' || !/^[a-f0-9-]{36}$/.test(input.request_id)) throw new HttpError(422, '测试通知必须带有效的 request_id。');
     const row = this.engine.store.db.prepare('SELECT data FROM device_debug_requests WHERE request_id=?').get(input.request_id) as { data: string } | undefined;
     if (row) {
       const prior: DebugRecord = JSON.parse(row.data);
-      if (prior.text !== input.text) throw new HttpError(409, '同一通知编号不能绑定不同内容。');
+      if (prior.text !== input.text || (prior.display_mode??'legacy_8500') !== (input.display_mode??'legacy_8500')) throw new HttpError(409, '同一通知编号不能绑定不同内容。');
       return prior;
     }
-    if (this.activeSession()) throw new HttpError(409, '请先结束进行中的会话，再发送独立测试通知。');
+    const mode=input.display_mode??'legacy_8500';
+    if(!['legacy_8500','tone_8500','confirm_until_ack'].includes(mode)) throw new HttpError(422,'通知模态无效。');
+    const sessionId=this.engine.store.ids().find(id=>{const s=this.engine.session(id);return s.state.status==='active' && s.state.device_id===this.engine.adapter.getStatus().device_id;});
+    if(sessionId) { const m=this.engine.manualNotification(sessionId,input.request_id!,input.text!,mode); return {...m,receipt:m.receipt as GlassesReceipt|undefined,text:m.text!,created_at:m.t_event,events:m.device_events??[]}; }
     if (this.hasLiveDebug()) throw new HttpError(409, '上一条测试通知尚未展示结束。');
     const state = this.engine.adapter.getStatus();
     if (!state.connected || !state.ready || state.busy) throw new HttpError(409, '显示端未就绪，请先点击“唤醒并打开显示端”。');
-    const record: DebugRecord = { request_id: input.request_id, text: input.text, device_id: state.device_id, created_at: new Date(this.now()).toISOString(), status: 'sending', error: null, events: [] };
+    const record: DebugRecord = { request_id: input.request_id, text: input.text, device_id: state.device_id, created_at: new Date(this.now()).toISOString(), display_mode:mode,status: 'sending', error: null, events: [] };
     this.save(record);
-    const request: GlassesRequest = { request_id: record.request_id, session_id: `device-debug:${randomUUID()}`, participant_id: 'DEVICE_DEBUG', stage_id: 'SH01', message_id: 'DEVICE_DEBUG', text: record.text, duration_ms: 8500, device_id: state.device_id };
+    const request: GlassesRequest = { request_id: record.request_id, session_id: `device-debug:${randomUUID()}`, participant_id: 'DEVICE_DEBUG', stage_id: 'SH01', message_id: 'DEVICE_DEBUG', text: record.text, duration_ms: 8500, display_mode:mode, device_id: state.device_id };
     try {
       const receipt = await this.engine.adapter.send(request);
       const current = JSON.parse((this.engine.store.db.prepare('SELECT data FROM device_debug_requests WHERE request_id=?').get(record.request_id) as { data: string }).data) as DebugRecord;

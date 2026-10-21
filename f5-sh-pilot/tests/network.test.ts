@@ -41,7 +41,7 @@ test('主试直接进入、离线二维码、跨主试页面共享入口、被�
   const post = async (path: string, input: unknown) => fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
   try {
     const admin = await fetch(base + '/admin'); assert.equal(admin.status, 200);
-    assert.match(await admin.text(), /手机扫码进入主试后台/);
+    assert.match(await admin.text(), /主试二维码/);
     assert.equal((await fetch(base + '/api/admin/config')).status, 200);
     const network = await (await fetch(base + '/api/admin/network')).json() as { shared: boolean; local_url: string };
     assert.equal(network.shared, true);

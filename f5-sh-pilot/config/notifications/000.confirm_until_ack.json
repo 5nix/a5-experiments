@@ -1,0 +1,43 @@
+{
+  "experiment_id": "f5-sh-pilot",
+  "schema_version": "1.0",
+  "participants": [],
+  "debug_participant": {
+    "participant_id": "000",
+    "version_label": "V1",
+    "debug": true,
+    "copied_from": "001",
+    "stages": [
+      {
+        "stage_id": "SH01",
+        "condition": "N-T0",
+        "message_id": "N01",
+        "display_mode": "confirm_until_ack"
+      },
+      {
+        "stage_id": "SH02",
+        "condition": "N-T1",
+        "message_id": "N02",
+        "display_mode": "confirm_until_ack"
+      },
+      {
+        "stage_id": "SH03",
+        "condition": "A-T0",
+        "message_id": "A03",
+        "display_mode": "confirm_until_ack"
+      },
+      {
+        "stage_id": "SH04",
+        "condition": "A-T1",
+        "message_id": "A04",
+        "display_mode": "confirm_until_ack"
+      },
+      {
+        "stage_id": "SH05",
+        "condition": "NONE",
+        "message_id": null
+      }
+    ]
+  },
+  "config_name": "000调试 · 无声等待确认"
+}

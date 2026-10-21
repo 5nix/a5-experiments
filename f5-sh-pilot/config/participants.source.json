@@ -16,28 +16,32 @@
           "condition": "N-T0",
           "message_id": "N01",
           "source_value": "N01-T0",
-          "source_cell": "C3"
+          "source_cell": "C3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "N-T1",
           "message_id": "N02",
           "source_value": "N02-T1",
-          "source_cell": "C4"
+          "source_cell": "C4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "A-T0",
           "message_id": "A03",
           "source_value": "A03-T0",
-          "source_cell": "C5"
+          "source_cell": "C5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "A-T1",
           "message_id": "A04",
           "source_value": "A04-T1",
-          "source_cell": "C6"
+          "source_cell": "C6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
@@ -57,28 +61,32 @@
           "condition": "N-T0",
           "message_id": "N01",
           "source_value": "N01-T0",
-          "source_cell": "C3"
+          "source_cell": "C3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "N-T1",
           "message_id": "N02",
           "source_value": "N02-T1",
-          "source_cell": "C4"
+          "source_cell": "C4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "A-T0",
           "message_id": "A03",
           "source_value": "A03-T0",
-          "source_cell": "C5"
+          "source_cell": "C5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "A-T1",
           "message_id": "A04",
           "source_value": "A04-T1",
-          "source_cell": "C6"
+          "source_cell": "C6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
@@ -98,28 +106,32 @@
           "condition": "N-T0",
           "message_id": "N01",
           "source_value": "N01-T0",
-          "source_cell": "C3"
+          "source_cell": "C3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "N-T1",
           "message_id": "N02",
           "source_value": "N02-T1",
-          "source_cell": "C4"
+          "source_cell": "C4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "A-T0",
           "message_id": "A03",
           "source_value": "A03-T0",
-          "source_cell": "C5"
+          "source_cell": "C5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "A-T1",
           "message_id": "A04",
           "source_value": "A04-T1",
-          "source_cell": "C6"
+          "source_cell": "C6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
@@ -139,28 +151,32 @@
           "condition": "N-T0",
           "message_id": "N01",
           "source_value": "N01-T0",
-          "source_cell": "C3"
+          "source_cell": "C3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "N-T1",
           "message_id": "N02",
           "source_value": "N02-T1",
-          "source_cell": "C4"
+          "source_cell": "C4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "A-T0",
           "message_id": "A03",
           "source_value": "A03-T0",
-          "source_cell": "C5"
+          "source_cell": "C5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "A-T1",
           "message_id": "A04",
           "source_value": "A04-T1",
-          "source_cell": "C6"
+          "source_cell": "C6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
@@ -180,21 +196,24 @@
           "condition": "N-T1",
           "message_id": "N01",
           "source_value": "N01-T1",
-          "source_cell": "D3"
+          "source_cell": "D3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "A-T0",
           "message_id": "A02",
           "source_value": "A02-T0",
-          "source_cell": "D4"
+          "source_cell": "D4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "A-T1",
           "message_id": "A03",
           "source_value": "A03-T1",
-          "source_cell": "D5"
+          "source_cell": "D5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
@@ -208,7 +227,8 @@
           "condition": "N-T0",
           "message_id": "N05",
           "source_value": "N05-T0",
-          "source_cell": "D7"
+          "source_cell": "D7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -221,21 +241,24 @@
           "condition": "N-T1",
           "message_id": "N01",
           "source_value": "N01-T1",
-          "source_cell": "D3"
+          "source_cell": "D3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "A-T0",
           "message_id": "A02",
           "source_value": "A02-T0",
-          "source_cell": "D4"
+          "source_cell": "D4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "A-T1",
           "message_id": "A03",
           "source_value": "A03-T1",
-          "source_cell": "D5"
+          "source_cell": "D5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
@@ -249,7 +272,8 @@
           "condition": "N-T0",
           "message_id": "N05",
           "source_value": "N05-T0",
-          "source_cell": "D7"
+          "source_cell": "D7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -262,21 +286,24 @@
           "condition": "N-T1",
           "message_id": "N01",
           "source_value": "N01-T1",
-          "source_cell": "D3"
+          "source_cell": "D3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "A-T0",
           "message_id": "A02",
           "source_value": "A02-T0",
-          "source_cell": "D4"
+          "source_cell": "D4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "A-T1",
           "message_id": "A03",
           "source_value": "A03-T1",
-          "source_cell": "D5"
+          "source_cell": "D5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
@@ -290,7 +317,8 @@
           "condition": "N-T0",
           "message_id": "N05",
           "source_value": "N05-T0",
-          "source_cell": "D7"
+          "source_cell": "D7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -303,21 +331,24 @@
           "condition": "N-T1",
           "message_id": "N01",
           "source_value": "N01-T1",
-          "source_cell": "D3"
+          "source_cell": "D3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "A-T0",
           "message_id": "A02",
           "source_value": "A02-T0",
-          "source_cell": "D4"
+          "source_cell": "D4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "A-T1",
           "message_id": "A03",
           "source_value": "A03-T1",
-          "source_cell": "D5"
+          "source_cell": "D5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
@@ -331,7 +362,8 @@
           "condition": "N-T0",
           "message_id": "N05",
           "source_value": "N05-T0",
-          "source_cell": "D7"
+          "source_cell": "D7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -344,14 +376,16 @@
           "condition": "A-T0",
           "message_id": "A01",
           "source_value": "A01-T0",
-          "source_cell": "E3"
+          "source_cell": "E3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "A-T1",
           "message_id": "A02",
           "source_value": "A02-T1",
-          "source_cell": "E4"
+          "source_cell": "E4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
@@ -365,14 +399,16 @@
           "condition": "N-T0",
           "message_id": "N04",
           "source_value": "N04-T0",
-          "source_cell": "E6"
+          "source_cell": "E6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "N-T1",
           "message_id": "N05",
           "source_value": "N05-T1",
-          "source_cell": "E7"
+          "source_cell": "E7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -385,14 +421,16 @@
           "condition": "A-T0",
           "message_id": "A01",
           "source_value": "A01-T0",
-          "source_cell": "E3"
+          "source_cell": "E3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "A-T1",
           "message_id": "A02",
           "source_value": "A02-T1",
-          "source_cell": "E4"
+          "source_cell": "E4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
@@ -406,14 +444,16 @@
           "condition": "N-T0",
           "message_id": "N04",
           "source_value": "N04-T0",
-          "source_cell": "E6"
+          "source_cell": "E6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "N-T1",
           "message_id": "N05",
           "source_value": "N05-T1",
-          "source_cell": "E7"
+          "source_cell": "E7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -426,14 +466,16 @@
           "condition": "A-T0",
           "message_id": "A01",
           "source_value": "A01-T0",
-          "source_cell": "E3"
+          "source_cell": "E3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "A-T1",
           "message_id": "A02",
           "source_value": "A02-T1",
-          "source_cell": "E4"
+          "source_cell": "E4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
@@ -447,14 +489,16 @@
           "condition": "N-T0",
           "message_id": "N04",
           "source_value": "N04-T0",
-          "source_cell": "E6"
+          "source_cell": "E6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "N-T1",
           "message_id": "N05",
           "source_value": "N05-T1",
-          "source_cell": "E7"
+          "source_cell": "E7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -467,14 +511,16 @@
           "condition": "A-T0",
           "message_id": "A01",
           "source_value": "A01-T0",
-          "source_cell": "E3"
+          "source_cell": "E3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
           "condition": "A-T1",
           "message_id": "A02",
           "source_value": "A02-T1",
-          "source_cell": "E4"
+          "source_cell": "E4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
@@ -488,14 +534,16 @@
           "condition": "N-T0",
           "message_id": "N04",
           "source_value": "N04-T0",
-          "source_cell": "E6"
+          "source_cell": "E6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "N-T1",
           "message_id": "N05",
           "source_value": "N05-T1",
-          "source_cell": "E7"
+          "source_cell": "E7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -508,7 +556,8 @@
           "condition": "A-T1",
           "message_id": "A01",
           "source_value": "A01-T1",
-          "source_cell": "F3"
+          "source_cell": "F3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
@@ -522,21 +571,24 @@
           "condition": "N-T0",
           "message_id": "N03",
           "source_value": "N03-T0",
-          "source_cell": "F5"
+          "source_cell": "F5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "N-T1",
           "message_id": "N04",
           "source_value": "N04-T1",
-          "source_cell": "F6"
+          "source_cell": "F6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "A-T0",
           "message_id": "A05",
           "source_value": "A05-T0",
-          "source_cell": "F7"
+          "source_cell": "F7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -549,7 +601,8 @@
           "condition": "A-T1",
           "message_id": "A01",
           "source_value": "A01-T1",
-          "source_cell": "F3"
+          "source_cell": "F3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
@@ -563,21 +616,24 @@
           "condition": "N-T0",
           "message_id": "N03",
           "source_value": "N03-T0",
-          "source_cell": "F5"
+          "source_cell": "F5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "N-T1",
           "message_id": "N04",
           "source_value": "N04-T1",
-          "source_cell": "F6"
+          "source_cell": "F6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "A-T0",
           "message_id": "A05",
           "source_value": "A05-T0",
-          "source_cell": "F7"
+          "source_cell": "F7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -590,7 +646,8 @@
           "condition": "A-T1",
           "message_id": "A01",
           "source_value": "A01-T1",
-          "source_cell": "F3"
+          "source_cell": "F3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
@@ -604,21 +661,24 @@
           "condition": "N-T0",
           "message_id": "N03",
           "source_value": "N03-T0",
-          "source_cell": "F5"
+          "source_cell": "F5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "N-T1",
           "message_id": "N04",
           "source_value": "N04-T1",
-          "source_cell": "F6"
+          "source_cell": "F6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "A-T0",
           "message_id": "A05",
           "source_value": "A05-T0",
-          "source_cell": "F7"
+          "source_cell": "F7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -631,7 +691,8 @@
           "condition": "A-T1",
           "message_id": "A01",
           "source_value": "A01-T1",
-          "source_cell": "F3"
+          "source_cell": "F3",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH02",
@@ -645,21 +706,24 @@
           "condition": "N-T0",
           "message_id": "N03",
           "source_value": "N03-T0",
-          "source_cell": "F5"
+          "source_cell": "F5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "N-T1",
           "message_id": "N04",
           "source_value": "N04-T1",
-          "source_cell": "F6"
+          "source_cell": "F6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "A-T0",
           "message_id": "A05",
           "source_value": "A05-T0",
-          "source_cell": "F7"
+          "source_cell": "F7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -679,28 +743,32 @@
           "condition": "N-T0",
           "message_id": "N02",
           "source_value": "N02-T0",
-          "source_cell": "G4"
+          "source_cell": "G4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "N-T1",
           "message_id": "N03",
           "source_value": "N03-T1",
-          "source_cell": "G5"
+          "source_cell": "G5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "A-T0",
           "message_id": "A04",
           "source_value": "A04-T0",
-          "source_cell": "G6"
+          "source_cell": "G6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "A-T1",
           "message_id": "A05",
           "source_value": "A05-T1",
-          "source_cell": "G7"
+          "source_cell": "G7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -720,28 +788,32 @@
           "condition": "N-T0",
           "message_id": "N02",
           "source_value": "N02-T0",
-          "source_cell": "G4"
+          "source_cell": "G4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "N-T1",
           "message_id": "N03",
           "source_value": "N03-T1",
-          "source_cell": "G5"
+          "source_cell": "G5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "A-T0",
           "message_id": "A04",
           "source_value": "A04-T0",
-          "source_cell": "G6"
+          "source_cell": "G6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "A-T1",
           "message_id": "A05",
           "source_value": "A05-T1",
-          "source_cell": "G7"
+          "source_cell": "G7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -761,28 +833,32 @@
           "condition": "N-T0",
           "message_id": "N02",
           "source_value": "N02-T0",
-          "source_cell": "G4"
+          "source_cell": "G4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "N-T1",
           "message_id": "N03",
           "source_value": "N03-T1",
-          "source_cell": "G5"
+          "source_cell": "G5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "A-T0",
           "message_id": "A04",
           "source_value": "A04-T0",
-          "source_cell": "G6"
+          "source_cell": "G6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "A-T1",
           "message_id": "A05",
           "source_value": "A05-T1",
-          "source_cell": "G7"
+          "source_cell": "G7",
+          "display_mode": "legacy_8500"
         }
       ]
     },
@@ -802,28 +878,32 @@
           "condition": "N-T0",
           "message_id": "N02",
           "source_value": "N02-T0",
-          "source_cell": "G4"
+          "source_cell": "G4",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH03",
           "condition": "N-T1",
           "message_id": "N03",
           "source_value": "N03-T1",
-          "source_cell": "G5"
+          "source_cell": "G5",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH04",
           "condition": "A-T0",
           "message_id": "A04",
           "source_value": "A04-T0",
-          "source_cell": "G6"
+          "source_cell": "G6",
+          "display_mode": "legacy_8500"
         },
         {
           "stage_id": "SH05",
           "condition": "A-T1",
           "message_id": "A05",
           "source_value": "A05-T1",
-          "source_cell": "G7"
+          "source_cell": "G7",
+          "display_mode": "legacy_8500"
         }
       ]
     }

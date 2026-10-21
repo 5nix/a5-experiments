@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { Snapshot } from './tasks.ts';
 
-export type Phase = 'INTRO' | 'CARD' | 'UNIT' | 'COMPREHENSION' | 'RATINGS' | 'BREAK' | 'COMPLETED' | 'ABORTED';
+export type Phase = 'TUTORIAL_INTRO' | 'TUTORIAL_NOTICE' | 'TUTORIAL_CHECK' | 'INTRO' | 'CARD' | 'UNIT' | 'COMPREHENSION' | 'RATINGS' | 'BREAK' | 'COMPLETED' | 'ABORTED';
 export interface State {
   phase: Phase; stage: number; unit: number; page_token: string;
   displayed: Record<string, boolean>; drafts: Record<string, Record<string, unknown>>;
@@ -17,12 +17,17 @@ export interface State {
 }
 export interface Session { id: string; token_hash: string; state: State; snapshot: Snapshot }
 export interface EventRecord {
+  data_kind?: string;
   event_id: string; session_id: string; participant_id: string; stage_id: string | null; unit_id: string | null;
   condition: string | null; event_type: string; timestamp_iso: string; elapsed_ms: number;
   payload: Record<string, unknown>; content_version: string;
   is_debug?: boolean;
 }
 export interface Intervention {
+  data_kind?: 'formal' | 'tutorial' | 'manual';
+  text?: string;
+  display_mode?: import('./contracts.ts').DisplayMode;
+  confirmation_requested_at?: string; confirmation_elapsed_ms?: number; confirmation_status?: 'pending' | 'accepted' | 'unknown';
   session_id: string; stage_id: string; participant_id: string; message_id: string; condition: string;
   request_id: string; status: string; source: 'mock' | 'device'; duration_ms: number;
   t_event: string; event_elapsed_ms: number; t_send: string | null; t_ack: string | null; t_display: string | null; t_hide: string | null;

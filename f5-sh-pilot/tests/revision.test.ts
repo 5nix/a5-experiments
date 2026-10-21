@@ -36,14 +36,14 @@ test('18张表格来自内嵌Excel且不再含图片；M1—M6使用已批准修
   assert.equal(tables.find(t => t.id === 'table-13')?.rows[0][1], '12:40');
   assert.equal(tables.find(t => t.id === 'table-18')?.rows[3][4], '125元');
   // 日常工作语气修订：M1仍为筛选当前基本方案且可多选；补充资料以文件附件名呈现，题干按文件名引用。
-  assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('选出符合全部标准的方案（可多选）')));
-  assert.equal(material.content.content_version, 'sh-current-2026-10-19-v4');
+  assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('可以选择多个方案，也可以选择无方案')));
+  assert.equal(material.content.content_version, 'sh-current-2026-10-20-v5');
   for (const unit of material.content.stages.map(s => s.units[0])) {
     assert.match(unit.reveal!.button_label, /\.(xlsx|docx)$/);
-    assert.ok(unit.paragraphs.some(p => p.includes(`“${unit.reveal!.button_label}”`)));
+    assert.ok(unit.paragraphs.some(p => p.includes(`《${unit.reveal!.button_label}》`)));
   }
-  assert.ok(material.content.stages[0].units[1].paragraphs.some(p => p.includes('D方案的基本报价和筹备周期已更新')));
-  assert.ok(material.content.stages[2].units[1].paragraphs.some(p => p.includes('最新状态更新为“已确认”')));
+  assert.ok(material.content.stages[0].units[1].paragraphs.some(p => p.includes('C方案的总费用已算好，请计算A、B、D三个方案的总费用')));
+  assert.ok(material.content.stages[2].units[1].paragraphs.some(p => p.includes('周宁已确认可以全程参加，状态为“已确认”')));
   const ai = material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'A02')!;
   assert.equal(ai.question, '眼镜建议前往哪里打印清单？'); assert.equal(ai.options.find(o => o.id === ai.correct_option)?.text, '三楼自助打印区');
   assert.equal(material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'N02')?.question, '在哪里领取清单的配套材料？');
@@ -156,7 +156,7 @@ test('计算草稿按单元保存，不是正式答案，不执行计算；调�
     assert.throws(() => f.send('submit', { answer: {} }), /完整填写/);
     f.send('jump', { target: 'SH02_U1' }); f.send('displayed'); f.send('scratchpad', { text: '9:45 + 45分钟' });
     f.send('jump', { target: 'SH01_U2' }); assert.equal(f.engine.view(f.debug.session_id).scratchpad?.text, raw);
-    const summary = f.engine.summary(f.debug.session_id); assert.equal(summary.answered_fields, 0); assert.equal(summary.total_fields, 5);
+    const summary = f.engine.summary(f.debug.session_id); assert.equal(summary.answered_fields, 0); assert.equal(summary.total_fields, 4);
     const result = await exportData(f.engine, [f.debug.session_id], directory), files = unzipSync(result.bytes);
     const csv = strFromU8(files['trials.csv']); assert.ok(csv.includes('scratchpad_text')); assert.ok(csv.includes("'=4.60")); assert.ok(csv.includes('is_debug'));
     assert.ok(strFromU8(files['events.jsonl']).includes('scratchpad_changed'));

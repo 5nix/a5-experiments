@@ -43,6 +43,7 @@ final class Ledger extends SQLiteOpenHelper {
         JSONArray fields = new JSONArray();
         for (String key : new String[]{"request_id", "session_id", "participant_id", "stage_id", "message_id", "device_id", "text"}) fields.put(request.getString(key));
         fields.put(request.getInt("duration_ms"));
+        if (!request.optString("display_mode", "legacy_8500").equals("legacy_8500")) fields.put(request.getString("display_mode"));
         return textHash(fields.toString());
     }
     static String textHash(String text) throws Exception {
@@ -86,5 +87,14 @@ final class Ledger extends SQLiteOpenHelper {
             while (rows.moveToNext()) result.put(new JSONObject().put("seq", rows.getLong(0)).put("event", new JSONObject(rows.getString(1))));
         }
         return result;
+    }
+    boolean hasEvent(String requestId, String deviceId, String kind) throws Exception {
+        try (Cursor rows = getReadableDatabase().rawQuery("SELECT body FROM events ORDER BY seq DESC", null)) {
+            while (rows.moveToNext()) {
+                JSONObject event = new JSONObject(rows.getString(0));
+                if (event.getString("request_id").equals(requestId) && event.getString("device_id").equals(deviceId) && event.getString("kind").equals(kind)) return true;
+            }
+        }
+        return false;
     }
 }

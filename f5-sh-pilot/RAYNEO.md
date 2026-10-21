@@ -1,113 +1,77 @@
-# 雷鸟眼镜接入
+# 雷鸟眼镜接入与维护
 
-电脑端适配器和专用 Android 显示端都已实现。2026-10-19 已在 Windows + 真实设备验证修复版 1.0.1 的 USB、完整流程、4 条双眼应用绘制/消失事件，以及上位机守护、独立通知和 scrcpy。**外部光学显示和计时仍待验收**，`pilot_ready` 和 `real_presentation_verified` 保留 false。详见 [TESTING.md](TESTING.md)。
+适用链路为Windows主机、USB ADB和一副指定序列号的雷鸟X3 Pro；显示应用使用Mercury SDK原生双眼View。当前APK源码版本为1.1.3，实际部署须核对构建文件、安装包和设备能力，不能只看文档版本。
 
-## 设备与构建
+## 首次接入与更换设备
 
-- **SDK**：`MercuryAndroidSDK-v0.2.6`（SHA-256 `5d408e2c…be2676`），通过 `BaseMirrorActivity` 在双眼显示原生 View。具体型号和固件兼容性须现场核对。
-- **显示端**：`rayneo-display/`，包名 `link.ironip.a5.rayneo`，不依赖 `reffers/`。支持一台服务器对应一副指定序列号的眼镜，同一设备只允许一个活跃会话。
-- **构建环境**：JDK 21、Android SDK 37、AGP 9.3.1、Gradle 9.5.0（使用 Wrapper），详见 [rayneo-display/BUILDING.md](rayneo-display/BUILDING.md)。
+1. 安装匹配的ADB驱动，眼镜开启USB调试，并在设备端允许当前电脑。使用数据线连接，确认 `adb devices` 中状态为device。
+2. 安装显示APK并打开应用，空闲纯黑属于正常状态；媒体音量须能听到提示音。
+3. 按 [公共启动器说明](../scripts/README.md) 配置项目内platform-tools、scrcpy及 `.a5-local/device.json`，启动真机模式，检查后台“显示端就绪”。
+4. 用000及手动通知检查双眼文字、音频、确认和消失，再进入正式会话。
 
-```sh
-cd f5-sh-pilot/rayneo-display
-./gradlew :app:assembleDebug            # Windows: .\gradlew.bat
-adb -s <序列号> install -r app/build/outputs/apk/debug/app-debug.apk
-adb -s <序列号> shell am start -n link.ironip.a5.rayneo/.MainActivity
+更换同款眼镜也须重新完成驱动识别、USB调试授权、APK安装和设备绑定。先结束原会话、停止服务，修改device.json的serial为新设备序列号；或移除旧serial，在仅连接一副已授权设备时让启动器重新绑定。不能把已有真机会话转到新设备或Mock。
+
+原包ID为link.ironip.a5.rayneo，本机修复版为link.ironip.a5.rayneo.localfix。A5_RAYNEO_PACKAGE必须与安装包一致。构建、签名与覆盖安装见 [BUILDING.md](rayneo-display/BUILDING.md)。卸载或清除数据会丢失去重账本；升级应同签名覆盖并保留数据，正式会话期间不部署。
+
+## 运行配置
+
+通用服务默认Mock；配置本机设备后的Windows启动器走真机且不回退。直接启动可在PowerShell设置：
+
+```powershell
+$env:A5_GLASSES_MODE = 'rayneo'
+$env:A5_RAYNEO_SERIAL = '<设备序列号>'
+$env:A5_ADB_PATH = '<adb.exe完整路径>'
+$env:A5_RAYNEO_PACKAGE = 'link.ironip.a5.rayneo.localfix'
+npm run start --workspace=f5-sh-pilot
 ```
 
-显示程序必须保持在前台，空闲时为纯黑画面。正式展示期间不要重装、更新或卸载；卸载或清除应用数据会丢失设备端的去重记录。
+A5_SCRCPY_PATH指定完整scrcpy可执行文件，相关DLL和server文件须齐全。A5_RAYNEO_HOST_MODE=off仅改变守护初始默认值；后台保存的设置优先。路径和设备配置不提交Git。
 
-### 固定亮度（1.0.3）
+## 控制与守护
 
-显示端在窗口创建及每次回到前台时，将 `WindowManager.LayoutParams.screenBrightness` 固定为 `1.0f / 6.0f`（约 16.67%）。采用雷鸟最高亮度 6000 nits 的实验假设，按线性比例估算为约 1000 nits；该估算未作光学标定，不表示实测出光亮度。该设置作用于实验显示窗口，须更新眼镜端 APK 后生效。
+后台“准备与检查 → 眼镜与显示端”提供探测、唤醒打开、USB重连、守护、手动通知和scrcpy。手动通知允许在会话进行中发送，模态和数据归属见 [API.md](API.md)。忙碌时拒绝新消息，不覆盖、不排队。
 
-## 运行模式
+守护按秒检查，恢复命令至少间隔5秒；失联或离开前台时尝试唤醒并拉回指定应用。展示及发送保护期不切前台、不重建隧道、不修改权限，也不重播刺激。物理断线、未授权或系统拦截仍须处理具体原因，守护不能替代连接和授权。
 
-默认 `mock`。真实模式需显式指定（PowerShell 用 `$env:变量='值'`）：
+语音覆盖防护仅按包限制com.rayneo.aispeech的SYSTEM_ALERT_WINDOW，不停用Launcher或共享系统UID。原权限先持久备份，设置后读回验证，关闭守护或安全退出时恢复。退出最多等待15秒，设备仍忙或恢复失败时保留备份及诊断。已发生的失焦继续记录失败；这不是设备所有者锁定模式。
 
-```sh
-A5_GLASSES_MODE=rayneo A5_RAYNEO_SERIAL=<序列号> [A5_ADB_PATH=<adb路径>] \
-A5_RUNTIME_DIR=/tmp/a5-rayneo-runtime A5_EXPORT_DIR=/tmp/a5-rayneo-exports \
-PORT=5174 npm run start --workspace=f5-sh-pilot
-```
+scrcpy独立使用 `--serial <设备> --crop 640:480:0:0 --no-audio` 监看左眼并可调试触控，不承担刺激发送。
 
-- 显示端未就绪或正在忙时，不能创建真实会话。
-- 会话创建时会固定 `device_id=adb:<序列号>`，之后改环境变量也不能把它转到别的设备或转为 Mock。
-- 断线重连后不补发已经触发过的刺激。
+## USB协议与证据
 
-## 上位机守护和后台设备调试
+ADB通过 `forward tcp:0 localabstract:a5-rayneo-v1` 建立持久TCP连接，每行一个JSON，protocol为a5-rayneo/1。设备仅接受shell/root UID连接，一次只允许一个刺激控制端。
 
-真机模式默认启用上位机守护，后台“准备与检查 → 眼镜与显示端”提供：唤醒并打开显示端、刷新状态、USB 重连、守护开关、发送测试通知、打开 scrcpy。守护每秒检查状态，恢复命令最短间隔 5 秒；设备断连、应用退出、离开前台时尝试唤醒和拉回指定应用，不强制结束进程。消息展示期间和发送后的保护期内不打断展示。
-
-配置 `A5_RAYNEO_PACKAGE` 指向实际安装包；本机修复版为 `link.ironip.a5.rayneo.localfix`。`A5_RAYNEO_HOST_MODE=off` 可关闭初始默认守护，后台手动设置会持久保存并优先使用。`A5_SCRCPY_PATH` 指向 scrcpy 可执行文件；本机启动脚本已保存这些配置。
-
-scrcpy 使用 `--serial <绑定设备> --crop 640:480:0:0 --no-audio`，打开独立左眼监看/控制窗口。测试通知使用独立调试 request_id 与设备账本，后台显示接受、双眼绘制、消失和失败证据；不会混入被试会话或导出。进行中会话拒绝发送独立调试通知。
-
-USB 调试授权和数据连接仍是前提；物理断线、未授权或设备系统拦截时，后台记录具体失败，不能承诺无连接时仍能控制。恢复链路不会补发旧刺激。
-
-### 语音助手抢焦点防护
-
-2026-10-19 用户导出 SH01 的 `device_window_focus_lost` 与设备日志相互对应：设备 11:34:05.606 记录 `onTPLongClick → startAiSpeech`，11:34:05.738 显示端失去焦点，11:34:05.769 焦点进入 `com.rayneo.aispeech`。导出设备失败时间为 11:34:05.740（电脑收件时间不同，不能混用两台设备时钟）。
-
-`VoiceOverlayGuard` 在守护开启时按包限制语音助手悬浮窗，不禁用语音包、Launcher 或系统共享 UID。原 AppOps 模式先写入 settings，设置后读回验证。后台显示“语音助手悬浮窗：已限制 / 限制失败”；关闭守护和正常安全退出时恢复原模式；退出时最多等待 15 秒回收展示结束证据，再恢复权限。设备持续忙碌、断线或恢复失败时保留备份并记录待恢复，不无限阻塞退出。显示期间不变更权限，已经失焦的消息继续保留失败证据，不重发。
-
-目前运行中的旧服务若仍有会话，不能为了加载新代码而重启。可由 `.a5-local/voice-overlay-control.mjs apply` 复用相同权限和备份实现，在设备不忙时直接限制；`restore` 仅允许会话结束后恢复。该过渡操作只写设备控制审计，不创建实验数据。完整后台守护更新在会话结束后重新启动电脑端加载。该限制针对已确认的语音悬浮窗，不等同于具有设备所有者权限的系统锁定模式。
-
-## 协议
-
-电脑端通过 `adb forward tcp:0 localabstract:a5-rayneo-v1` 建立持久 TCP 连接，以每行一个 JSON 通信（`protocol: a5-rayneo/1`）。眼镜端只接受 shell 或 root UID 的连接，不联网，同一时间只允许一个刺激控制端。后台 scrcpy 的画面/触控通道独立于此协议。
-
-| 命令 | 结果 |
+| 命令 | 主要字段与结果 |
 | --- | --- |
-| `status` | `ready`、`busy`、`ledger_id` |
-| `show` | 请求包含业务 ID、`device_id`、`text`、`duration_ms: 8500`；返回 `deduplicated` 和正文的 SHA-256 |
-| `events` | `{after: seq}`，每次最多返回 25 条事件 |
+| status | ready、busy、ledger_id及device_info.display_modes |
+| show | 业务ID、device_id、text、duration_ms=8500、可选display_mode；返回去重状态、正文哈希及双眼layout |
+| confirm | request_id、device_id；确认持续消息并立即收起，重复确认幂等 |
+| cancel | request_id、device_id；结束会话时取消持续消息并留痕 |
+| events | after序号，每批最多25条 |
 
-- **正文排版（1.0.2）**：X3 Pro 按 27 PPD 换算，固定字号 0.6°（16.2 px）、Medium 500、字距 0.02 em。最大文本宽 9.55°（257.85 px，整数排版宽向下取 257 px）、四周内边距 0.5°（13.5 px）；卡片仍在画布中央，正文左对齐。1–4 行使用字号的 135%（21.87 px）行高，5 行及以上使用 150%（24.3 px）。文字白色 `#FFFFFF`，圆角遮罩同色、不透明度 35%（8 bit alpha 89），卡片外黑底。固定字号不再自动缩小，超出画布报 `device_text_does_not_fit`，不截断、省略或翻页。`show` 回执的双眼 `layout` 保存样式版本及实际排版指标。
-- **超时**：单次 RPC 最多 3 秒，适配器整体最多 5 秒；之后每秒轮询事件，不等待 8.5 秒。
+支持的display_modes为legacy_8500、tone_8500、confirm_until_ack，模式语义见 [CONFIG.md](CONFIG.md)。设备先落盘accepted，双眼完成绘制后记drawn；固定时长模式独立计时后收起，持续模式等待confirmed，再由双眼清除回调记录hidden。音频播放启动/失败分别为cue_started/cue_failed。
 
-## 证据与时钟
+单次RPC上限3秒，引擎等待上限5秒，事件后续轮询回收。传输超时、进程重启或失焦不证明“未显示”，不自动重发。设备按request_id永久去重，同ID不同内容拒绝。
 
-- **事件链**：眼镜端先落盘请求并记 `accepted`，再绘制。双眼绘制完成记 `drawn`，按设备 uptime 计时 8500 ms 后清屏，清屏绘制完成记 `hidden`。电脑侧的任何操作都不影响这段计时。
-- **时间字段**：事件保存设备原始的 `device_wall_ms`、`device_monotonic_ms` 和 `clock_id`。电脑与眼镜之间不做时钟换算，`t_display` / `t_hide` 为 null；`t_ack` 只表示电脑收到了接受应答。
-- **证据效力**：`drawn` / `hidden` 只是应用层证据，不证明光学出光或被试实际阅读。`application_presentation_complete` 可以变为 true，但 `real_presentation_verified` 不会自动改变。
-- **去重**：电脑端按“会话 + 任务组”至多发一次；眼镜端按 request_id 永久去重，同一 ID 内容不同则拒绝。
-- **不排队**：眼镜忙碌或不在前台时直接拒绝新消息。
-- **异常**：进程重启、Activity 销毁、绘制超时等记为失败或“待核查”，不重播。传输超时不等于未显示，也不自动补发。
+设备原始wall、monotonic和clock_id保留；未与电脑同步，不直接换算显示ISO时间。drawn/hidden仅为应用层证据，cue_started不证明可听见，confirmed不等于注意起点。正式验收标准见 [TESTING.md](TESTING.md)。
 
-## 前端与后台的眼镜相关实现
+## 显示与音频参数
 
-- **被试端触发**（`public/experiment.js`）：
-  - **E / T0**：U1 附件被点开后，左侧查看器窗口实际显示并完成两帧绘制（`openAttachment → fillViewer → showViewer → visiblePaint(viewer)`），不再是页内展开。
-  - **T1**：U1 提交后渲染 U2；先关闭查看器、把工作台置顶，再报告 `displayed`。
-  - 关闭附件发 `reveal(open:false)`，重开时不重复记 E。
-  - 被试页从不显示消息，不发关闭指令。
-  - 宽度 <1180 px 时附件和草稿本浮在工作台上方；若要求 T0 时附件完全无遮挡，现场须使用 ≥1180 px 宽并注明。
-- **情景时钟**：任务组内一直显示。部分刺激涉及时间（如 N01“调整为13:30开始”），分析消息理解时需知道这一呈现。
-- **管理端**（`public/admin.js`）：
-  - `deviceInfo()`：顶栏显示 Mock / 连接中断 / 未就绪 / 正在展示 / 就绪。
-  - `messageStepOne/Two()`：“发送请求”和“眼镜显示”两步；`message_evidence` 为 drawn / hidden 时显示为“应用证据”，failed 时提示核查。
-  - `ATTENTION`：已为 `device_*` 与 `*_delivery_unknown` 预置中文提示；服务端新增 attention 代码时须在这里补文案。
-  - 另有绑定设备行，以及含来源、`t_send`、`t_ack` 的消息请求表。
-  - 真实设备下的这些显示均未截图验证。
-- **电脑端时间基线**（Mock 下实测）：客户端到服务端 0—4 ms，触发到排期 0 ms，`t_send` 晚 1 ms。
-
-## 真机验收步骤
-
-1. 用 rayneo 模式启动独立 runtime，确认顶栏显示“显示端就绪”，再新建会话（v4 快照）。
-2. 运行 `qa/browser/flow.mjs`（000）与 `timestamps.mjs`（001），同时录像或用外部手段测量眼镜画面；在真实模式下截图管理端，存为 `qa/admin-device-*.png`。`admin.mjs` 中针对 Mock 文案的断言需改写。
-3. 按下表逐项记录，未执行的项不能算通过：
-
-| 项目 | 证据 |
+| 项目 | 当前设置 |
 | --- | --- |
-| 设备 | 型号、固件、Android、SDK、序列号、宿主系统、APK 哈希 |
-| 正文 | 四条刺激的中文、标点、换行、双眼完整显示，字级合适 |
-| 计时 | 外部测量 8500 ms 及误差，同时保留 drawn / hidden 原始值 |
-| 触发 | T0 / T1 / NONE 正确；同一任务组往返不重发 |
-| 并行 | 切页、问卷、暂停、结束、跳过休息都不影响展示 |
-| 故障 | 拔 USB、设备重启、切到后台、显示端忙碌、超时、第二个控制端：都能诊断，不出现假成功 |
-| 导出 | 设备绑定、业务 ID、原始证据及 null 时间与后台一致 |
+| 角度换算与字体 | 27 PPD，0.6°即16.2px，Medium 500，字距0.02em |
+| 正文宽与内边距 | 最大9.55°，整数布局宽257px；四周0.5°即13.5px |
+| 行高 | 1—4行135%（21.87px），5行及以上150%（24.3px） |
+| 位置与颜色 | 卡片居中、正文左对齐；白字和白色35%圆角遮罩，外部黑底 |
+| 溢出 | 固定字号，不缩字、不截断；实际不适配则报device_text_does_not_fit |
+| 窗口亮度 | 固定1/6；以6000nits线性估算约1000nits，未经光学标定 |
 
-4. 验收通过后再修改：`pilot_ready` / `real_presentation_verified` 的来源（`preflight.ts`、`app.ts` health、summary、导出清单），管理端 `deviceInfo()` 与 preflight 中“尚待验收”的文案，以及各文档的“未验证”项。
+提示音为内置res/raw/notification.wav，48kHz、16位、单声道PCM。由用户提供MP3裁去前导73ms后转码，时长约0.983秒；SoundPool启动时预加载，在drawn后以媒体音量播放一次，不循环。资源哈希及检查方法见BUILDING。静音、加载或启动失败必须保留cue_failed。
 
-仍不支持：多副眼镜、电脑与眼镜之间的时钟同步、跨电脑访问。
+## 1.1.3 提示音热修复（2026-10-20）
+
+P03反馈SH02 T0开始无声、T1有声；原会话SH02/SH03均有accepted/drawn/cue_started/hidden，只能确认软件调用，不能证明被试听到。000按P03原分配复现可见双眼文字。1.1.2尝试的registerFrameCommitCallback在此Mercury镜像渲染环境未回调，造成有文字但不进入drawn/声音路径；1.1.3已撤回该等待，恢复双眼onDraw后回调，再执行提示音及独立8500ms计时。
+
+T0和T1共用playCue：申请瞬时音频焦点，不等待延迟焦点；静音、未加载、焦点拒绝/丢失、播放失败分别留cue_failed，启动成功仍只记cue_started。显示应用前台持有有超时的亮屏唤醒锁，暂停/销毁释放；就绪包含交互和屏幕ON。隐藏超时保留失败并释放忙碌，不伪造hidden。电脑在T0展开/T1提交前阻止未就绪触发，恢复后用户重试原操作，旧通知不补发。
+
+用户要求停止继续测试后，仅编译并同签名安装1.1.3，保留账本，未再次发送测试通知。真实听感未作最终验收，不能宣称历史漏通知原因已完全确认。禁止再用未经此设备验证的帧提交等待阻断声音。

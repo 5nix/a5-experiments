@@ -67,17 +67,19 @@ test('独立测试通知：幂等、双眼事件关联、重启不重发，且�
   } finally { await f.control.close(); f.store.close(); }
 });
 
-test('进行中会话拒绝独立通知；忙碌时不抢前台、不重建USB', async () => {
+test('进行中会话允许手动通知并单独标记；忙碌时不抢前台、不重建USB', async () => {
   const f = await fixture();
   try {
     f.engine.create('000');
-    await assert.rejects(f.control.action({ action: 'notify', request_id: randomUUID(), text: '测试' }), /结束进行中/);
+    await f.control.action({ action: 'notify', request_id: randomUUID(), text: '测试' }); await f.engine.settle();
+    assert.equal(f.store.interventions(f.store.ids()[0])[0].data_kind,'manual');
+    assert.equal(f.engine.presentation(f.store.ids()[0]).device_drawn_messages,0);
     f.busy(true); f.ready(false);
     f.control.tick();
     await assert.rejects(f.control.action({ action: 'open' }), /尚未展示结束/);
     await assert.rejects(f.control.action({ action: 'reconnect' }), /尚未展示结束/);
     assert.equal(f.calls.length, 0);
-    assert.equal(f.sends(), 0);
+    assert.equal(f.sends(), 1);
   } finally { await f.control.close(); f.store.close(); }
 });
 

@@ -32,7 +32,8 @@ export async function exportData(engine: Engine, ids: string[], outputRoot: stri
     const { session: s } = c; const participant = s.snapshot.participant;
     const common = { session_id: s.id, participant_id: participant.participant_id, is_debug: engine.isDebug(s), version_label: participant.version_label ?? '', content_version: s.snapshot.content.content_version };
     const intro = c.events.find(e => e.event_type === 'intro_displayed'); const introEnd = c.events.find(e => e.event_type === 'intro_continue');
-    sessions.push({ ...common, ...c.summary, device_source: (c.events.find(e => e.event_type === 'session_created')?.payload.adapter as { source?: string })?.source,
+    const tutorialStart=c.events.find(e=>e.event_type==='tutorial_intro_displayed'), tutorialEnd=c.events.find(e=>e.event_type==='tutorial_completed');
+    sessions.push({ ...common, tutorial_started_at:timestamp(tutorialStart),tutorial_completed_at:timestamp(tutorialEnd),tutorial_duration_ms:tutorialStart&&tutorialEnd?tutorialEnd.elapsed_ms-tutorialStart.elapsed_ms:null,tutorial_answer_attempts:c.events.filter(e=>e.event_type==='tutorial_answer_submitted').length, ...c.summary, device_source: (c.events.find(e => e.event_type === 'session_created')?.payload.adapter as { source?: string })?.source,
       stimulus_version: s.snapshot.stimulus_version, content_hash: s.snapshot.content_hash, intro_displayed: timestamp(intro), intro_continue: timestamp(introEnd), intro_duration_ms: intro && introEnd ? introEnd.elapsed_ms - intro.elapsed_ms : null,
       resume_count: c.events.filter(e => e.event_type === 'app_resumed').length, anomaly_count: s.state.attention.length,
       breaks_skipped: c.events.filter(e => e.event_type === 'break_skipped').length, debug_jumps: c.events.filter(e => e.event_type === 'debug_jump').length });
@@ -63,27 +64,39 @@ export async function exportData(engine: Engine, ids: string[], outputRoot: stri
     }
     for (const e of c.events.filter(e => e.event_type === 'note_saved')) notes.push({ ...common, ...e.payload, saved_at: e.timestamp_iso, elapsed_ms: e.elapsed_ms });
     for (const message of c.interventions) {
+      const deviceEvent = (kind: string) => message.device_events?.find(e => e.kind === kind);
+      const duration = (from: string, to: string) => {
+        const a = deviceEvent(from), b = deviceEvent(to);
+        return a && b && a.clock_id === b.clock_id && b.device_monotonic_ms >= a.device_monotonic_ms ? b.device_monotonic_ms - a.device_monotonic_ms : null;
+      };
       const sent = message.t_send ? Date.parse(message.t_send) : null;
       const ack = message.t_ack ? Date.parse(message.t_ack) : null;
       const displayed = message.t_display ? Date.parse(message.t_display) : null;
-      interventions.push({ ...common, ...message, timing: message.condition.split('-')[1], latency_baseline: 't_event', latency_unit: 'ms',
+      interventions.push({ ...common, ...message, data_kind:message.data_kind??'formal', timing: message.condition.split('-')[1], latency_baseline: 't_event', latency_unit: 'ms',
+        display_mode: message.display_mode ?? s.snapshot.display_mode ?? 'legacy_8500',
+        cue_status: deviceEvent('cue_failed') ? 'failed' : deviceEvent('cue_started') ? 'started' : message.display_mode === 'tone_8500' ? 'unverified' : 'not_required',
+        confirmation_recorded: !!message.confirmation_requested_at, device_confirmation_recorded: !!deviceEvent('confirmed'),
+        device_confirmation_delay_ms: duration('drawn', 'confirmed'), actual_display_duration_ms: duration('drawn', 'hidden'), post_confirmation_duration_ms: duration('confirmed', 'hidden'),
         send_latency_ms: sent === null ? null : sent - Date.parse(message.t_event), acknowledgement_latency_ms: sent !== null && ack !== null ? ack - sent : null,
         display_latency_ms: displayed === null ? null : displayed - Date.parse(message.t_event) });
     }
   }
   const files: Record<string, string> = {
+    'notice_clicks.csv': csv(['session_id','participant_id','is_debug','data_kind','event_id','timestamp_iso','elapsed_ms','stage_id','unit_id','condition','click_id','disposition','pending_request_id','confirmation_request_id','phase','page_token','page_token_matches','visible_request_id','client_timestamp_iso','client_monotonic_ms','client_time_origin_ms','client_visibility_state','client'],events.filter(e=>e.event_type==='notice_read_clicked').map(e=>({...e,...e.payload,client_timestamp_iso:(e.payload.client as Row|null)?.timestamp_iso??null,client_monotonic_ms:(e.payload.client as Row|null)?.monotonic_ms??null,client_time_origin_ms:(e.payload.client as Row|null)?.time_origin_ms??null,client_visibility_state:(e.payload.client as Row|null)?.visibility_state??null}))),
+    'tutorial.csv': csv(['session_id','participant_id','data_kind','event_id','event_type','timestamp_iso','elapsed_ms','payload'],events.filter(e=>e.data_kind==='tutorial').map(e=>({...e,data_kind:'tutorial'}))),
     'events.jsonl': events.map(e => JSON.stringify(e)).join('\n') + (events.length ? '\n' : ''),
     'trials.csv': csv(['session_id', 'participant_id', 'is_debug', 'version_label', 'stage_id', 'unit_id', 'condition', 'page_displayed', 'page_displayed_elapsed_ms', 'client_display_evidence', 'e_clicked', 'e_displayed', 'e_elapsed_ms', 'f_submitted', 'f_semantics', 'first_answer', 'last_answer', 'first_answer_elapsed_ms', 'last_answer_elapsed_ms', 'submitted', 'submitted_elapsed_ms', 'raw_answer', 'normalized_answer', 'score', 'completion_ms', 'submission_attempts', 'scratchpad_text', 'scratchpad_changes', 'content_version'], trials),
-    'interventions.csv': csv(['session_id', 'participant_id', 'is_debug', 'stage_id', 'condition', 'message_id', 'timing', 'request_id', 'device_id', 'device_events', 'duration_ms', 't_event', 'event_elapsed_ms', 't_send', 't_ack', 't_display', 't_hide', 'source', 'display_time_source', 'status', 'error', 'send_latency_ms', 'acknowledgement_latency_ms', 'display_latency_ms', 'latency_baseline', 'latency_unit', 'receipt', 'content_version'], interventions),
+    'interventions.csv': csv(['session_id', 'participant_id', 'is_debug', 'stage_id', 'condition', 'message_id', 'data_kind', 'timing', 'request_id', 'device_id', 'device_events', 'duration_ms', 'display_mode', 'cue_status', 'confirmation_requested_at', 'confirmation_elapsed_ms', 'confirmation_status', 'confirmation_recorded', 'device_confirmation_recorded', 'device_confirmation_delay_ms', 'actual_display_duration_ms', 'post_confirmation_duration_ms', 't_event', 'event_elapsed_ms', 't_send', 't_ack', 't_display', 't_hide', 'source', 'display_time_source', 'status', 'error', 'send_latency_ms', 'acknowledgement_latency_ms', 'display_latency_ms', 'latency_baseline', 'latency_unit', 'receipt', 'content_version'], interventions),
     'surveys.csv': csv(['session_id', 'participant_id', 'is_debug', 'stage_id', 'condition', 'message_id', 'comprehension_answer', 'comprehension_correct', 'comprehension_submitted', 'timing', 'disruption', 'effort', 'helpfulness', 'ratings_submitted', 'content_version'], surveys),
-    'sessions.csv': csv(['session_id', 'participant_id', 'is_debug', 'copied_from', 'version_label', 'status', 'phase', 'started_at', 'ended_at', 'elapsed_ms', 'device_source', 'real_presentation_verified', 'validation_status', 'device_id', 'expected_messages', 'device_drawn_messages', 'application_presentation_complete', 'intro_displayed', 'intro_continue', 'intro_duration_ms', 'resume_count', 'anomaly_count', 'breaks_skipped', 'debug_jumps', 'attention', 'config_hash', 'content_hash', 'content_version', 'stimulus_version'], sessions),
+    'sessions.csv': csv(['session_id', 'participant_id', 'is_debug', 'copied_from', 'version_label', 'display_mode', 'status', 'phase', 'started_at', 'ended_at', 'elapsed_ms', 'device_source', 'real_presentation_verified', 'validation_status', 'device_id', 'expected_messages', 'device_drawn_messages', 'application_presentation_complete', 'tutorial_started_at','tutorial_completed_at','tutorial_duration_ms','tutorial_answer_attempts','intro_displayed', 'intro_continue', 'intro_duration_ms', 'resume_count', 'anomaly_count', 'breaks_skipped', 'debug_jumps', 'attention', 'config_hash', 'content_hash', 'content_version', 'stimulus_version'], sessions),
     'notes.csv': csv(['session_id', 'participant_id', 'is_debug', 'note_id', 'category', 'stage_id', 'text', 'saved_at', 'elapsed_ms', 'content_version'], notes),
     'snapshots.json': JSON.stringify(captures.map(c => ({ session_id: c.session.id, snapshot: c.session.snapshot })), null, 2),
-    'manifest.json': JSON.stringify({ schema_version: '1.2', created_at: new Date().toISOString(), session_ids: ids,
+    'manifest.json': JSON.stringify({ schema_version: '1.6', created_at: new Date().toISOString(), session_ids: ids,
+      tutorial_event_count:events.filter(e=>e.data_kind==='tutorial').length, tutorial_semantics:'教程数据单独标记，不计入正式题目和正式呈现完成率；tutorial.csv包含作答尝试及设备证据。手动通知标记manual。',
       debug_session_ids: captures.filter(c => engine.isDebug(c.session)).map(c => c.session.id),
       row_counts: { events: events.length, trials: trials.length, interventions: interventions.length, surveys: surveys.length, sessions: sessions.length, notes: notes.length },
       timing: '服务器ISO墙上时间与会话单调相对毫秒；客户端实际可见证据在事件payload；未测得时间为null/CSV空值。恢复衔接包含停机时间。',
-      presentation: 'Mock不是实际眼镜显示；雷鸟 device_events 为双眼应用绘制证据，未完成光学实测。Android墙上时间和uptime原值未同步，不计算跨设备显示延迟。8500ms由眼镜端独立控制；电脑不发送清屏。', adapter: engine.adapter.getStatus(), csv: 'UTF-8 BOM；公式前缀字符串在CSV加单引号，原始值在JSONL中保留。' }, null, 2),
+      presentation: 'Mock不是真机证据。策略按每条通知固定于被试配置快照：legacy_8500 无音固定8500ms；tone_8500 双眼绘制后提示音且固定8500ms；confirm_until_ack 无音持续至电脑确认，设备收到主控确认后立即收起消息。cue_started仅说明播放调用成功，不证明可听见；确认是用户明确操作，不等于注意起点。电脑与眼镜时钟未同步，仅在同一设备clock_id内计算绘制、确认和消失间隔，不换算跨设备时间。结束会话时取消未结束的持续消息，保留失败/未确认记录。', adapter: engine.adapter.getStatus(), csv: 'UTF-8 BOM；公式前缀字符串在CSV加单引号，原始值在JSONL中保留。' }, null, 2),
   };
   const exportId = `${new Date().toISOString().replace(/[:.]/g, '-')}-${randomUUID().slice(0, 8)}`;
   const directory = join(outputRoot, exportId); await mkdir(directory, { recursive: true });

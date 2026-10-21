@@ -28,6 +28,7 @@ export interface TaskContent {
   interview_prompts: string[]; break_ms: number; allow_break_skip?: boolean; message_duration_ms: number; completion_text: string;
 }
 export interface Snapshot {
+  display_mode?: import('./contracts.ts').DisplayMode;
   content: TaskContent; stimuli: Stimulus[]; stimulus_version: string; participant: Participant;
   assets: Record<string, { base64: string; sha256: string }>; config_hash: string; content_hash: string;
 }

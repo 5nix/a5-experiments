@@ -134,6 +134,16 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
         t_ack: null, t_display: null, t_hide: null, display_time_source: 'unavailable', error: reason, evidence: error instanceof DeviceRejection ? error.evidence : evidence };
     }
   }
+  async confirm(request: { request_id: string; device_id?: string }) {
+    if (request.device_id !== this.state.device_id) throw new Error('device_binding_mismatch');
+    const reply = await this.call('confirm', request);
+    if (reply.request_id !== request.request_id) throw new Error('device_confirmation_identity_mismatch');
+  }
+  async cancel(request: { request_id: string; device_id?: string }) {
+    if (request.device_id !== this.state.device_id) throw new Error('device_binding_mismatch');
+    const reply = await this.call('cancel', request);
+    if (reply.request_id !== request.request_id) throw new Error('device_cancellation_identity_mismatch');
+  }
   async pollEvents(receive: (event: GlassesEvent) => void) {
     if (this.polling || this.closed) return;
     this.polling = true;
@@ -146,7 +156,7 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
         if (!Number.isSafeInteger(item.seq) || item.seq <= this.cursor) throw new Error('device_invalid_event_cursor');
         const event = item.event as GlassesEvent;
         if (!event || typeof event.event_id !== 'string' || typeof event.request_id !== 'string' || event.device_id !== this.state.device_id ||
-          !['accepted', 'drawn', 'hidden', 'failed'].includes(event.kind) || !Number.isFinite(event.device_wall_ms) || !Number.isFinite(event.device_monotonic_ms) ||
+          !['accepted', 'drawn', 'hidden', 'failed', 'confirmed', 'cue_started', 'cue_failed'].includes(event.kind) || !Number.isFinite(event.device_wall_ms) || !Number.isFinite(event.device_monotonic_ms) ||
           typeof event.clock_id !== 'string' || !(event.error === null || typeof event.error === 'string')) throw new Error('device_invalid_event');
         receive(event); // 持久化成功才前移游标；重复批次由 Store 去重。
         this.cursor = item.seq;
