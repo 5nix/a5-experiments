@@ -1,56 +1,80 @@
-# 被试预分配 JSON
+# 配置文件使用与格式
 
-后台入口：**准备与检查 → 被试预分配配置 → JSON 格式与导入说明**。点击“下载当前配置（JSON）”取得正在使用的完整配置，修改后通过同一页导入。
+## 选择、导入与生效
 
-仓库默认配置为 [config/participants.pilot.json](config/participants.pilot.json)，直接使用 P01—P20 的 20 人预分配，版本标签 V01—V10 各使用两次。首次启动自动使用这份配置，无需手动导入。原工作簿来源配置 `config/participants.source.json` 仅作来源保留。
+后台“新建会话 → 实验配置文件”读取 [config/notifications](config/notifications) 中的JSON；选中文件和被试后创建会话。“准备与检查 → 被试预分配配置”可下载当前JSON，修改后导入。校验通过才保存并选中，新文件使用唯一名称，不覆盖同名文件；无效配置不写入，也不替换当前配置。
 
-已有运行数据库继续保留其中的配置；如需切换，在后台导入默认 JSON 一次即可。已有会话始终保留原快照。
+也可直接将有效JSON放入上述目录，再刷新后台。当前选择重启后保留；创建会话时重新读取所选文件。配置与材料都固定到会话快照，修改文件不改变已有会话。
 
-## 可导入的最小示例
+首次启动默认源配置是 [participants.pilot.json](config/participants.pilot.json)，使用P01—P20；已有数据库继续保留其配置。participants.source.json仅保留原工作簿来源。程序不自动分组或纠正分配。
+
+## 预置文件
+
+| 文件名模式 | 名单 |
+| --- | --- |
+| `20-participants.<模式>.json` | 保留原P01—P20分配，并附同模式000调试配置 |
+| `000.<模式>.json` | 仅000调试 |
+
+两类各有以下三种模式，共六份文件。正式文件的编号、版本、任务条件及消息分配不变，只改变通知呈现方式。
+
+| display_mode | 呈现行为 |
+| --- | --- |
+| `legacy_8500` | 无声，从双眼绘制起显示8500毫秒 |
+| `tone_8500` | 播放内置通知音，从双眼绘制起显示8500毫秒 |
+| `confirm_until_ack` | 无声且不自动消失，收到主控确认立即收起，不追加倒计时 |
+
+## JSON字段
+
+| 字段 | 要求 |
+| --- | --- |
+| experiment_id / schema_version | 固定为f5-sh-pilot及字符串1.0 |
+| config_name | 可选的下拉显示名称 |
+| participants | 正式被试完整名单；仅调试文件可为空 |
+| participant_id / version_label | 非空、不重复的字符串编号，保留前导零；版本标签可选 |
+| stages | 恰好包含SH01—SH05，不缺少、不重复；实际顺序由任务材料决定 |
+| condition | N-T0、N-T1、A-T0、A-T1或NONE |
+| message_id | 类别、数字与任务组一致，如SH03的A条件使用A03；NONE必须为null |
+| display_mode | 配置在每个stages条目上，可在同一被试内混合；省略时默认legacy_8500 |
+| debug_participant | 可选的000配置，见下文；正式participants中禁止000 |
+
+N为通知型消息，A为AI主动服务型消息；T0在补充资料首次实际呈现时触发，T1在第二单元首次实际呈现时触发。NONE不发消息，不需要display_mode。条件分配与呈现模式相互独立；每种条件出现次数由实验设计确定。
+
+以下是仅含001的完整示例；导入会替换当前名单。修改20人文件时须保留所有需要的被试。
 
 ```json
 {
-  "experiment_id": "f5-sh-pilot",
-  "schema_version": "1.0",
-  "participants": [
-    {
-      "participant_id": "001",
-      "version_label": "V1",
-      "stages": [
-        { "stage_id": "SH01", "condition": "N-T0", "message_id": "N01" },
-        { "stage_id": "SH02", "condition": "N-T1", "message_id": "N02" },
-        { "stage_id": "SH03", "condition": "A-T0", "message_id": "A03" },
-        { "stage_id": "SH04", "condition": "A-T1", "message_id": "A04" },
-        { "stage_id": "SH05", "condition": "NONE", "message_id": null }
-      ]
-    }
-  ]
+  "experiment_id": "f5-sh-pilot", "schema_version": "1.0",
+  "config_name": "逐通知混合示例",
+  "participants": [{
+    "participant_id": "001", "version_label": "V1",
+    "stages": [
+      {"stage_id":"SH01","condition":"N-T0","message_id":"N01","display_mode":"legacy_8500"},
+      {"stage_id":"SH02","condition":"N-T1","message_id":"N02","display_mode":"tone_8500"},
+      {"stage_id":"SH03","condition":"A-T0","message_id":"A03","display_mode":"confirm_until_ack"},
+      {"stage_id":"SH04","condition":"A-T1","message_id":"A04","display_mode":"legacy_8500"},
+      {"stage_id":"SH05","condition":"NONE","message_id":null}
+    ]
+  }]
 }
 ```
 
-此示例只有 001；若导入，会替换现有完整名单。增加被试时复制 participants 中的对象，修改编号和分配，保留所有需要的被试。
+旧API的会话级display_mode仅为兼容默认值，逐通知字段优先。已撤回的confirm_8500不是有效新配置。source_ref/source_value/source_cell可用于追溯，不控制流程。
 
-## 字段与规则
+## 000与教程调试
 
-| 字段 | 含义与格式 |
-| --- | --- |
-| experiment_id | 固定为 `f5-sh-pilot` |
-| schema_version | 固定为字符串 `1.0` |
-| participants | 非空的完整被试数组 |
-| participant_id | 非空、不重复的字符串，如 `001`；保留前导零。`000` 为系统保留编号，不可导入 |
-| version_label | 版本显示标签，如 `V1`，建议填写 |
-| stages | 每人恰好包含 `SH01`—`SH05`，不可缺少或重复；呈现顺序由实验任务材料决定，不随此数组重排 |
-| condition | `N-T0`、`N-T1`、`A-T0`、`A-T1`、`NONE` 五选一 |
-| message_id | N/A 与条件类别一致，数字与任务组一致，如 `SH03` 的 A 条件使用 `A03`；`NONE` 必须为 JSON 的 `null` |
-| source_ref / source_value / source_cell | 可选的来源追溯信息，不控制实验流程 |
+以 [000.confirm_until_ack.json](config/notifications/000.confirm_until_ack.json) 为完整模板。顶层debug_participant使用与正式被试相同的stages结构，但身份须为 `participant_id="000"`、`debug=true`、`copied_from="001"`。没有此字段的旧文件仍使用系统默认000条件。更换000模式后须新建会话；同编号只允许一个未结束会话。
 
-N 为通知型消息，A 为 AI 主动服务型消息。T0 在补充资料首次实际展示时触发；T1 在第 2 单元首次实际展示时触发。NONE 不发送消息，也不展示该组消息理解题和四项评价。
+新会话若含confirm_until_ack，教程为工具说明、练习通知、须答对的理解题；其他配置只有工具说明。000被试端和主试后台均可跳转：
 
-系统不自动重新分配或纠正配置，只报告校验错误。当前校验不要求每种条件恰好出现一次；请按实验设计自行确定每名被试的分配。
+| 目标 | 页面 | 适用配置 |
+| --- | --- | --- |
+| TUTORIAL_INTRO | 工作台、草稿本和时间 | 全部 |
+| TUTORIAL_NOTICE | 阅读并确认练习通知 | 含确认模式 |
+| TUTORIAL_CHECK | 通知理解题 | 含确认模式 |
+| INTRO | 正式情景导入 | 全部 |
 
-## 生效范围
+目标按当前会话快照生成。跳回不会重发已发送的练习通知；重新完整练习需结束并新建000。主试跳转原因可空，正式被试不能自行跳转。教程、正式数据和手动通知的统计区分见 [API.md](API.md)。
 
-- 导入替换整份预分配，校验失败时保留原配置。
-- 新建会话采用当前配置；已经创建的会话保留原快照，包括分配和题目内容。
-- 000 使用固定调试配置：SH01=N-T0/N01、SH02=N-T1/N02、SH03=A-T0/A03、SH04=A-T1/A04、SH05=NONE。它独立于正式名单，不随默认 JSON 或后台导入变化。
-- 后台可为所有未删除会话执行题目跳转，需填写干预原因；被试前端只有 000 提供跳转入口。正式被试被后台跳转后仍是正式身份，导出不会被标成 000 或调试会话。
+## 已阅读按钮与点击导出
+
+“已阅读通知”仅移除悬浮提示，保留原有悬停效果。每次点击（含无通知空点、未绘制、重复/暂停时点击）记录notice_read_clicked，独立click_id防止网络重试重复计数。有效确认仍单独记录message_user_confirmed及设备confirmed/hidden。导出schema1.6的notice_clicks.csv可直接查看点击墙钟、单调毫秒、页面、关联通知和判定结果；完整埋点见[API.md](API.md)的当前事件清单。教程、手动与正式数据分别标记。

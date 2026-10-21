@@ -34,7 +34,7 @@ function renderOnce(node, signatureValue, build) {
 const narrow = window.matchMedia('(max-width: 899px)');
 
 /* ───────── 中文文案 ───────── */
-const PHASES = { INTRO:'情景导入', CARD:'说明卡', UNIT:'主任务', COMPREHENSION:'消息理解题', RATINGS:'四项评价', BREAK:'组间休息', COMPLETED:'完成页', ABORTED:'结束页' };
+const PHASES = { TUTORIAL_INTRO:'教程：工作台',TUTORIAL_NOTICE:'教程：阅读通知',TUTORIAL_CHECK:'教程：理解题', INTRO:'情景导入', CARD:'说明卡', UNIT:'主任务', COMPREHENSION:'眼镜中的关键信息获取题', RATINGS:'眼镜消息体验评价', BREAK:'组间休息', COMPLETED:'完成页', ABORTED:'结束页' };
 const MESSAGE_STATUS = { NONE:'本组无消息', not_triggered:'尚未触发', scheduled:'等待发送', send_requested:'已发出，等待回执', accepted:'请求已接受', failed:'发送失败', unacknowledged:'未收到回执', unknown:'发送结果待核查' };
 const MESSAGE_TONE = { NONE:'neutral', not_triggered:'neutral', scheduled:'pending', send_requested:'pending', accepted:'ok', failed:'bad', unacknowledged:'bad', unknown:'bad' };
 const CATEGORIES = { interview:'访谈记录', observation:'任务观察', anomaly:'异常备注' };
@@ -119,6 +119,7 @@ function deviceInfo(status) {
 }
 
 /* ───────── 状态 ───────── */
+let justCreatedId = null;
 let config = null, debugParticipant = null, prompts = [];
 let sessions = [], deletedSessions = [], adapter = null;
 let deviceControl = null, deviceWorking = false, notificationDraft = null;
@@ -222,7 +223,7 @@ function renderDeviceControl() {
   setText($('#device-control-error'), control?.error ?? control?.voice_guard?.error ?? control?.scrcpy?.error ?? '');
   const records = control?.debug_notifications ?? [];
   const latest = records[0];
-  setText($('#device-debug-result'), control?.active_session ? '当前有进行中的会话，请结束后再发送测试通知。' : latest ? `最近测试：${DEBUG_STATUS[latest.status] ?? latest.status}${latest.error ? ' · ' + latest.error : ''}` : '尚未发送测试通知。');
+  setText($('#device-debug-result'), latest ? `最近手动通知：${DEBUG_STATUS[latest.status] ?? latest.status}${latest.error ? ' · ' + latest.error : ''}` : '尚未手动发送通知。');
   renderOnce($('#device-debug-history'), [records, control?.audit], () => [
     ...records.slice(0, 10).map(record => el('p', { class: 'device-debug-record' },
       el('strong', { text: `${when(record.created_at, fmtFull)} · ${DEBUG_STATUS[record.status] ?? record.status}` }),
@@ -251,14 +252,19 @@ $('#device-host').addEventListener('click', async () => {
   try { await deviceAction({ action: 'host', enabled: !deviceControl?.enabled }); feedback('上位机守护设置已保存。'); }
   catch (error) { fail(error); }
 });
+$('#device-notify-confirm').addEventListener('click', async () => {
+  const record=deviceControl?.debug_notifications?.find(r=>r.display_mode==='confirm_until_ack' && !r.events?.some(e=>e.kind==='hidden'));
+  if(!record)return;try{await deviceAction({action:'confirm_notify',request_id:record.request_id});}catch(error){fail(error);}
+});
 $('#device-notify').addEventListener('submit', async event => {
   event.preventDefault();
   const text = $('#device-notify-text').value;
   if (!text.trim()) { $('#device-notify-text').focus(); return; }
-  if (!notificationDraft || notificationDraft.text !== text) notificationDraft = { action: 'notify', request_id: uuid(), text };
+  const mode = $('#device-notify-mode').value;
+  if (!notificationDraft || notificationDraft.text !== text || notificationDraft.display_mode !== mode) notificationDraft = { action: 'notify', request_id: uuid(), text, display_mode:mode };
   try {
     await deviceAction(notificationDraft); notificationDraft = null;
-    feedback('测试请求已记录。请核对双眼画面及下方绘制、消失证据。');
+    feedback('手动通知请求已记录。请核对双眼画面及下方绘制、消失证据。');
   } catch (error) { fail(error); }
 });
 
@@ -297,7 +303,7 @@ function activeSessionOf(id) { return sessions.find(s => s.participant_id === id
 function renderParticipantOptions(rebuild = false) {
   const select = $('#participant');
   const entries = [];
-  if (debugParticipant) entries.push(['000', '000 · 调试测试者']);
+  if (debugParticipant) entries.push(['000', `000 · ${config?.config_name ?? '调试测试者'}`]);
   for (const p of config?.participants ?? []) entries.push([p.participant_id, `${p.participant_id}${p.version_label ? ` · ${p.version_label}` : ''}`]);
   const ids = entries.map(([id]) => id).join(',');
   if (rebuild || select.dataset.ids !== ids) {
@@ -317,19 +323,27 @@ function renderCreateHint() {
   const id = $('#participant').value, p = participantStage(id), active = id && activeSessionOf(id);
   $('#start button[type=submit]').disabled = !p;
   setHidden($('#assignment-section'), !p);
-  renderOnce($('#assignment'), [id, p?.stages], () => (p?.stages ?? []).map(s => el('li', {}, el('strong', { text: s.stage_id }), ` ${conditionText(s)}`)));
-  setHidden($('#participant-hint'), !active);
+  renderOnce($('#assignment'), [id, p?.stages], () => (p?.stages ?? []).map(s => el('li', {}, el('strong', { text: s.stage_id }), ` ${conditionText(s)} · ${{legacy_8500:'无声8.5秒',tone_8500:'提示音8.5秒',confirm_until_ack:'无声等待确认'}[s.display_mode ?? 'legacy_8500'] ?? '无声8.5秒'}`)));
+  setHidden($('#participant-hint'), !active || (active.session_id === selected || active.session_id === justCreatedId));
   if (active) setText($('#participant-hint-text'), `${id === '000' ? '调试测试者' : `被试 ${id}`} 已有进行中的会话（开始于 ${when(active.started_at)}）。同一编号同时只能有一个未结束会话。`);
   $('#participant-hint-view').onclick = active ? () => select(active.session_id, { focus: true }) : null;
 }
 $('#participant').addEventListener('change', renderCreateHint);
+$('#config-file').addEventListener('change', async () => {
+  const filename = $('#config-file').value; if (!filename) return;
+  const select = $('#config-file'); select.disabled = true;
+  try { await api('config/select', {filename}); await loadConfig(); feedback('已切换配置；已有会话继续使用原快照。'); }
+  catch (error) { fail(error); await loadConfig(); }
+  finally { select.disabled = false; }
+});
 $('#start').addEventListener('submit', async event => {
   event.preventDefault();
   const id = $('#participant').value; if (!id) return;
   const button = $('#start button[type=submit]'); feedback();
   await busyButton(button, '正在创建…', async () => {
     try {
-      const created = await api('sessions', { participant_id: id });
+      const created = await api('sessions', { participant_id: id, ...($('#config-file').value ? {config_file:$('#config-file').value} : {}) });
+      justCreatedId = created.session_id;
       links.set(created.session_id, created.participant_url); saveLinks();
       await refresh(); await select(created.session_id, { focus: true });
       feedback(`已为${id === '000' ? '调试测试者' : `被试 ${id}`}创建会话。请复制或打开右侧“被试入口”。`);
@@ -465,7 +479,8 @@ function renderDetail(data) {
   const attempt = attemptIndex(s);
   setText($('#selected-title'), fullName(s));
   renderOnce($('#selected-badges'), [st, isDebug(s)], () => [el('span', { class: 'badge', 'data-kind': st.key, text: st.label }), isDebug(s) ? el('span', { class: 'badge', 'data-kind': 'debug', text: '调试' }) : null]);
-  setText($('#selected-meta'), [`开始 ${when(s.started_at, fmtFull)}`, attempt ? `该编号第 ${attempt} 次会话` : null, `${s.status === 'active' ? '已用时' : '总用时'} ${duration(s.elapsed_ms)}`, s.ended_at ? `结束 ${when(s.ended_at, fmtFull)}` : null, `会话 ${s.session_id.slice(0, 8)}`].filter(Boolean).join(' · '));
+  const modeText = { mixed: '逐条通知模式', tone_8500: '提示音＋8.5秒', confirm_until_ack: '无提示音＋确认后立即消失', legacy_8500: '原版无提示音8.5秒' };
+  setText($('#selected-meta'), [`开始 ${when(s.started_at, fmtFull)}`, modeText[s.display_mode ?? 'legacy_8500'], attempt ? `该编号第 ${attempt} 次会话` : null, `${s.status === 'active' ? '已用时' : '总用时'} ${duration(s.elapsed_ms)}`, s.ended_at ? `结束 ${when(s.ended_at, fmtFull)}` : null, `会话 ${s.session_id.slice(0, 8)}`].filter(Boolean).join(' · '));
 
   // 需要核查
   setHidden($('#attention'), !s.attention.length);
@@ -546,25 +561,17 @@ function renderControls(s, actions, targets) {
   $('#admin-debug [value=debug_jump]').disabled = controlling || !actions.includes('debug_jump');
   // 危险操作
   for (const button of $$('[data-confirm]')) { const allowed = actions.includes(button.dataset.confirm); setHidden(button, !allowed); button.disabled = controlling || !allowed; }
-  setHidden($('#danger'), !actions.includes('stop') && !actions.includes('delete'));
+  setHidden($('#danger'), !actions.includes('delete'));
   setText($('#danger-help'), actions.includes('stop') ? '提前结束后，被试页面显示结束页，无法继续实验；记录会保留。进行中的会话需先结束才能删除。' : actions.includes('delete') ? '删除只针对这一次会话，不影响同一编号的其他会话；删除后可在“已删除会话”中恢复。' : '');
   const pending = $('#confirm-yes').value;
   if (pending && !actions.includes(pending)) closeConfirm();
   setHidden($('#reason-wrap'), !actions.some(a => a !== 'restore'));
 }
-function requireReason() {
-  const input = $('#reason');
-  input.value = input.value.trim() ? input.value : '';
-  if (input.value) { input.removeAttribute('aria-invalid'); return true; }
-  input.setAttribute('aria-invalid', 'true'); input.focus();
-  fail(new Error('请先填写操作原因，所有干预都会连同原因写入记录。'));
-  return false;
-}
 $('#reason').addEventListener('input', () => $('#reason').removeAttribute('aria-invalid'));
 // 原因框内按回车不触发任何干预，避免误操作。
 $('#reason').addEventListener('keydown', event => { if (event.key === 'Enter') event.preventDefault(); });
 for (const button of $$('[data-confirm]')) button.addEventListener('click', () => {
-  if (!requireReason() || !detail) return;
+  if (!detail) return;
   const s = detail.summary, action = button.dataset.confirm;
   setText($('#confirm-text'), action === 'stop'
     ? `确认提前结束${fullName(s)}的这次会话？被试页面将显示结束页，无法继续实验。此操作不可撤销，已有记录会保留。`
@@ -579,7 +586,6 @@ $('#control').addEventListener('submit', async event => {
   event.preventDefault();
   const button = event.submitter, action = button?.value;
   if (!action || controlling || !detail) return;
-  if (!requireReason()) return;
   controlling = true; button.disabled = true; feedback();
   const id = selected, s = detail.summary;
   try {
@@ -589,7 +595,7 @@ $('#control').addEventListener('submit', async event => {
       if (selected === id) { deselect(); showList(); }
       $('#deleted-section').open = true;
       feedback(`${fullName(s)}的这一次会话已移至“已删除会话”，不再进入全部导出，可随时恢复。`, { label: '撤销删除', run: () => restore(s, $('#notice-action')) });
-    } else feedback(`${ACTION_DONE[action]}，操作原因已记录。`);
+    } else feedback(`${ACTION_DONE[action]}，操作已记录。`);
   } catch (error) { fail(error); }
   finally { controlling = false; $('#confirm-yes').disabled = false; await refresh().catch(pollFailed); }
 });
@@ -752,7 +758,7 @@ $('#import').addEventListener('submit', async event => {
   await busyButton(event.submitter ?? $('#import button'), '正在校验…', async () => {
     let parsed;
     try { parsed = JSON.parse(await file.text()); } catch { fail(new Error('所选文件不是有效的 JSON。')); return; }
-    try { await api('config', parsed); await loadConfig(); $('#import').reset(); feedback('配置已校验并导入。已开始的会话继续使用原配置。'); }
+    try { await api('config', {config:parsed, filename:file.name}); await loadConfig(); $('#import').reset(); feedback('配置已保存到配置文件夹并导入。已开始的会话继续使用原配置。'); }
     catch (error) { fail(new Error(`配置未导入：${error.message}`)); }
   });
 });
@@ -760,6 +766,10 @@ $('#import').addEventListener('submit', async event => {
 /* ───────── 加载与轮询 ───────── */
 async function loadConfig() {
   const data = await api('config');
+  const fileSelect = $('#config-file');
+  fileSelect.replaceChildren(new Option('当前已导入配置', ''));
+  for (const file of data.files ?? []) { const option = new Option(`${file.label}${file.valid ? '' : '（配置无效）'}`, file.filename); option.disabled = !file.valid; option.title = file.error ?? file.filename; fileSelect.add(option); }
+  fileSelect.value = data.selected_file ?? '';
   config = data.config; debugParticipant = data.debug_participant; adapter = data.adapter; prompts = data.interview_prompts ?? [];
   renderDevice(); renderParticipantOptions(true); renderPrompts(); renderSetup();
 }
@@ -783,7 +793,7 @@ async function poll() {
   polling = true;
   try { await refresh(); } catch (error) { pollFailed(error); } finally { polling = false; }
 }
-$('#network-card').open = !narrow.matches;
+$('#network-card').open = false;
 setView('sessions');
 try { await loadNetwork(); await loadConfig(); await refresh(); await loadDeviceControl(); } catch (error) { fail(error); }
 setInterval(poll, 2500);

@@ -15,14 +15,8 @@
 <header class="appbar">
   <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div class="brand-text"><strong>实验员后台</strong><span>f5-sh-pilot</span></div></div>
   <p id="device" class="device" data-tone="neutral" role="status"><span class="dot" aria-hidden="true"></span><span id="device-text">正在读取眼镜状态…</span></p>
-  <nav class="appnav" aria-label="后台视图">
-    <button id="nav-sessions" type="button" aria-pressed="true">会话</button>
-    <button id="nav-setup" type="button" aria-pressed="false">准备与检查</button>
-  </nav>
-</header>
-
-        <details class="card network-entry" id="network-card" open>
-          <summary id="network-title">手机扫码进入主试后台</summary>
+  <div class="header-actions">        <details class="card network-entry" id="network-card">
+          <summary id="network-title">主试二维码</summary>
           <div class="network-content"><div class="network-fields">
           <p class="hint">手机连接电脑热点后，扫码打开主试后台。电脑上选好会话，再点击“在本机打开被试页面”。</p>
           <label class="field-label" for="share-address">其他设备访问地址</label>
@@ -34,6 +28,13 @@
           <details class="disclosure"><summary>其他设备打不开？</summary><ol><li>确认已连接这台电脑的热点或同一局域网。</li><li>网卡较多时切换上方地址后重试；不要在另一设备输入 127.0.0.1。</li><li>在 Windows 或 macOS 防火墙提示中允许 Node.js 接收入站连接。切换网络后点击刷新地址。</li></ol><p class="hint">电脑本机能打开，不代表另一设备已连通；请以另一设备实际打开页面为准。</p></details>
           </div><img id="network-qr" class="connection-qr" alt="主试后台二维码"></div>
         </details>
+  <nav class="appnav" aria-label="后台视图">
+    <button id="nav-sessions" type="button" aria-pressed="true">会话</button>
+    <button id="nav-setup" type="button" aria-pressed="false">准备与检查</button>
+  </nav>
+  </div>
+</header>
+
 
 <main id="main" class="layout">
   <!-- 左栏：新建会话 + 会话列表 + 已删除会话 -->
@@ -41,6 +42,8 @@
     <section class="card create-card" aria-labelledby="create-title">
       <h2 id="create-title" class="card-title">新建会话</h2>
       <form id="start" class="create-form" novalidate>
+        <label class="field-label" for="config-file">实验配置文件</label>
+        <select id="config-file"><option value="">当前已导入配置</option></select>
         <label for="participant" class="field-label">被试编号</label>
         <div class="create-row">
           <select id="participant" required aria-describedby="participant-hint"><option value="">请选择被试</option></select>
@@ -118,27 +121,28 @@
           <section class="card" id="control-card" aria-labelledby="control-title">
             <h3 id="control-title" class="card-title">实验干预</h3>
             <form id="control" novalidate>
-              <p id="control-help" class="hint"></p>
-              <div id="reason-wrap" class="field">
-                <label for="reason" class="field-label">操作原因 <span class="req">必填</span></label>
-                <input id="reason" required maxlength="4000" autocomplete="off" placeholder="例如：被试请求暂停、设备异常、调试检查" aria-describedby="control-help">
-              </div>
-              <div id="regular-actions" class="action-row">
-                <button type="submit" value="pause" class="btn primary">暂停实验</button>
-                <button type="submit" value="resume" class="btn primary">恢复实验</button>
-                <button type="submit" value="skip_break" class="btn">跳过休息</button>
-              </div>
+              <p hidden id="control-help" class="hint"></p>
               <div id="admin-debug" class="debug-box" hidden>
                 <label for="admin-debug-target" class="field-label">题目跳转调试（主试）</label>
                 <div class="create-row"><select id="admin-debug-target"></select><button type="submit" value="debug_jump" class="btn">跳转</button></div>
               </div>
+              <div id="reason-wrap" class="field">
+                <label for="reason" class="field-label">操作原因（可选）</label>
+                <input id="reason" maxlength="4000" autocomplete="off" placeholder="例如：被试请求暂停、设备异常、调试检查" aria-describedby="control-help">
+              </div>
+              <div id="regular-actions" class="action-row">
+                <button type="submit" value="pause" class="btn primary">暂停实验</button>
+                <button type="submit" value="stop" class="btn danger-outline">停止实验</button>
+                <button type="submit" value="resume" class="btn primary">恢复实验</button>
+                <button type="submit" value="skip_break" class="btn">跳过休息</button>
+              </div>
               <div id="danger" class="danger-zone">
-                <p class="danger-title">危险操作</p>
+
                 <div class="action-row">
-                  <button type="button" data-confirm="stop" class="btn danger-outline">提前结束会话…</button>
+
                   <button type="button" data-confirm="delete" class="btn danger-outline">删除此会话记录…</button>
                 </div>
-                <p id="danger-help" class="hint"></p>
+                <p hidden id="danger-help" class="hint"></p>
                 <div id="confirm" class="confirm" role="group" aria-labelledby="confirm-text" hidden>
                   <p id="confirm-text"></p>
                   <div class="action-row"><button id="confirm-yes" type="submit" class="btn danger">确认</button><button id="confirm-no" type="button" class="btn">取消</button></div>
@@ -220,11 +224,12 @@
           <p class="hint">上位机守护会在显示端失联或离开前台时自动唤醒并拉回应用。展示期间保留眼镜独立计时；恢复连接不补发旧消息。</p>
           <p id="device-control-error" class="field-error" role="status"></p>
           <form id="device-notify" class="device-notify">
-            <label for="device-notify-text" class="field-label">眼镜测试通知</label>
+            <label for="device-notify-text" class="field-label">手动发送通知</label>
+            <select id="device-notify-mode" aria-label="通知模态"><option value="legacy_8500">原始无声8.5秒</option><option value="tone_8500">通知音8.5秒</option><option value="confirm_until_ack">无声持续至确认</option></select>
             <textarea id="device-notify-text" rows="3" maxlength="500" required>这是一条眼镜测试通知。
-请确认双眼文字清晰，消息将在 8.5 秒后自动消失。</textarea>
-            <p class="hint">仅在没有进行中的会话时发送，单独记录，不计入被试实验。</p>
-            <div class="action-row"><button id="device-notify-send" type="submit" class="btn primary">发送测试通知</button></div>
+请阅读通知内容。</textarea>
+            <p class="hint">会话进行中也可发送；手动通知单独标记。眼镜忙碌时不会覆盖或排队。</p>
+            <div class="action-row"><button id="device-notify-send" type="submit" class="btn primary">发送通知</button><button id="device-notify-confirm" type="button" class="btn">确认收起手动通知</button></div>
           </form>
           <p id="device-debug-result" class="hint" aria-live="polite"></p>
           <details class="disclosure"><summary>最近的设备控制与测试记录</summary><div id="device-debug-history"></div></details>

@@ -1,11 +1,13 @@
 export const stageIds = ['SH01', 'SH02', 'SH03', 'SH04', 'SH05'] as const;
 export type StageId = typeof stageIds[number];
 export type Condition = 'N-T0' | 'N-T1' | 'A-T0' | 'A-T1' | 'NONE';
+export type DisplayMode = 'legacy_8500' | 'tone_8500' | 'confirm_until_ack';
 
 export interface Assignment {
   stage_id: StageId;
   condition: Condition;
   message_id: string | null;
+  display_mode?: DisplayMode;
 }
 
 export interface Participant {
@@ -20,6 +22,8 @@ export interface ParticipantConfig {
   experiment_id: string;
   schema_version: string;
   participants: Participant[];
+  debug_participant?: Participant;
+  config_name?: string;
 }
 
 export interface Stimulus {
@@ -40,6 +44,7 @@ export interface GlassesRequest {
   message_id: string;
   text: string;
   duration_ms: 8500;
+  display_mode?: DisplayMode;
   device_id?: string;
 }
 
@@ -62,7 +67,7 @@ export interface GlassesEvent {
   event_id: string;
   request_id: string;
   device_id: string;
-  kind: 'accepted' | 'drawn' | 'hidden' | 'failed';
+  kind: 'accepted' | 'drawn' | 'hidden' | 'failed' | 'confirmed' | 'cue_started' | 'cue_failed';
   device_wall_ms: number;
   device_monotonic_ms: number;
   clock_id: string;
@@ -87,4 +92,6 @@ export interface GlassesAdapter {
   close?(): void | Promise<void>;
   /** 发送带永久去重编号的消息；接受回执不代表实际光学呈现。 */
   send(request: GlassesRequest): Promise<GlassesReceipt>;
+  confirm?(request: { request_id: string; device_id?: string }): Promise<void>;
+  cancel?(request: { request_id: string; device_id?: string }): Promise<void>;
 }

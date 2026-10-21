@@ -196,9 +196,9 @@ test('恢复真实会话时若运行模式改变，拒绝刺激派发，不暗�
     const engine = new Engine(f.store, mock, f.material, f.config);
     engine.adminAction(f.created.session_id, 'debug_jump', '检查模式隔离', 'SH01_U1');
     const send = (action: string, extra = {}) => engine.command(f.created.session_id, { command_id: randomUUID(), page_token: engine.view(f.created.session_id).page_token, action, client: visible, ...extra });
-    send('displayed'); send('reveal', { open: true }); send('reveal_displayed'); await engine.settle();
-    assert.equal(mockCalls, 0); const m = f.store.interventions(f.created.session_id)[0];
-    assert.equal(m.source, 'device'); assert.equal(m.error, 'adapter_mode_or_device_mismatch');
+    send('displayed'); assert.throws(() => send('reveal', { open: true }), /眼镜未就绪/); await engine.settle();
+    assert.equal(mockCalls, 0); assert.equal(f.store.interventions(f.created.session_id).length, 0);
+    assert.equal(engine.view(f.created.session_id).reveal?.open, false);
   } finally { f.store.close(); await b.close(); }
 });
 

@@ -13,6 +13,8 @@ export class MockGlassesAdapter implements GlassesAdapter {
   getStatus() {
     return { source: 'mock' as const, connected: this.options.connected !== false };
   }
+  async confirm() { /* 仅接受模拟确认，不产生真机绘制或提示音证据。 */ }
+  async cancel() { /* Mock 没有实际设备画面。 */ }
 
   send(request: GlassesRequest): Promise<GlassesReceipt> {
     const fingerprint = JSON.stringify(request);

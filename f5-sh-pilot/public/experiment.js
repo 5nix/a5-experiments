@@ -361,6 +361,10 @@ function pageHeader(view, { progress = true, tools = [] } = {}) {
   const [eyebrow, title] = splitTitle(view.title);
   const heading = h('h1', { tabIndex: -1, text: title });
   const right = h('div', { class: 'page-tools' }, tools);
+  if (view.confirmation_enabled && !['COMPLETED', 'ABORTED'].includes(view.phase)) {
+    const check = svg('svg', {class:'icon', width:16, height:16, viewBox:'0 0 24 24', fill:'none', 'aria-hidden':'true'}, svg('path', {d:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4', stroke:'currentColor', 'stroke-width':2, 'stroke-linecap':'round', 'stroke-linejoin':'round'}));
+    right.prepend(h('button', {id:'confirm-message', type:'button', class:'btn subtle read-notice', onclick:confirmMessage}, check, h('span', {text:'已阅读通知'})));
+  }
   if (progress) {
     const segments = h('span', { class: 'progress-track', 'aria-hidden': 'true' },
       Array.from({ length: view.stage_count }, (_, i) => h('span', { class: i < view.stage_number - 1 ? 'done' : i === view.stage_number - 1 ? 'now' : '' })));
@@ -619,7 +623,7 @@ function tickBreak() {
 // 任务栏右下角的时钟固定显示当前任务组说明卡中的情景时间，全程不走动。
 function sceneClock(view) {
   const clock = document.querySelector('#clock'), scene = view.scene_time;
-  const visible = Boolean(scene) && !['INTRO', 'BREAK', 'COMPLETED', 'ABORTED'].includes(view.phase);
+  const visible = Boolean(scene);
   clock.hidden = !visible;
   if (!visible) return;
   document.querySelector('#clock-time').textContent = scene.time;
@@ -674,7 +678,7 @@ async function render(view) {
   restore(main); focusWindow(main);
   debugTray(view); sceneClock(view);
   let unit = null;
-  if (view.phase === 'UNIT') unit = unitPage(view);
+  if (view.tutorial || view.phase === 'UNIT') unit = unitPage(view);
   else if (view.fields.length) formPage(view);
   else if (view.phase === 'INTRO') readingPage(view, '阅读完毕，继续', { progress: false });
   else if (view.phase === 'CARD') readingPage(view, '开始任务');
@@ -682,6 +686,7 @@ async function render(view) {
   else if (view.phase === 'PAUSED') statusPage(view, 'pause');
   else if (view.phase === 'COMPLETED') statusPage(view, 'check');
   else statusPage(view, 'info');
+  renderMessageConfirmation(view);
   syncFooter();
   bindScratchpad(view, pageChanged);
   if (view.phase === 'PAUSED') return;
@@ -715,11 +720,36 @@ function fatal(message) {
   actionsNode.replaceChildren(); syncFooter();
 }
 
+function renderMessageConfirmation(view) {
+  let button = document.querySelector('#confirm-message');
+  if(!button && view.confirmation_enabled) {
+    const tools=document.querySelector('.page-tools');
+    if(tools) { const temp=pageHeader(view); button=temp.querySelector('#confirm-message'); if(button) {const progress=tools.querySelector('.progress');if(progress)progress.after(button);else tools.prepend(button);} }
+  }
+  if (!button) return;
+  button.removeAttribute('title');
+  button.disabled = false;
+}
+async function confirmMessage() {
+  // 在任何 await 之前捕获实际点击时刻，空点与快速连续点击同样发送记录。
+  const payload={click_id:uuid(),page_token:current?.page_token,visible_request_id:current?.message_confirmation?.request_id??null,client:client()};
+  const options={method:'POST',body:JSON.stringify(payload)};
+  try {
+    let result;
+    try {result=await api('/read-notice-click',options);}
+    catch(problem){if(!(problem instanceof TypeError))throw problem;result=await api('/read-notice-click',options);}
+    const view=result.view;
+    if(view.page_token!==current.page_token || view.phase!==current.phase)await render(view);
+    else current.message_confirmation=view.message_confirmation;
+  }catch(problem){showError(problem);}
+}
+
 setInterval(tickBreak, 200);
 setInterval(async () => {
   if (!current || pending || document.visibilityState !== 'visible') return;
   try {
     const view = await api();
+    renderMessageConfirmation(view); current.message_confirmation = view.message_confirmation;
     // 只有page_token或phase变化才整体切页，避免打断输入法、焦点与草稿本编辑。
     if (view.page_token !== current.page_token || view.phase !== current.phase) await render(view);
     else if (view.phase === 'BREAK') breakClock = { remaining: view.remaining_ms, origin: performance.now() };

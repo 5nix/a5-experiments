@@ -11,7 +11,12 @@ export function validateConfig(input: unknown, stimuli: Stimulus[]): string[] {
   if (!object(input) || input.experiment_id !== 'f5-sh-pilot' || input.schema_version !== '1.0' || !Array.isArray(input.participants)) {
     return ['配置必须包含 experiment_id=f5-sh-pilot、schema_version=1.0 和 participants 数组。'];
   }
-  if (input.participants.length === 0) errors.push('被试列表不能为空。');
+  if (input.participants.length === 0 && input.debug_participant === undefined) errors.push('被试列表不能为空。');
+  if (input.debug_participant !== undefined) {
+    const d = input.debug_participant;
+    if (!object(d) || d.participant_id !== '000' || d.debug !== true || d.copied_from !== '001') errors.push('debug_participant 必须为 participant_id=000、debug=true、copied_from=001。');
+    else errors.push(...validateConfig({ experiment_id: input.experiment_id, schema_version: input.schema_version, participants: [{...d, participant_id:'001'}] }, stimuli).map(e => `调试配置：${e}`));
+  }
   const seen = new Set<string>();
   for (const participant of input.participants) {
     if (!object(participant) || typeof participant.participant_id !== 'string' || !participant.participant_id.trim() || !Array.isArray(participant.stages)) {
@@ -35,6 +40,7 @@ export function validateConfig(input: unknown, stimuli: Stimulus[]): string[] {
         errors.push(`${prefix} 条件非法。`);
         continue;
       }
+      if (stage.display_mode !== undefined && (typeof stage.display_mode !== 'string' || !['legacy_8500', 'tone_8500', 'confirm_until_ack'].includes(stage.display_mode))) errors.push(`${prefix} display_mode 必须为 legacy_8500、tone_8500 或 confirm_until_ack。`);
       if (stage.condition === 'NONE') {
         if (stage.message_id !== null) errors.push(`${prefix} 为 NONE，message_id 必须为 null。`);
         continue;

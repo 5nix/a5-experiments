@@ -1,49 +1,47 @@
-# 架构
+# 架构与数据流
 
-## 组成
+## 模块职责
 
 | 位置 | 职责 |
 | --- | --- |
-| src/server.ts | 启动、局域网监听、路径、正常停止 |
-| src/app.ts | HTTP 接口、实验员与被试隔离、固定静态白名单、CSP（只允许本站脚本和样式） |
-| src/engine.ts | 会话状态机、操作去重、时钟、E/F、问卷与休息、消息调度 |
-| src/store.ts | SQLite 事务、快照、只追加事件、消息记录 |
-| src/tasks.ts | 内容载入、输入归一化、评分（含排班约束） |
-| src/export.ts | CSV / JSONL / 快照 / 清单 / ZIP |
-| src/adapters/ | Mock 与雷鸟眼镜适配器 |
-| src/device-control.ts | 上位机守护、唤醒/拉回、USB 重连、独立调试通知与 scrcpy 子进程 |
-| content/ | tasks.json、stimuli.json、revisions.json、来源与归档 |
-| scripts/ | 从原始附件重建内容（Python 标准库） |
-| public/ | 被试端（experiment.* + desktop.css）与管理端（admin.* + app.css），样式互相隔离 |
-| rayneo-display/ | 眼镜端 Android 显示程序 |
+| src/server.ts | 启动、监听、运行目录、定时轮询与正常停止 |
+| src/app.ts | HTTP路由、被试token、静态白名单与CSP |
+| src/engine.ts | 状态机、快照、校验、调度、确认及操作去重 |
+| src/store.ts | SQLite事务、状态、只追加事件及干预记录 |
+| src/config.ts / config-files.ts | JSON校验、目录扫描、选择和导入落盘 |
+| src/tasks.ts | 内容载入、输入归一化与评分 |
+| src/export.ts | CSV、JSONL、快照、清单和ZIP |
+| src/adapters/ | Mock与雷鸟USB适配器 |
+| src/device-control.ts / voice-overlay-guard.ts | 主机恢复、手动通知、scrcpy及语音覆盖防护 |
+| content/ / config/ | 材料、修订及预分配，均不直接公开为静态资源 |
+| public/ | 原生ES module；被试端与后台样式隔离 |
+| rayneo-display/ | Android双眼显示、音频、设备去重账本 |
 
-依赖：Node.js 24+、fflate；使用 Node 内置 SQLite，不引入需要编译的原生模块。已在 macOS 上验证，Windows 未实机验证。
+Node.js 24+使用内置SQLite；其他运行依赖见package.json。公共启动器管理进程生命周期，不介入实验规则。
 
-## 状态与提交
+## 状态与服务端权威
 
-- **服务端权威**：服务端掌握权威状态和校验。每个页面有一个不可猜测的 page_token，旧页面无法再提交。
-- **操作去重**：command_id 在数据库中唯一，重试同一操作不会重复写入或重复推进。
-- **评分**：评分和正确选项只保存在服务端。
+新建HTTP会话先进入教程，再进入INTRO、CARD、UNIT、COMPREHENSION、RATINGS、BREAK及终态；完整分支见 [DECISIONS.md](DECISIONS.md)。暂停保留底层阶段，通过view呈现PAUSED。直接使用Engine的内部调用可保留无教程的兼容路径。
 
-## 时间与持久化
+每页具有page_token，旧页面不能提交；command_id与完整请求指纹用于操作去重。评分和正确答案只在服务端，公开view不包含答案。配置文件在创建请求中重新读取，防止多个主试页面切换配置时使用错误预分配；已有会话继续使用其快照。
 
-- **写入**：SQLite 开启 WAL 与 `synchronous=FULL`，状态、事件和发送意图在同一事务中写入。事件表用触发器禁止更新和删除。
-- **计时**：`elapsed_ms` 由服务端单调时钟计算，暂停期间照常计时（休息结束时间会顺延）。服务重启后，取“持久化的已用时长”和“从开始到现在的墙钟时长”中较大的值续上，并记录 `server_restarted`。
-- **客户端证据**：浏览器绘制时间作为客户端证据保存在事件 payload 中，与服务端接收时间分开。
-- **未决消息**：重启时尚无最终回执的消息标为 unknown，不会重放。
+## 持久化与时钟
 
-## 消息
+SQLite启用WAL、synchronous=FULL及外键。状态、事件和发送意图在事务中保存；事件表与设备原始事件禁止更新或删除。会话删除仅写state.deleted，默认读取和全部导出排除它，被试接口返回410。
 
-- **发送顺序**：触发后先在事务中保存请求和 request_id，再非阻塞调用适配器；设备的接受、绘制、清屏、失败等证据按 request_id 合并。
-- **去重与关联**：每个会话的每个任务组至多一条消息；迟到的回调仍归入原任务组。
-- **雷鸟链路**：雷鸟眼镜经 ADB 建立 USB 隧道后，通过持久 TCP 通信，详见 [RAYNEO.md](RAYNEO.md)。
+elapsed_ms由服务器单调时钟计算，暂停期间仍累计，休息截止时间相应顺延。重启取持久化时长与墙钟跨度的较大值续接并记录server_restarted。浏览器可见证据、服务器接收时间和设备原始时间分别保存，不把电脑与眼镜时钟直接相减。
 
-## 上位机与独立调试数据
+## 消息生命周期
 
-`DeviceControl` 复用引擎的唯一眼镜适配器，ADB 命令只管理唤醒、前台和隧道生命周期。设备消息通过原套接字发送，原始 drawn/hidden 时钟不换算。正常显示期间不执行前台恢复，断线后等待发送保护期结束再恢复，不能因上位机守护而重发刺激。
+1. 实际可见事件触发正式消息；教程与手动通知使用独立请求。
+2. 先保存request_id和发送意图，再异步调用适配器，不阻塞答题。
+3. 接受回执和后续设备事件按request_id、设备身份合并；迟到事件仍落原请求。
+4. 确认按消息归属校验，跨页有效，重复确认不重播。下一条触发前检查待确认或仍在显示的通知。
 
-独立测试通知在 `device_debug_requests` 保存 request_id、正文、设备绑定、回执与事件。引擎先将匹配的调试事件路由至该表，其他事件继续原实验关联规则。通知记录和实验 interventions 分开；测试通知、设备控制和新建实验之间有忙碌互斥。守护开关保存在 settings，操作留在 admin_audit；服务关闭时先等待当前控制结束，再关闭适配器和数据库，并回收自己启动的 scrcpy 进程。
+重启时未完成的发送标为unknown，不重放。设备另有永久去重账本；任一端超时都不能据此推断未显示。协议与显示计时见 [RAYNEO.md](RAYNEO.md)。
 
-## 删除
+## 数据类别与主机控制
 
-删除只在 `state.deleted` 中做标记，不改动事件和快照。默认列表、启动扫描和全部导出都排除已删除会话；被试接口对已删除会话返回 410。
+interventions中的data_kind区分formal、tutorial、manual，旧记录缺省formal；教程和手动消息不计正式呈现完成率。无会话的手动通知保存于device_debug_requests，其事件优先路由到该表。导出结构见 [API.md](API.md)。
+
+DeviceControl复用唯一适配器；ADB只负责连接、前台及权限生命周期。展示保护期不拉前台、不改权限、不重建隧道。守护设置和原权限备份持久化，操作进入admin_audit。关闭服务先等待控制任务和有限的展示保护窗口，再关闭适配器与数据库，并回收自身scrcpy进程。

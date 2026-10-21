@@ -1,0 +1,56 @@
+{
+  "experiment_id": "f5-sh-pilot",
+  "schema_version": "1.0",
+  "source_ref": {
+    "file": "刺激材料的属性判断.xlsx",
+    "sheet": "每个场景中的试次顺序安排",
+    "range": "B2:G8"
+  },
+  "participants": [
+    {
+      "participant_id": "001",
+      "version_label": "V1",
+      "stages": [
+        {
+          "stage_id": "SH01",
+          "condition": "N-T0",
+          "message_id": "N01",
+          "source_value": "N01-T0",
+          "source_cell": "C3",
+          "display_mode": "legacy_8500"
+        },
+        {
+          "stage_id": "SH02",
+          "condition": "N-T1",
+          "message_id": "N02",
+          "source_value": "N02-T1",
+          "source_cell": "C4",
+          "display_mode": "tone_8500"
+        },
+        {
+          "stage_id": "SH03",
+          "condition": "A-T0",
+          "message_id": "A03",
+          "source_value": "A03-T0",
+          "source_cell": "C5",
+          "display_mode": "confirm_until_ack"
+        },
+        {
+          "stage_id": "SH04",
+          "condition": "A-T1",
+          "message_id": "A04",
+          "source_value": "A04-T1",
+          "source_cell": "C6",
+          "display_mode": "legacy_8500"
+        },
+        {
+          "stage_id": "SH05",
+          "condition": "NONE",
+          "message_id": null,
+          "source_value": "无信息介入",
+          "source_cell": "C7"
+        }
+      ]
+    }
+  ]
+}

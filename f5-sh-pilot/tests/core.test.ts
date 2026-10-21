@@ -79,7 +79,7 @@ test('完整五组闭环：10单元、4次消息、4份问卷、4次180秒休息
   } finally { await f.engine.settle(); f.store.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
-test('全部题型强制完整；0合法、时间与金额归一化、NONE互斥及不适用格式', () => {
+test('全部题型强制完整；0合法、时间与金额归一化、NONE互斥且采购仅选A至D', () => {
   for (const stage of material.content.stages) for (const unit of stage.units) {
     const answer = correct(unit);
     assert.equal(score(unit, normalize(unit.fields, answer)), 1);
@@ -91,7 +91,8 @@ test('全部题型强制完整；0合法、时间与金额归一化、NONE互斥
   assert.throws(() => normalize(first.fields, { plans: ['A', 'NONE'] }));
   const stock = material.content.stages[4].units[0]; assert.equal(normalize(stock.fields, correct(stock)).guide_gap, 0);
   const order = material.content.stages[4].units[1];
-  assert.equal(normalize(order.fields, { plan: 'NONE', badge_surplus: '不适用', record_surplus: '不适用' }).plan, 'NONE');
+  assert.deepEqual(order.fields.find(f => f.id === 'plan')!.options!.map(o => o.value), ['A', 'B', 'C', 'D']);
+  assert.throws(() => normalize(order.fields, { plan: 'NONE', badge_surplus: '不适用', record_surplus: '不适用' }));
 });
 
 test('SH04允许多个合法排班，拒绝重人、缺席和迟到；不采用错误示例', () => {

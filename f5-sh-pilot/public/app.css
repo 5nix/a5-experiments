@@ -370,3 +370,9 @@ details[open] > summary::before { transform: rotate(45deg); }
 .network-content { display:grid; grid-template-columns:minmax(0,1fr) 180px; gap:20px; align-items:start; padding-top:12px; }
 .network-fields { min-width:0; }
 @media(max-width:899px) { .network-content { grid-template-columns:minmax(0,1fr); } }
+
+.header-actions { grid-area: nav; display:flex; align-items:center; gap:12px; }
+.header-actions .network-entry { position:relative; margin:0; padding:0; border:0; box-shadow:none; background:transparent; }
+.header-actions .network-entry > summary { padding:6px 8px; font-size:14px; font-weight:400; list-style:none; cursor:pointer; }
+.header-actions .network-entry > summary::-webkit-details-marker { display:none; }
+.header-actions .network-content { position:absolute; z-index:100; right:0; top:38px; width:min(580px,90vw); max-height:75vh; overflow:auto; padding:20px; background:#fff; border:1px solid var(--stroke); border-radius:8px; box-shadow:0 8px 28px #0002; }

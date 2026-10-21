@@ -1,18 +1,23 @@
 # 公共实验启动器
 
-根目录的macOS `.command`、Windows `.bat`和 `npm run launcher` 都运行 `experiment-launcher.mjs`。它只提供终端选择和管理，不包含任何实验题目或业务流程。
+仓库根目录的macOS.command、Windows.bat及 `npm run launcher` 均运行experiment-launcher.mjs。启动器负责选择实验和管理服务，不含题目、消息模式或实验状态机。
 
-Windows 本机若存在 `.a5-local/device.json`，SH 菜单的启动和重启会调用仓库内的 `scripts/rayneo-control.mjs`：优先使用 `.a5-local/android/platform-tools/adb.exe`，检查绑定设备授权，打开眼镜应用并传入 rayneo 真机环境。已有 Mock 服务在启动真机前正常停止；设备检查失败会报错，不会降级为 Mock。`4/status` 显示实际运行模式和设备状态，只有显式选择 `9/mock` 才进入模拟预演。`start/restart 端口` 仍传递自定义端口。其他实验和未配置本机设备的环境保持通用启动行为。
+## 现场设备配置
+
+Windows存在 `.a5-local/device.json` 时，SH的启动与重启调用scripts/rayneo-control.mjs，检查绑定设备和USB授权后使用真机模式；失败不降级Mock。状态命令显示实际模式，只有显式选择9/mock才进入模拟。其他实验或未配置设备的环境使用通用启动。
+
+在另一台Windows主机上准备：
+
+- 完整platform-tools放到 `.a5-local/android/platform-tools/`，优先使用其中adb.exe。
+- 完整scrcpy放到 `.a5-local/scrcpy/`，可执行文件、DLL和server文件保持齐全。
+- 创建device.json，最小配置为 `{"packageName":"link.ironip.a5.rayneo.localfix"}`，按实际安装包填写。单副已授权设备可自动保存serial；多设备须明确指定。
+- 已有工具可填写adbPath、scrcpyPath。显示端尚未安装时先按 [Android构建说明](../f5-sh-pilot/rayneo-display/BUILDING.md) 部署，或配置apkPath与apkSha256供启动脚本校验安装。
+
+工具和设备凭据不提交Git。修改路径或绑定后重启服务加载；换设备须先结束原会话。应用内守护、通知和硬件验收见 [RAYNEO.md](../f5-sh-pilot/RAYNEO.md)。
 
 ## 新实验接入
 
-本机设备启动脚本也优先检查 `.a5-local/scrcpy/scrcpy.exe`，运行配置将该路径作为 `A5_SCRCPY_PATH` 传入电脑端；scrcpy 的 DLL 和 server 文件须与可执行文件一并保存。修改本机路径配置后需正常重启服务才会加载新环境。
-
-在另一台 Windows 主机上，将完整 Android platform-tools 放到 `.a5-local/android/platform-tools/`，将完整 scrcpy 放到 `.a5-local/scrcpy/`；这些工具和设备配置不提交 Git。创建 `.a5-local/device.json`，最小内容为 `{"packageName":"link.ironip.a5.rayneo.localfix"}`（按实际安装包名填写）。仅连接一副已授权眼镜时自动绑定并保存序列号；多设备时需设置 `serial`。若显示端尚未安装，先按 Android 构建说明安装，或配置 `apkPath` 与 `apkSha256` 供启动脚本校验后安装。已有工具可用 `adbPath`、`scrcpyPath` 指定完整路径。
-
-启动器按名称自动发现根目录的 `f5-sh-*`、`f5-sl-*`、`f5-mh-*`、`f5-ml-*` 目录。没有配置启动方式的目录也会列出，并提示需要配置的内容。
-
-当前启动器管理Node服务入口。在实验自身package.json中声明：
+启动器按名称发现根目录f5-sh-*、f5-sl-*、f5-mh-*、f5-ml-*。未配置启动方式的目录也会列出并提示缺失项。在实验package.json声明：
 
 ```json
 {
@@ -27,27 +32,20 @@ Windows 本机若存在 `.a5-local/device.json`，SH 菜单的启动和重启会
 }
 ```
 
-entry相对于实验目录，由当前Node进程的同版本可执行文件运行。它不需要在公共启动器中写死实验名。各实验仍需提供自己的start/check/doctor等npm命令；菜单的check/doctor调用所选实验的对应脚本，install调用仓库根目录的npm ci。
+entry相对实验目录，以当前Node版本运行。实验提供自己的start/check/doctor命令；install在仓库根目录执行npm ci。
 
-服务入口需遵守：
+服务约定：
 
-- 从PORT读取端口；SH 默认绑定0.0.0.0供热点设备访问，健康检查与管理通道使用本机127.0.0.1。启动器支持 `start 其他端口`，不同实验可同时使用不同端口。
-- 健康接口返回 `{ "ok": true, "experiment_id": "与实验目录名相同" }`；健康检查通过后才显示“运行中”。
-- 使用A5_RUNTIME_DIR、A5_EXPORT_DIR保存运行数据与导出。管理器将其分别设为所选实验的runtime和exports，不与其他实验混用。
-- SH 直接打开 `/admin`；其他实验如配置admin_key_file，打开后台时读取该文件并以 `#key=...` 附到URL；未配置则只打开后台地址。文件路径必须在实验目录内。
-- 监听Node进程IPC消息 `{ "type": "a5:shutdown" }`，收到后停止接受请求、保存并关闭数据，最后调用 `process.disconnect?.()`。管理进程意外断开时也应正常关闭。SH实验入口已实现此约定。
-- 8.5秒眼镜计时等实验规则仍由实验自身负责，公共启动器不介入。
+- 从PORT读取端口。SH默认监听0.0.0.0供局域网使用，健康检查和控制通道使用127.0.0.1；start可指定其他端口。
+- 健康接口包含ok:true和对应experiment_id，通过后才报告运行中。
+- A5_RUNTIME_DIR与A5_EXPORT_DIR分别指向该实验数据和导出，不与其他实验共用。
+- SH直接打开/admin；其他实验如声明admin_key_file，凭据文件路径必须在实验目录内。
+- 收到IPC消息 `{ "type":"a5:shutdown" }` 后停止接收、保存和关闭数据，再断开IPC；管理进程意外断开也应正常关闭。
 
-## 进程管理
+## 生命周期与检查
 
-每套实验有独立后台管理进程，启动器菜单退出后不会带走实验服务。管理进程保存状态并提供带随机凭据的本机控制通道；重新打开菜单即可继续管理。不会只根据持久化PID杀进程，避免PID复用时误停无关程序。
+每个实验由独立后台管理进程承载，退出菜单不停止服务。状态、随机控制凭据和日志位于 `.launcher/<实验>/`，不提交Git；重新打开启动器可继续管理。不会只根据持久化PID终止进程，也不会结束占用端口的无关服务。
 
-状态、管理凭据和追加日志位于 `.launcher/<实验目录>/`，不进入Git。停止时通过IPC请求正常关闭，等待进程退出，不调用Windows taskkill强制终止数据库。管理进程最多等待 45 秒正常退出，以容纳眼镜展示结束及权限恢复；停止超时会保留提示，不假报成功。管理进程若异常退出，实验服务通过IPC断开事件自行关闭。
+停止使用IPC正常关闭，不以taskkill强制结束数据库。最多等待45秒，以容纳展示结束和权限恢复；超时保留诊断，不假报成功。并发启动由锁保护，异常锁30秒后可恢复。
 
-短时间同时启动由锁保护，异常终止遗留的启动锁在30秒后可恢复。端口占用、入口错误或健康检查失败都会显示错误，详情写入service.log；不会杀掉占用端口的其他服务。
-
-## 检查
-
-`npm run test:launcher`包含7项公共测试：动态发现、重复/后台启动和跨菜单状态、正常关闭、错误凭据、端口冲突及启动失败、非管理服务保护、遗留锁恢复、实际SH服务IPC及SQLite完整性、入口格式与菜单（部分检查合并在同一测试项）。测试使用临时目录和独立端口，不写入真实被试数据。
-
-macOS入口可用 `bash -n a5-experiments.command` 检查；Windows文件使用CRLF、UTF-8控制台及带引号路径。Windows 11 已验证批处理菜单、启动、重启、跨菜单状态、正常停止和浏览器打开；7项启动器测试全部通过，包含中文及空格临时路径和SQLite完整性。测试清理对Windows进程退出时短暂的目录锁执行有限重试。
+`npm run test:launcher` 使用临时目录和独立端口，覆盖目录发现、后台/重复启动、跨菜单状态、端口冲突、遗留锁、USB启动配置、实际SH服务IPC和SQLite完整性。测试数量以命令输出为准，不写正式被试数据。Windows入口还需核对CRLF、UTF-8控制台、中文和空格路径；macOS入口可执行 `bash -n a5-experiments.command`。

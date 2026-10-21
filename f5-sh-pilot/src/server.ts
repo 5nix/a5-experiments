@@ -24,7 +24,7 @@ const adapter: GlassesAdapter = mode === 'rayneo' ? new RayNeoGlassesAdapter(pro
 const engine = new Engine(store, adapter, await loadMaterial(), await readJson<ParticipantConfig>('config/participants.pilot.json'));
 const deviceControl = new DeviceControl(engine, { serial: process.env.A5_RAYNEO_SERIAL, adb: process.env.A5_ADB_PATH,
   packageName: process.env.A5_RAYNEO_PACKAGE, enabled: process.env.A5_RAYNEO_HOST_MODE !== 'off', scrcpy: process.env.A5_SCRCPY_PATH });
-const server = createApp(engine, resolve(process.env.A5_EXPORT_DIR ?? join(experimentRoot, 'exports')), deviceControl);
+const server = createApp(engine, resolve(process.env.A5_EXPORT_DIR ?? join(experimentRoot, 'exports')), deviceControl, join(experimentRoot, 'config/notifications'));
 engine.pollDevice();
 /** 每秒回收设备事件、执行已隔离异常的控制任务并推进实验。 */
 const ticker = setInterval(() => { engine.pollDevice(); deviceControl.tick(); for (const id of store.ids()) engine.tick(id); }, 1000); ticker.unref();

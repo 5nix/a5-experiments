@@ -9,6 +9,7 @@ import { Engine, HttpError } from './engine.ts';
 import { exportData } from './export.ts';
 import { InputError } from './tasks.ts';
 import { experimentRoot, preflight } from './preflight.ts';
+import { ConfigFiles } from './config-files.ts';
 import type { DeviceControl } from './device-control.ts';
 
 export async function body(request: IncomingMessage): Promise<any> {
@@ -20,7 +21,8 @@ export async function body(request: IncomingMessage): Promise<any> {
 }
 const bearer = (request: IncomingMessage) => request.headers.authorization?.replace(/^Bearer /, '') ?? '';
 /** 建立实验与后台 HTTP 路由；后台直接进入，被试请求仍按会话标识绑定。 */
-export function createApp(engine: Engine, exportRoot: string, deviceControl?: DeviceControl) {
+export function createApp(engine: Engine, exportRoot: string, deviceControl?: DeviceControl, configDirectory = join(exportRoot, 'configurations')) {
+  const configFiles = new ConfigFiles(configDirectory, engine.material.stimuli);
   const json = (response: ServerResponse, value: unknown, status = 200) => {
     response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); response.end(JSON.stringify(value));
   };
@@ -59,12 +61,22 @@ export function createApp(engine: Engine, exportRoot: string, deviceControl?: De
           if (!deviceControl) throw new HttpError(409, '当前服务未配置眼镜控制。');
           json(response, await deviceControl.action(await body(request))); return;
         }
-        if (method === 'GET' && path === '/api/admin/config') { json(response, { config: engine.config(), debug_participant: engine.debugParticipant(), adapter: engine.adapter.getStatus(), interview_prompts: engine.material.content.interview_prompts }); return; }
-        if (method === 'POST' && path === '/api/admin/config') { json(response, { config: engine.importConfig(await body(request)) }); return; }
+        if (method === 'GET' && path === '/api/admin/config') { json(response, { files: await configFiles.list(), selected_file: engine.store.setting('selected_config_file') ?? null, config: engine.config(), debug_participant: engine.debugParticipant(), adapter: engine.adapter.getStatus(), interview_prompts: engine.material.content.interview_prompts }); return; }
+        if (method === 'POST' && path === '/api/admin/config') {
+          const input = await body(request); const saved = await configFiles.save(input.config ?? input, input.filename);
+          engine.importConfig(saved.config); engine.store.setSetting('selected_config_file', saved.filename);
+          json(response, saved); return;
+        }
+        if (method === 'POST' && path === '/api/admin/config/select') {
+          const input = await body(request); const config = await configFiles.read(input.filename);
+          engine.importConfig(config); engine.store.setSetting('selected_config_file', input.filename);
+          json(response, {config, selected_file:input.filename}); return;
+        }
         if (method === 'GET' && path === '/api/admin/sessions') { json(response, { adapter: engine.adapter.getStatus(), sessions: engine.store.ids().map(id => ({ ...engine.summary(id), connection: connection(id) })), deleted_sessions: engine.store.deletedIds().map(id => engine.summary(id)) }); return; }
         if (method === 'POST' && path === '/api/admin/sessions') {
           const input = await body(request); if (typeof input.participant_id !== 'string') throw new HttpError(422, '请选择被试。');
-          const created = engine.create(input.participant_id, { user_agent: request.headers['user-agent'] ?? null });
+          if (input.config_file !== undefined) { const config = await configFiles.read(input.config_file); engine.importConfig(config); engine.store.setSetting('selected_config_file', input.config_file); }
+          const created = engine.create(input.participant_id, { tutorial_enabled: true, config_file: input.config_file ?? engine.store.setting('selected_config_file') ?? null, user_agent: request.headers['user-agent'] ?? null, ...(input.display_mode !== undefined ? { display_mode: input.display_mode } : {}) });
           const participant_url = `/experiment#session=${created.session_id}&token=${created.token}`;
           engine.store.setSetting(`participant_entry:${created.session_id}`, participant_url);
           json(response, { ...created, participant_url }, 201); return;
@@ -89,11 +101,17 @@ export function createApp(engine: Engine, exportRoot: string, deviceControl?: De
           response.writeHead(200, { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="a5-${result.export_id}.zip"` }); response.end(result.bytes); return;
         }
       }
-      const participantPath = /^\/api\/participant\/sessions\/([a-f0-9-]+)(?:\/(commands|assets\/image\d+\.png))?$/.exec(path);
+      const participantPath = /^\/api\/participant\/sessions\/([a-f0-9-]+)(?:\/(commands|read-notice-click|confirm-message|assets\/image\d+\.png))?$/.exec(path);
       if (participantPath) {
         const [, id, resource] = participantPath; engine.authenticate(id, bearer(request));
         connections.set(id, { seen: Date.now() });
         if (method === 'GET' && !resource) { json(response, engine.view(id)); return; }
+        if(method==='POST' && resource==='read-notice-click') {json(response,await engine.readNoticeClick(id,await body(request)));return;}
+        if (method === 'POST' && resource === 'confirm-message') {
+          const input = await body(request);
+          if (typeof input.request_id !== 'string') throw new HttpError(422, '缺少确认消息编号。');
+          json(response, await engine.confirmMessage(id, input.request_id, input.client ?? null)); return;
+        }
         if (method === 'POST' && resource === 'commands') { json(response, engine.command(id, await body(request))); return; }
         if (method === 'GET' && resource?.startsWith('assets/')) {
           const name = resource.slice(7), view = engine.view(id);
