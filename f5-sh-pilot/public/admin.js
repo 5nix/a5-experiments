@@ -106,6 +106,8 @@ function attentionLabel(value) {
   const [stage, reason] = String(value).split(':');
   return `${stage}：${ATTENTION[reason] ?? '消息异常，请查看技术记录'}`;
 }
+/** 与 content/tasks.json 的 message_duration_ms 一致；显示端未声明支持时提示更新 APK。 */
+const FIXED_DURATION_MS = 11000;
 function deviceInfo(status) {
   if (!status) return { short:'正在读取眼镜状态…', long:'正在读取眼镜状态。', tone:'neutral' };
   if (status.source === 'mock') return status.connected === false
@@ -114,6 +116,7 @@ function deviceInfo(status) {
   const id = status.device_id ?? '雷鸟眼镜';
   if (!status.connected) return { short:`${id} · 连接中断`, long:`雷鸟设备 ${id}：连接中断，请检查 USB 连接与显示端。`, tone:'bad' };
   if (!status.ready) return { short:`${id} · 显示端未就绪`, long:`雷鸟设备 ${id}：显示端未就绪，请保持眼镜应用在前台。`, tone:'pending' };
+  if (!status.device_info?.fixed_duration_ms?.split(',').includes(String(FIXED_DURATION_MS))) return { short:`${id} · 显示端 APK 需更新`, long:`雷鸟设备 ${id}：显示端 ${status.device_info?.app_version ?? '未知版本'} 不支持${FIXED_DURATION_MS / 1000}秒固定时长，请安装最新显示端 APK（1.1.4 及以上）；更新前无法创建固定时长会话或发送固定时长通知。`, tone:'bad' };
   if (status.busy) return { short:`${id} · 正在展示消息`, long:`雷鸟设备 ${id}：正在展示消息。硬件呈现仍需现场验收。`, tone:'ok' };
   return { short:`${id} · 显示端就绪`, long:`雷鸟设备 ${id}：连接正常，显示端就绪。硬件呈现仍需现场验收。`, tone:'ok' };
 }
@@ -479,7 +482,8 @@ function renderDetail(data) {
   const attempt = attemptIndex(s);
   setText($('#selected-title'), fullName(s));
   renderOnce($('#selected-badges'), [st, isDebug(s)], () => [el('span', { class: 'badge', 'data-kind': st.key, text: st.label }), isDebug(s) ? el('span', { class: 'badge', 'data-kind': 'debug', text: '调试' }) : null]);
-  const modeText = { mixed: '逐条通知模式', tone_8500: '提示音＋11秒', confirm_until_ack: '无提示音＋确认后立即消失', legacy_8500: '原版无提示音11秒' };
+  const seconds = `${(s.message_duration_ms ?? 8500) / 1000}秒`;
+  const modeText = { mixed: '逐条通知模式', tone_8500: `提示音＋${seconds}`, confirm_until_ack: '无提示音＋确认后立即消失', legacy_8500: `原版无提示音${seconds}` };
   setText($('#selected-meta'), [`开始 ${when(s.started_at, fmtFull)}`, modeText[s.display_mode ?? 'legacy_8500'], attempt ? `该编号第 ${attempt} 次会话` : null, `${s.status === 'active' ? '已用时' : '总用时'} ${duration(s.elapsed_ms)}`, s.ended_at ? `结束 ${when(s.ended_at, fmtFull)}` : null, `会话 ${s.session_id.slice(0, 8)}`].filter(Boolean).join(' · '));
 
   // 需要核查

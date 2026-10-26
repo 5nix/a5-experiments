@@ -30,7 +30,7 @@ async function bridge() {
       while ((end = buffer.indexOf('\n')) >= 0) {
         const req = JSON.parse(buffer.slice(0, end)); buffer = buffer.slice(end + 1); commands.push(req.command);
         let value: Record<string, unknown> = {};
-        if (req.command === 'status') value = { ready: true, busy: false, ledger_id: 'test-ledger' };
+        if (req.command === 'status') value = { ready: true, busy: false, ledger_id: 'test-ledger', device_info: { fixed_duration_ms: '8500,11000' } };
         else if (req.command === 'events') value = { ledger_id: 'test-ledger', events: events.filter(e => e.seq > req.payload.after) };
         else if (req.command === 'show') {
           const request = req.payload as GlassesRequest;
@@ -197,7 +197,7 @@ test('已删除会话未决发送重启也标未知；重读历史事件可恢�
 });
 
 test('没有结束的适配器Promise有5秒上限，不阻塞主任务与正常停止', async () => {
-  const adapter: GlassesAdapter = { getStatus: () => ({ source: 'device', connected: true, ready: true, device_id: 'adb:test-usb' }), send: () => new Promise(() => {}) };
+  const adapter: GlassesAdapter = { getStatus: () => ({ source: 'device', connected: true, ready: true, device_id: 'adb:test-usb', device_info: { fixed_duration_ms: '8500,11000' } }), send: () => new Promise(() => {}) };
   const f = await fixture(adapter);
   try {
     f.trigger(); assert.equal(f.send('submit', { answer: { plans: ['A'] } }).phase, 'UNIT');

@@ -19,7 +19,7 @@ async function fixture(mode: DisplayMode = 'confirm_until_ack') {
   let engine: Engine;
   const emit = (kind: GlassesEvent['kind'], request = requests[0], extra = {}) => engine.receiveDeviceEvent({ event_id: randomUUID(), request_id: request.request_id, device_id: 'adb:fixture', kind, device_wall_ms: clock, device_monotonic_ms: clock - epoch, clock_id: 'same-device-clock', error: null, ...extra });
   const adapter: GlassesAdapter = {
-    getStatus: () => ({ source: 'device', connected: true, ready: true, busy: false, device_id: 'adb:fixture', device_info: { display_modes: 'legacy_8500,tone_8500,confirm_until_ack' } }),
+    getStatus: () => ({ source: 'device', connected: true, ready: true, busy: false, device_id: 'adb:fixture', device_info: { display_modes: 'legacy_8500,tone_8500,confirm_until_ack', fixed_duration_ms: '8500,11000', app_version: '1.1.4' } }),
     send: async request => { requests.push(request); return { request_id: request.request_id, device_id: request.device_id, source: 'device', status: 'accepted', t_send: new Date(clock).toISOString(), t_ack: new Date(clock).toISOString(), t_display: null, t_hide: null, display_time_source: 'unavailable', error: null }; },
     confirm: async request => { confirms++; if (rejectConfirm) throw new Error('transport_unknown'); emit('confirmed', requests.find(r => r.request_id === request.request_id)!); },
     cancel: async request => { cancels++; const message = requests.find(r => r.request_id === request.request_id)!; emit('failed', message, { error: 'experiment_stopped' }); emit('hidden', message); },
@@ -95,6 +95,8 @@ test('提示音失败保留异常，后续 hidden 不覆盖；不支持新策略
     f.engine.adminAction(f.id, 'stop', 'test');
     f.adapter.getStatus = () => ({ source: 'device', connected: true, ready: true, device_id: 'adb:fixture' });
     assert.throws(() => f.engine.create('000', { display_mode: 'tone_8500' }), /更新显示端/);
+    f.adapter.getStatus = () => ({ source: 'device', connected: true, ready: true, device_id: 'adb:fixture', device_info: { display_modes: 'legacy_8500,tone_8500,confirm_until_ack', app_version: '1.1.3' } });
+    assert.throws(() => f.engine.create('000', { display_mode: 'legacy_8500' }), /1\.1\.3.*不支持11秒固定时长/);
     assert.throws(() => f.engine.create('000', { display_mode: 'invalid' }), /策略无效/);
   } finally { await f.engine.settle(); f.store.close(); }
 });
