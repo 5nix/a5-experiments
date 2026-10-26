@@ -11,6 +11,7 @@ export interface State {
   reveals: Record<string, { open: boolean; requested: boolean; displayed: boolean }>;
   started_at: string; ended_at: string | null; ended_elapsed_ms: number | null; last_elapsed_ms: number;
   break_until_ms: number | null; break_completed: boolean;
+  break_displayed_at?: string | null; break_displayed_elapsed_ms?: number | null;
   paused_at_ms: number | null; attention: string[]; status: 'active' | 'completed' | 'aborted';
   device_id?: string; delivery_source?: 'mock' | 'device';
   deleted?: { deleted_at: string; reason: string };

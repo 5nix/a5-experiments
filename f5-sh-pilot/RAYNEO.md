@@ -1,6 +1,6 @@
 # 雷鸟眼镜接入与维护
 
-适用链路为Windows主机、USB ADB和一副指定序列号的雷鸟X3 Pro；显示应用使用Mercury SDK原生双眼View。当前APK源码版本为1.1.3，实际部署须核对构建文件、安装包和设备能力，不能只看文档版本。
+适用链路为Windows主机、USB ADB和一副指定序列号的雷鸟X3 Pro；显示应用使用Mercury SDK原生双眼View。当前APK源码版本为1.1.4，实际部署须核对构建文件、安装包和设备能力，不能只看文档版本。眼镜端须保持安装最新APK：服务端在创建会话、发送会话内及独立手动通知前核对status.device_info.fixed_duration_ms，未声明支持当前固定时长（11000）的显示端（如1.1.3）一律拒绝，后台眼镜状态显示“显示端 APK 需更新”；持续确认模式不受此检查影响。
 
 ## 首次接入与更换设备
 
@@ -44,12 +44,14 @@ ADB通过 `forward tcp:0 localabstract:a5-rayneo-v1` 建立持久TCP连接，每
 | 命令 | 主要字段与结果 |
 | --- | --- |
 | status | ready、busy、ledger_id及device_info.display_modes |
-| show | 业务ID、device_id、text、duration_ms=8500、可选display_mode；返回去重状态、正文哈希及双眼layout |
+| show | 业务ID、device_id、text、固定模式duration_ms=11000（兼容旧快照8500）、可选display_mode；返回去重状态、正文哈希及双眼layout。确认模式忽略duration_ms |
 | confirm | request_id、device_id；确认持续消息并立即收起，重复确认幂等 |
 | cancel | request_id、device_id；结束会话时取消持续消息并留痕 |
 | events | after序号，每批最多25条 |
 
 支持的display_modes为legacy_8500、tone_8500、confirm_until_ack，模式语义见 [CONFIG.md](CONFIG.md)。设备先落盘accepted，双眼完成绘制后记drawn；固定时长模式独立计时后收起，持续模式等待confirmed，再由双眼清除回调记录hidden。音频播放启动/失败分别为cue_started/cue_failed。
+
+1.1.4固定策略的自动隐藏截止时刻为账本drawn事件的device_monotonic_ms加11000毫秒，不从发送、接受、服务端回执或提示音播放起算。hidden事件保留实际双眼清除绘制时间，并记录hide_reason：auto_timeout（自动到时）、user_confirmed（用户确认）、experiment_stopped（实验取消）等；不将异常取消混作正常自动隐藏。策略、绘制、隐藏与设备确认时间另列导出，旧事件缺失原因时留空。持续确认策略没有隐藏定时器，确认命令收到后直接清除显示，提示音资源、音量、焦点及播放逻辑未修改。
 
 单次RPC上限3秒，引擎等待上限5秒，事件后续轮询回收。传输超时、进程重启或失焦不证明“未显示”，不自动重发。设备按request_id永久去重，同ID不同内容拒绝。
 

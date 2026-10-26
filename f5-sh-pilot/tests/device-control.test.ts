@@ -18,7 +18,7 @@ async function fixture() {
   const requests: GlassesRequest[] = [];
   const adapter: GlassesAdapter = {
     /** 提供可独立切换的连接、就绪和忙碌状态，模拟探测失败。 */
-    getStatus: () => ({ source: 'device', connected, ready, busy, device_id: 'adb:fixture', error: connected ? undefined : 'fixture_disconnected' }),
+    getStatus: () => ({ source: 'device', connected, ready, busy, device_id: 'adb:fixture', device_info: { fixed_duration_ms: '8500,11000' }, error: connected ? undefined : 'fixture_disconnected' }),
     /** 探测与重连不替测试自动恢复连接，以验证调用方检查状态。 */
     probe: async () => {}, reconnect: async () => { calls.push(['reconnect']); },
     /** 记录发送次数和原始请求，只模拟接受而不伪造绘制事件。 */

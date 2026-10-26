@@ -137,7 +137,7 @@ def main():
         options = [{"id": line[0], "text": line[1:].strip()}
                    for line in cell("H").splitlines() if line.strip()]
         stimuli.append({"stage_id": stage, "message_id": cell("B"), "text": cell("C"),
-                        "duration_ms": 8500, "question": cell("G"), "options": options,
+                        "duration_ms": 11000, "question": cell("G"), "options": options,
                         "correct_option": cell("I")[0], "source_answer": cell("I"),
                         "source_ref": {"file": "刺激材料的属性判断.xlsx", "sheet": "文案呈现与问答表", "range": f"A{row}:I{row}"}})
     save(EXPERIMENT / "content" / "stimuli.json", {"content_version": VERSION, "stimuli": stimuli})

@@ -83,9 +83,11 @@ work = revisions['work_style']
 def unit(stage, number, title, indexes, tables, fields, scoring, reveal=None):
     unit_id = f'{stage}_U{number}'
     # 使用用户逐项指定的任务文案；原句和原始表格保留在source与archive。
-    value = {'unit_id': unit_id, 'title': blocks[title]['text'], 'paragraphs': work['unit_paragraphs'].get(unit_id, paragraphs(*indexes)),
+    value = {'unit_id': unit_id, 'title': work.get('unit_titles', {}).get(unit_id, blocks[title]['text']), 'paragraphs': work['unit_paragraphs'].get(unit_id, paragraphs(*indexes)),
              'tables': tables, 'assets': [], 'fields': fields, 'scoring': scoring,
              'source_ref': {**source(title, *indexes), 'wording_revision_id': work['revision_id']}}
+    for answer_field in value['fields']:
+        answer_field['label'] = work.get('field_labels', {}).get(unit_id, {}).get(answer_field['id'], answer_field['label'])
     value['scratchpad'] = {'label': '草稿本', 'placeholder': work['scratchpad_placeholder'], 'max_length': 20000}
     if reveal:
         value['reveal'] = {**reveal, 'button_label': work['reveal_labels'].get(unit_id, reveal['button_label'])}
@@ -135,14 +137,15 @@ def scene_time(card):
 
 
 data = {
-    'schema_version': '1.1', 'content_version': 'sh-current-2026-10-20-v5', 'revision_id': revisions['revision_id'], 'wording_revision_id': work['revision_id'],
+    'schema_version': '1.2', 'content_version': 'sh-current-2026-10-25-v10', 'revision_id': revisions['revision_id'], 'wording_revision_id': work['revision_id'],
     'intro': {'title': '情景导入', 'paragraphs': paragraphs(6, 7), 'source_ref': source(6, 7)},
     'stages': [{'stage_id': f'SH{i+1:02}', 'title': blocks[t]['text'], 'card': work.get('stage_cards', {}).get(f'SH{i+1:02}', blocks[c]['text']), 'scene_time': scene_time(blocks[c]['text']), 'source_ref': {**source(t, c), 'wording_revision_id': work['revision_id']}, 'units': pair}
                for i, (t, c, pair) in enumerate(zip([11, 40, 66, 93, 116], [13, 42, 68, 95, 118], units))],
-    'ratings': [{'id': id, 'label': blocks[i]['text'], 'min': 1, 'max': 7, 'source_ref': source(i)}
-                for id, i in zip(['timing', 'disruption', 'effort', 'helpfulness'], range(148, 152))],
+    'survey_revision_id': revisions['survey_revision']['revision_id'],
+    'survey_pages': revisions['survey_revision']['survey_pages'],
+    'ratings': revisions['survey_revision']['ratings'],
     'interview_prompts': paragraphs(154, 155, 156),
-    'break_ms': 180000, 'allow_break_skip': True, 'message_duration_ms': 8500,
+    'break_ms': revisions['break_settings']['duration_ms'], 'break_start_on_display': revisions['break_settings']['start_on_display'], 'allow_break_skip': True, 'message_duration_ms': revisions['message_presentation']['fixed_duration_ms'],
     'completion_text': '五组任务已完成，请等待实验员进行访谈。',
 }
 (ROOT / 'content/tasks.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')

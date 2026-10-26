@@ -37,13 +37,13 @@ test('18张表格来自内嵌Excel且不再含图片；M1—M6使用已批准修
   assert.equal(tables.find(t => t.id === 'table-18')?.rows[3][4], '125元');
   // 日常工作语气修订：M1仍为筛选当前基本方案且可多选；补充资料以文件附件名呈现，题干按文件名引用。
   assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('可以选择多个方案，也可以选择无方案')));
-  assert.equal(material.content.content_version, 'sh-current-2026-10-20-v5');
+  assert.equal(material.content.content_version, 'sh-current-2026-10-25-v10');
   for (const unit of material.content.stages.map(s => s.units[0])) {
     assert.match(unit.reveal!.button_label, /\.(xlsx|docx)$/);
     assert.ok(unit.paragraphs.some(p => p.includes(`《${unit.reveal!.button_label}》`)));
   }
-  assert.ok(material.content.stages[0].units[1].paragraphs.some(p => p.includes('C方案的总费用已算好，请计算A、B、D三个方案的总费用')));
-  assert.ok(material.content.stages[2].units[1].paragraphs.some(p => p.includes('周宁已确认可以全程参加，状态为“已确认”')));
+  assert.ok(material.content.stages[0].units[1].paragraphs.some(p => p.includes('请按“总费用＝基本报价＋其他费用”，计算A、B、D的总费用')));
+  assert.ok(material.content.stages[2].units[1].paragraphs.some(p => p.includes('吴桐状态为已退出；陈晨资料为齐全；周宁状态为已确认')));
   const ai = material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'A02')!;
   assert.equal(ai.question, '眼镜建议前往哪里打印清单？'); assert.equal(ai.options.find(o => o.id === ai.correct_option)?.text, '三楼自助打印区');
   assert.equal(material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'N02')?.question, '在哪里领取清单的配套材料？');
@@ -119,7 +119,7 @@ test('固定000可自行往返跳题；正式被试只能由后台跳题且保�
   } finally { await f.engine.settle(); f.store.close(); }
 });
 
-test('跳过休息由被试或管理员记录，不伪造180秒完成；状态框操作随暂停恢复变化', async () => {
+test('跳过休息由被试或管理员记录，不伪造30秒完成；状态框操作随暂停恢复变化', async () => {
   const f = fixture();
   try {
     f.send('jump', { target: 'SH01_BREAK' }); f.send('displayed'); f.advance(12000);
@@ -130,7 +130,7 @@ test('跳过休息由被试或管理员记录，不伪造180秒完成；状态�
     f.engine.command(f.debug.session_id, skip);
     assert.equal(f.store.events(f.debug.session_id).filter(e => e.event_type === 'break_skipped').length, 1);
     const event = f.store.events(f.debug.session_id).find(e => e.event_type === 'break_skipped')!;
-    assert.equal(event.payload.actual_rest_ms, 12000); assert.equal(event.payload.remaining_ms, 168000);
+    assert.equal(event.payload.actual_rest_ms, 12000); assert.equal(event.payload.remaining_ms, 18000);
     assert.equal(f.store.events(f.debug.session_id).filter(e => e.event_type === 'break_completed').length, 0);
     f.engine.adminAction(f.debug.session_id, 'debug_jump', '测试休息', 'SH02_BREAK');
     f.engine.adminAction(f.debug.session_id, 'pause', '核对设备');
@@ -140,7 +140,7 @@ test('跳过休息由被试或管理员记录，不伪造180秒完成；状态�
     assert.equal(f.store.events(f.debug.session_id).filter(e => e.event_type === 'break_skipped').at(-1)?.payload.actor, 'admin');
     // 正式被试也可跳过休息。
     const formal = f.engine.create('001');
-    f.store.tx(() => { const s = f.engine.session(formal.session_id); s.state.phase = 'BREAK'; s.state.break_until_ms = f.engine.elapsed(s) + 180000; f.store.save(s); });
+    f.store.tx(() => { const s = f.engine.session(formal.session_id); s.state.phase = 'BREAK'; s.state.break_until_ms = null; f.store.save(s); });
     f.engine.adminAction(formal.session_id, 'skip_break', '正式流程允许跳过休息');
     assert.equal(f.engine.summary(formal.session_id).phase, 'CARD');
   } finally { await f.engine.settle(); f.store.close(); }

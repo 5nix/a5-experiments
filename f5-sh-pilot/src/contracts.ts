@@ -43,7 +43,8 @@ export interface GlassesRequest {
   stage_id: StageId;
   message_id: string;
   text: string;
-  duration_ms: 8500;
+  /** 固定模式的目标时长；confirm_until_ack忽略此值，不设置自动隐藏。8500保留兼容旧快照。 */
+  duration_ms: 8500 | 11000;
   display_mode?: DisplayMode;
   device_id?: string;
 }
@@ -72,6 +73,9 @@ export interface GlassesEvent {
   device_monotonic_ms: number;
   clock_id: string;
   error: string | null;
+  display_mode?: DisplayMode;
+  duration_ms?: number;
+  hide_reason?: string | null;
 }
 export interface GlassesStatus {
   source: 'mock' | 'device'; connected: boolean;

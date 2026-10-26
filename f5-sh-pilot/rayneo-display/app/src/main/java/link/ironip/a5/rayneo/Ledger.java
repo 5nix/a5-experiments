@@ -31,7 +31,7 @@ final class Ledger extends SQLiteOpenHelper {
         try (Cursor rows = db.rawQuery("SELECT body FROM requests WHERE finished=0", null)) {
             while (rows.moveToNext()) interrupted.add(new JSONObject(rows.getString(0)));
         }
-        for (JSONObject request : interrupted) event(request, "failed", "device_process_restarted_delivery_unknown");
+        for (JSONObject request : interrupted) event(request, "failed", "device_process_restarted_delivery_unknown", null);
     }
     @Override public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE settings(key TEXT PRIMARY KEY,value TEXT NOT NULL)");
@@ -64,21 +64,25 @@ final class Ledger extends SQLiteOpenHelper {
         try {
             ContentValues row = new ContentValues(); row.put("id", request.getString("request_id")); row.put("fingerprint", fingerprint(request));
             row.put("body", request.toString()); row.put("finished", 0); db.insertOrThrow("requests", null, row);
-            append(request, "accepted", null); db.setTransactionSuccessful();
+            append(request, "accepted", null, null); db.setTransactionSuccessful();
         } finally { db.endTransaction(); }
     }
-    private void append(JSONObject request, String kind, String error) throws Exception {
+    private long append(JSONObject request, String kind, String error, String hideReason) throws Exception {
         JSONObject event = new JSONObject().put("event_id", UUID.randomUUID().toString()).put("request_id", request.getString("request_id"))
             .put("device_id", request.getString("device_id")).put("kind", kind).put("device_wall_ms", System.currentTimeMillis())
-            .put("device_monotonic_ms", SystemClock.uptimeMillis()).put("clock_id", clockId).put("error", error == null ? JSONObject.NULL : error);
+            .put("device_monotonic_ms", SystemClock.uptimeMillis()).put("clock_id", clockId).put("error", error == null ? JSONObject.NULL : error)
+            .put("display_mode", request.optString("display_mode", "legacy_8500")).put("duration_ms", request.getInt("duration_ms"))
+            .put("hide_reason", hideReason == null ? JSONObject.NULL : hideReason);
         ContentValues row = new ContentValues(); row.put("body", event.toString()); getWritableDatabase().insertOrThrow("events", null, row);
+        return event.getLong("device_monotonic_ms");
     }
-    void event(JSONObject request, String kind, String error) throws Exception {
+    long event(JSONObject request, String kind, String error, String hideReason) throws Exception {
         SQLiteDatabase db = getWritableDatabase(); db.beginTransaction();
         try {
-            append(request, kind, error);
+            long recordedAt = append(request, kind, error, hideReason);
             if (kind.equals("hidden") || kind.equals("failed")) db.execSQL("UPDATE requests SET finished=1 WHERE id=?", new Object[]{request.getString("request_id")});
             db.setTransactionSuccessful();
+            return recordedAt;
         } finally { db.endTransaction(); }
     }
     JSONArray events(long after) throws Exception {
