@@ -17,7 +17,7 @@ Windows本机环境信息位于仓库根目录 `.a5-local/build-environment.json
 node scripts/verify-apk-runtime.mjs app/build/outputs/apk/debug/app-debug.apk
 ```
 
-产物为app/build/outputs/apk/debug/app-debug.apk。应用版本为app/build.gradle.kts中的versionName/versionCode；当前为1.1.4 / 10。Gradle依赖排查可运行 `:app:dependencies --configuration debugRuntimeClasspath`。
+产物为app/build/outputs/apk/debug/app-debug.apk。应用版本为app/build.gradle.kts中的versionName/versionCode；当前为1.1.5 / 11。Gradle依赖排查可运行 `:app:dependencies --configuration debugRuntimeClasspath`。
 
 | 依赖 | 维护要点 |
 | --- | --- |
