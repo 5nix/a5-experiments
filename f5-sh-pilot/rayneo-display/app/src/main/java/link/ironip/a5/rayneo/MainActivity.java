@@ -18,6 +18,8 @@ import org.json.JSONObject;
 public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> {
     // 按雷鸟最高亮度 6000 nits 线性假设，1/6 对应约 1000 nits；不是实测光学亮度。
     private static final float FIXED_BRIGHTNESS = 1.0f / 6.0f;
+    // 固定时长模式接受的自动隐藏时长；8500/11000仍在范围内，后端未改动时行为不变。
+    private static final int MIN_DURATION_MS = 1000, MAX_DURATION_MS = 60000;
     private final Handler main = new Handler(Looper.getMainLooper());
     private PowerManager.WakeLock displayWakeLock;
     private Ledger ledger;
@@ -65,7 +67,8 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
                 .put("firmware", android.os.Build.DISPLAY).put("android_api", Integer.toString(android.os.Build.VERSION.SDK_INT))
                 .put("mercury_sdk", "0.2.6-20260310143142_94a01a90").put("app_package", getPackageName())
                 .put("display_modes", "legacy_8500,tone_8500,confirm_until_ack")
-                .put("app_version", "1.1.4").put("fixed_duration_ms", "8500,11000").put("frame_evidence", "android_dual_eye_onDraw")
+                .put("app_version", "1.1.5").put("fixed_duration_ms", "8500,11000")
+                .put("fixed_duration_range_ms", MIN_DURATION_MS + "-" + MAX_DURATION_MS).put("frame_evidence", "android_dual_eye_onDraw")
                 .put("interactive", Boolean.toString(((PowerManager)getSystemService(POWER_SERVICE)).isInteractive())));
         if (command.equals("events")) return new JSONObject().put("ledger_id", ledger.id).put("events", ledger.events(payload.getLong("after")));
         if (command.equals("confirm") || command.equals("cancel")) {
@@ -109,7 +112,7 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
         }
         String text = request.getString("text");
         int duration = request.getInt("duration_ms");
-        if (text.trim().isEmpty() || text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 16000 || (duration != 8500 && duration != 11000))
+        if (text.trim().isEmpty() || text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 16000 || duration < MIN_DURATION_MS || duration > MAX_DURATION_MS)
             throw new IllegalArgumentException("invalid_stimulus");
         String mode = request.optString("display_mode", "legacy_8500");
         if (!mode.equals("legacy_8500") && !mode.equals("tone_8500") && !mode.equals("confirm_until_ack")) throw new IllegalArgumentException("invalid_display_mode");
