@@ -1,6 +1,6 @@
 # f5-sh-pilot
 
-SH（静态高负荷）Pilot实验，属于 [a5-experiments](../README.md)。包含5组10个任务单元、眼镜消息、理解题、评价、休息、会话恢复和数据导出。电脑端为浏览器工作台，眼镜端为雷鸟X3 Pro Android应用。
+SH（静态高负荷）Pilot实验，属于 [a5-experiments](../README.md)。当前为V2：7组14个任务单元（SH01—SH07）、T0/T1/T2眼镜消息、U2内被试自主休息、理解题、评价、会话恢复和数据导出。V2规则见 [DECISIONS.md](DECISIONS.md) 及 [V2变更文档](docs/V2变更决策与PRD-2026-10-26.md)。电脑端为浏览器工作台，眼镜端为雷鸟X3 Pro Android应用。
 
 Windows＋Chrome及USB真机应用流程已验证；外部光学计时和实际可听性仍需现场验收，不能把应用绘制事件视为被试已注意到消息。验收边界见 [TESTING.md](TESTING.md)。
 
@@ -13,8 +13,8 @@ npm run start --workspace=f5-sh-pilot
 ```
 
 1. 打开 `http://127.0.0.1:5173/admin`，在“准备与检查”核对设备与材料。
-2. 在新建会话区选择配置文件和被试编号，再创建会话、打开被试链接。000用于调试，正式名单默认P01—P20；配置方法见 [CONFIG.md](CONFIG.md)。
-3. 被试完成操作教程后进入正式流程。主试可暂停、恢复、跳题、停止及记录备注；操作留痕，原因可空，删除需二次确认且可恢复。
+2. 在新建会话区选择配置文件和被试编号，再创建会话、打开被试链接。000用于调试（默认覆盖全部7种条件），正式名单默认P01—P28；配置方法见 [CONFIG.md](CONFIG.md)。
+3. 被试完成操作教程后进入正式流程。主试可暂停、恢复、跳题、停止及记录备注；被试在U2且本组未休息时可点“提醒休息”（口头提醒请写入备注）；操作留痕，原因可空，删除需二次确认且可恢复。
 4. 结束后导出当前会话或全部未删除会话。教程、正式数据和手动通知分别标记。
 
 同一编号只能有一个未结束会话；同一副真机眼镜只能绑定一个活跃会话。启动器退出不停止服务，需使用stop。端口冲突可输入 `start 5174`。
@@ -29,7 +29,7 @@ Windows项目已配置 `.a5-local/device.json` 时，启动器自动使用项目
 
 - 数据默认位于 `runtime/experiment.sqlite`，导出位于 `exports/`；这些目录不提交Git。备份前停止服务，复制完整runtime及所需导出。
 - 测试使用独立 `A5_RUNTIME_DIR`、`A5_EXPORT_DIR` 和端口，不能复用正式数据目录。
-- 内容由 `content/tasks.json`、`stimuli.json` 提供；编辑 `revisions.json` 后，在本实验目录执行 `python scripts/build_task_content.py` 重建，并更新内容版本。保持字段ID与评分约束一致。
+- 内容由 `content/tasks.json`、`stimuli.json` 提供；SH06/SH07（`v2_stages`/`v2_stimuli`）和休息参数（`rest_settings`）也在 `revisions.json`。编辑 `revisions.json` 后，在本实验目录执行 `python scripts/build_task_content.py` 重建，并更新内容版本。保持字段ID与评分约束一致。
 - 内容修改需重启并新建会话；配置切换只影响新会话。已有会话使用创建时快照，版本以快照和导出清单为准。
 
 ## 文档导航

@@ -48,7 +48,7 @@ node scripts/verify-apk-runtime.mjs app/build/outputs/apk/debug/app-debug.apk
 电脑端是 Node 服务 + 原生 ES module 浏览器页面（`public/experiment.*` 被试端、`public/admin.*` 主试后台，样式隔离）；眼镜端是雷鸟 X3 Pro Android 应用，经 USB/ADB 与服务通信。
 
 - `src/server.ts` 组装 Store → Engine → App，并每秒 tick：回收设备事件、执行设备控制任务、推进各会话。`A5_GLASSES_MODE=mock|rayneo` 选择适配器（`src/adapters/`），默认 mock；真机模式由启动器在检测到 `.a5-local/device.json` 时设置，失败不回退 mock。
-- `src/engine.ts` 是服务端权威状态机（教程 → INTRO → CARD → UNIT → COMPREHENSION → RATINGS → BREAK → 终态；暂停只在 view 上呈现 PAUSED）。每页有 `page_token` 防旧页提交，`command_id` + 请求指纹去重。评分与答案只在服务端，公开 view 不含答案。
+- `src/engine.ts` 是服务端权威状态机（教程（含 TUTORIAL_REST）→ INTRO → CARD → UNIT → COMPREHENSION → RATINGS → 下一组 CARD … → 终态；V2 取消组间休息，改为 U2 内被试自主休息与 T2，旧快照仍有 BREAK；暂停只在 view 上呈现 PAUSED）。每页有 `page_token` 防旧页提交，`command_id` + 请求指纹去重。评分与答案只在服务端，公开 view 不含答案。
 - `src/store.ts` 使用 Node 内置 SQLite（WAL、synchronous=FULL）。事件表与设备原始事件只追加，禁止更新/删除；会话删除只是 `state.deleted` 软标记。
 - 会话创建时固定题目、刺激和配置快照；修改 `content/` 或 `config/` 不影响已有会话。配置文件在 `config/notifications/*.json`，`display_mode` 逐通知配置（`legacy_8500` / `tone_8500` / `confirm_until_ack`）。
 - 消息流程：先在事务中保存 `request_id` 与发送意图，再异步调用适配器；回执和设备事件按 `request_id` 合并。重启时未完成发送标为 unknown，绝不重放。`interventions.data_kind` 区分 formal / tutorial / manual。
@@ -57,7 +57,7 @@ node scripts/verify-apk-runtime.mjs app/build/outputs/apk/debug/app-debug.apk
 
 ## 必须遵守的约束
 
-- 实验规则以 `f5-sh-pilot/DECISIONS.md` 为准；`docs/` 下是原始需求，与 DECISIONS 冲突时以 DECISIONS 为准。不得为让测试或脚本通过而改动正式预分配（P01—P20）或绕过确认规则。
+- 实验规则以 `f5-sh-pilot/DECISIONS.md` 为准；`docs/` 下是原始需求，与 DECISIONS 冲突时以 DECISIONS 为准。不得为让测试或脚本通过而改动正式预分配（P01—P28）或绕过确认规则。
 - 不伪造证据：Mock 不生成真机证据，未知时间留空，drawn 不等于光学出光，cue_started 不等于听到，`pilot_ready`/`real_presentation_verified` 不自动置真。
 - `f5-sh-pilot/docs/PRD.md` 必须保持 LF 换行（启动时做 SHA-256 完整性校验）；`.bat` 使用 CRLF，其余 LF。
 - 新实验接入启动器需在其 `package.json` 声明 `a5.launcher`（entry/port/health_path/admin_path），健康接口返回 `ok:true` 与 `experiment_id`，并支持 IPC `{ "type": "a5:shutdown" }` 正常关闭；详见 `scripts/README.md`。

@@ -34,6 +34,18 @@
       },
       {
         "stage_id": "SH05",
+        "condition": "N-T2",
+        "message_id": "N05",
+        "display_mode": "confirm_until_ack"
+      },
+      {
+        "stage_id": "SH06",
+        "condition": "A-T2",
+        "message_id": "A06",
+        "display_mode": "confirm_until_ack"
+      },
+      {
+        "stage_id": "SH07",
         "condition": "NONE",
         "message_id": null
       }

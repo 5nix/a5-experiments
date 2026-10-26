@@ -12,12 +12,12 @@ export class HttpError extends Error {
 }
 export interface Command {
   command_id: string; page_token: string; action: string; answer?: Record<string, unknown>; open?: boolean;
-  text?: string; target?: string;
+  text?: string; target?: string; reminder_id?: string;
   client?: { timestamp_iso?: string; monotonic_ms?: number; time_origin_ms?: number; visibility_state?: string; user_agent?: string };
 }
 export type Material = Omit<Snapshot, 'participant' | 'config_hash' | 'content_hash'>;
 
-/** 固定的 000 调试配置，不随正式被试预分配或后台导入变化。 */
+/** 固定的 000 调试配置（V2分配表V1列，覆盖全部7种条件），不随正式被试预分配或后台导入变化。 */
 const DEBUG_PARTICIPANT: Participant = {
   participant_id: '000', version_label: 'V1', debug: true, copied_from: '001',
   stages: [
@@ -25,9 +25,13 @@ const DEBUG_PARTICIPANT: Participant = {
     { stage_id: 'SH02', condition: 'N-T1', message_id: 'N02' },
     { stage_id: 'SH03', condition: 'A-T0', message_id: 'A03' },
     { stage_id: 'SH04', condition: 'A-T1', message_id: 'A04' },
-    { stage_id: 'SH05', condition: 'NONE', message_id: null },
+    { stage_id: 'SH05', condition: 'N-T2', message_id: 'N05' },
+    { stage_id: 'SH06', condition: 'A-T2', message_id: 'A06' },
+    { stage_id: 'SH07', condition: 'NONE', message_id: null },
   ],
 };
+type Timing = 'T0' | 'T1' | 'T2';
+const ACTIVE_REST = ['requested', 'resting'];
 
 export class Engine {
   private confirmations = new Map<string, Promise<unknown>>();
@@ -49,11 +53,14 @@ export class Engine {
     if (this.store.interventions(s.id).some(m => m.data_kind === 'manual' && m.display_mode !== 'confirm_until_ack' && m.status !== 'failed' && (m.source === 'device' ? !m.device_events?.some(e => e.kind === 'hidden') : !!m.t_send && this.wallNow()-Date.parse(m.t_send)<m.duration_ms))) throw new HttpError(409, '手动通知仍在显示，请等待后再触发下一条。');
     if (this.pendingConfirmation(s)) throw new HttpError(409, '请先确认上一条眼镜消息，并等待眼镜消失回执，再触发下一条消息。');
   }
+  private deviceUnavailable(s: Session) {
+    const target = this.adapter.getStatus();
+    return this.deliverySource(s) === 'device' && (!target.connected || !target.ready || target.busy || target.device_id !== s.state.device_id);
+  }
   private guardTrigger(s: Session, timing: 'T0' | 'T1') {
     if (this.assignment(s).condition.endsWith(timing) && !this.store.interventions(s.id).some(m => m.stage_id === this.assignment(s).stage_id)) {
       this.requirePreviousMessageFinished(s);
-      const target=this.adapter.getStatus();
-      if(this.deliverySource(s)==='device' && (!target.connected || !target.ready || target.busy || target.device_id!==s.state.device_id)) throw new HttpError(409,'眼镜未就绪或正在展示，当前触发操作未执行。请恢复眼镜后重试；不会补发旧通知。');
+      if (this.deviceUnavailable(s)) throw new HttpError(409,'眼镜未就绪或正在展示，当前触发操作未执行。请恢复眼镜后重试；不会补发旧通知。');
     }
   }
   private cancelOnEnd(id: string) {
@@ -260,10 +267,12 @@ export class Engine {
   transition(s: Session, phase: Phase) { s.state.phase = phase; s.state.page_token = randomUUID(); }
   debugTargets(s: Session) {
     const targets: { id: string; label: string; phase: Phase; stage: number; unit: number }[] = [{ id: 'INTRO', label: '情景导入', phase: 'INTRO', stage: 0, unit: 0 }];
-    targets.unshift({id:'TUTORIAL_INTRO',label:'教程1：工作台、草稿本与时间',phase:'TUTORIAL_INTRO',stage:0,unit:0});
-    if(this.sessionModes(s).includes('confirm_until_ack')) targets.splice(1,0,
-      {id:'TUTORIAL_NOTICE',label:'教程2：阅读并确认练习通知',phase:'TUTORIAL_NOTICE',stage:0,unit:0},
-      {id:'TUTORIAL_CHECK',label:'教程3：通知理解题',phase:'TUTORIAL_CHECK',stage:0,unit:0});
+    const tutorial: typeof targets = [{id:'TUTORIAL_INTRO',label:'工作台、草稿本与时间',phase:'TUTORIAL_INTRO',stage:0,unit:0}];
+    if(s.snapshot.content.in_unit_rest) tutorial.push({id:'TUTORIAL_REST',label:'第二单元中的休息',phase:'TUTORIAL_REST',stage:0,unit:0});
+    if(this.sessionModes(s).includes('confirm_until_ack')) tutorial.push(
+      {id:'TUTORIAL_NOTICE',label:'阅读并确认练习通知',phase:'TUTORIAL_NOTICE',stage:0,unit:0},
+      {id:'TUTORIAL_CHECK',label:'通知理解题',phase:'TUTORIAL_CHECK',stage:0,unit:0});
+    targets.unshift(...tutorial.map((t, i) => ({ ...t, label: `教程${i + 1}：${t.label}` })));
     for (const [index, stage] of s.snapshot.content.stages.entries()) {
       targets.push({ id: `${stage.stage_id}_CARD`, label: `${stage.stage_id} 说明卡`, phase: 'CARD', stage: index, unit: 0 });
       stage.units.forEach((unit, n) => targets.push({ id: unit.unit_id, label: `${stage.stage_id} ${unit.title}`, phase: 'UNIT', stage: index, unit: n }));
@@ -271,7 +280,7 @@ export class Engine {
         targets.push({ id: `${stage.stage_id}_COMPREHENSION`, label: `${stage.stage_id} ${s.snapshot.content.survey_pages?.comprehension.title ?? '眼镜中的关键信息获取题'}`, phase: 'COMPREHENSION', stage: index, unit: 1 });
         targets.push({ id: `${stage.stage_id}_RATINGS`, label: `${stage.stage_id} ${s.snapshot.content.survey_pages?.ratings.title ?? '眼镜消息体验评价'}`, phase: 'RATINGS', stage: index, unit: 1 });
       }
-      if (index < s.snapshot.content.stages.length - 1) targets.push({ id: `${stage.stage_id}_BREAK`, label: `${stage.stage_id} 休息`, phase: 'BREAK', stage: index, unit: 1 });
+      if (!s.snapshot.content.in_unit_rest && index < s.snapshot.content.stages.length - 1) targets.push({ id: `${stage.stage_id}_BREAK`, label: `${stage.stage_id} 休息`, phase: 'BREAK', stage: index, unit: 1 });
     }
     targets.push({ id: 'COMPLETED', label: '完成页', phase: 'COMPLETED', stage: s.snapshot.content.stages.length - 1, unit: 1 });
     return targets;
@@ -281,6 +290,7 @@ export class Engine {
     const target = this.debugTargets(s).find(t => t.id === targetId);
     if (!target) throw new HttpError(422, '调试跳转目标无效。');
     this.log(s, 'debug_jump', { from_phase: s.state.phase, from_stage: s.state.stage, from_unit: s.state.unit, target: target.id, actor, reason, is_debug: this.isDebug(s) });
+    this.interruptRests(s, 'debug_jump');
     s.state.stage = target.stage; s.state.unit = target.unit; s.state.paused_at_ms = null;
     s.state.status = target.phase === 'COMPLETED' ? 'completed' : 'active';
     s.state.ended_at = target.phase === 'COMPLETED' ? this.iso() : null;
@@ -297,8 +307,8 @@ export class Engine {
     s.state.break_displayed_at = null; s.state.break_displayed_elapsed_ms = null;
     // 旧快照沿用原计时起点；新配置等待休息页可见回执。
     if (!s.snapshot.content.break_start_on_display) {
-      s.state.break_until_ms = this.elapsed(s) + s.snapshot.content.break_ms;
-      this.log(s, 'break_started', { duration_ms: s.snapshot.content.break_ms, until_elapsed_ms: s.state.break_until_ms, break_id: s.state.page_token, source_debug_jump: sourceDebugJump });
+      s.state.break_until_ms = this.elapsed(s) + this.breakMs(s);
+      this.log(s, 'break_started', { duration_ms: this.breakMs(s), until_elapsed_ms: s.state.break_until_ms, break_id: s.state.page_token, source_debug_jump: sourceDebugJump });
     }
   }
   private completeBreak(s: Session) {
@@ -308,6 +318,7 @@ export class Engine {
       ? new Date(Date.parse(s.state.break_displayed_at) + s.state.break_until_ms - s.state.break_displayed_elapsed_ms).toISOString() : null;
     this.log(s, 'break_completed', { break_id: s.state.page_token, countdown_ended_at: endedAt, countdown_ended_elapsed_ms: s.state.break_until_ms });
   }
+  private breakMs(s: Session) { return s.snapshot.content.break_ms ?? 30000; }
   private actualRest(s: Session, at = this.elapsed(s)) {
     return s.state.break_displayed_elapsed_ms == null ? null : Math.max(0, at - s.state.break_displayed_elapsed_ms);
   }
@@ -320,8 +331,8 @@ export class Engine {
     if (s.state.phase !== 'BREAK' || s.state.paused_at_ms !== null || s.state.status !== 'active') throw new HttpError(409, '当前不是可跳过的休息状态。');
     if (s.snapshot.content.allow_break_skip === false) throw new HttpError(409, '此会话协议未开放跳过休息。');
     this.completeBreak(s);
-    const remaining = s.state.break_until_ms === null ? s.snapshot.content.break_ms : Math.max(0, s.state.break_until_ms - this.elapsed(s));
-    this.log(s, 'break_skipped', { break_id: s.state.page_token, actor, reason, remaining_ms: remaining, actual_rest_ms: this.actualRest(s), planned_rest_ms: s.snapshot.content.break_ms });
+    const remaining = s.state.break_until_ms === null ? this.breakMs(s) : Math.max(0, s.state.break_until_ms - this.elapsed(s));
+    this.log(s, 'break_skipped', { break_id: s.state.page_token, actor, reason, remaining_ms: remaining, actual_rest_ms: this.actualRest(s), planned_rest_ms: this.breakMs(s) });
     this.nextAfterBreak(s);
   }
   stageEnd(s: Session) {
@@ -329,14 +340,132 @@ export class Engine {
     if (s.state.stage === s.snapshot.content.stages.length - 1) {
       this.transition(s, 'COMPLETED'); s.state.status = 'completed'; s.state.ended_at = this.iso(); s.state.ended_elapsed_ms = this.elapsed(s);
       this.log(s, 'session_completed', { ...this.presentation(s.id), attention_count: s.state.attention.length });
+    } else if (s.snapshot.content.in_unit_rest) {
+      // V2取消组间休息：问卷（或NONE/T2未触发组的U2）提交后直接进入下一组说明卡。
+      s.state.stage++; s.state.unit = 0; this.transition(s, 'CARD');
     } else {
       this.transition(s, 'BREAK'); this.prepareBreak(s);
     }
   }
   tick(id: string) {
     const s = this.session(id);
-    if (s.state.phase !== 'BREAK' || s.state.paused_at_ms !== null || s.state.break_completed || s.state.break_until_ms === null || this.elapsed(s) < s.state.break_until_ms) return;
+    if (s.state.status !== 'active' || s.state.paused_at_ms !== null) return;
+    const now = this.elapsed(s);
+    const resting = Object.values(s.state.rests ?? {}).filter(r => r.status === 'resting' && ((r.t2_due_ms !== null && !r.t2_fired && now >= r.t2_due_ms) || now >= r.until_ms!));
+    if (resting.length) {
+      this.store.tx(() => {
+        for (const r of resting) {
+          if (r.t2_due_ms !== null && !r.t2_fired && now >= r.t2_due_ms) this.fireT2(s, r);
+          if (now >= r.until_ms!) { r.status = 'returning'; r.countdown_ended_elapsed_ms = r.until_ms; this.log(s, 'rest_countdown_ended', { rest_id: r.rest_id, rest_key: r.key, countdown_ended_elapsed_ms: r.until_ms }); }
+        }
+        this.store.save(s);
+      });
+      this.dispatch(id);
+    }
+    if (s.state.phase !== 'BREAK' || s.state.break_completed || s.state.break_until_ms === null || now < s.state.break_until_ms) return;
     this.store.tx(() => { this.completeBreak(s); this.store.save(s); });
+  }
+
+  /* ───── V2：第二单元内被试自主休息与T2 ───── */
+  private restKey(s: Session): string | null {
+    if (!s.snapshot.content.in_unit_rest || s.state.status !== 'active') return null;
+    if (s.state.phase === 'TUTORIAL_REST') return 'TUTORIAL';
+    return s.state.phase === 'UNIT' && s.state.unit === 1 ? s.snapshot.content.stages[s.state.stage].stage_id : null;
+  }
+  private restDuration(s: Session, key: string) { const c = s.snapshot.content.in_unit_rest!; return key === 'TUTORIAL' ? c.tutorial_duration_ms : c.duration_ms; }
+  private restWindow(s: Session, key: string) { const c = s.snapshot.content.in_unit_rest!; return key === 'TUTORIAL' ? 0 : c.window_min_ms_by_stage?.[key] ?? c.window_min_ms; }
+  private u2Elapsed(s: Session, key: string, at = this.elapsed(s)) { const shown = s.state.u2_displayed_elapsed?.[key]; return shown === undefined ? null : Math.max(0, at - shown); }
+  private activeRest(s: Session) { const key = this.restKey(s); const r = key ? s.state.rests?.[key] : undefined; return r && ACTIVE_REST.includes(r.status) ? r : undefined; }
+  private requireNotResting(s: Session) { if (this.activeRest(s)) throw new HttpError(409, '正在休息，休息结束后会自动回到任务。'); }
+  /** 休息计时依赖服务端轮询；另设精确定时器，使T2尽量贴近休息开始后的计划时刻。 */
+  private wake(id: string, delay: number) {
+    const timer = setTimeout(() => { try { this.tick(id); } catch { /* 服务关闭后忽略，由轮询兜底 */ } }, Math.max(0, delay) + 5);
+    timer.unref?.();
+  }
+  private fireT2(s: Session, r: import('./store.ts').RestState) {
+    r.t2_fired = true;
+    const a = s.snapshot.participant.stages.find(x => x.stage_id === r.key);
+    if (!a || !a.condition.endsWith('T2') || this.store.interventions(s.id).some(m => m.stage_id === a.stage_id)) return;
+    const now = this.elapsed(s);
+    const due = this.log(s, 'rest_t2_due', { rest_id: r.rest_id, planned_elapsed_ms: r.t2_due_ms, delay_ms: s.snapshot.content.in_unit_rest!.t2_delay_ms, actual_delay_ms: now - r.started_elapsed_ms! }, { stage_id: a.stage_id, unit_id: `${a.stage_id}_U2`, condition: a.condition });
+    let blocked: string | null = null;
+    try { this.requirePreviousMessageFinished(s); } catch { blocked = 'previous_message_pending'; }
+    if (!blocked && this.deviceUnavailable(s)) blocked = 'device_not_ready_at_t2';
+    if (!blocked) { this.schedule(s, due, 'T2'); return; }
+    // 第5秒时眼镜不可用：不覆盖、不排队、不补发，记录失败原因；与“T2未触发”区分。
+    const message: Intervention = { session_id: s.id, participant_id: s.snapshot.participant.participant_id, stage_id: a.stage_id, message_id: a.message_id!, condition: a.condition,
+      device_id: s.state.device_id, device_events: [], request_id: randomUUID(), status: 'failed', source: this.deliverySource(s), duration_ms: this.mode(s) === 'confirm_until_ack' ? 8500 : s.snapshot.content.message_duration_ms,
+      display_mode: this.mode(s), t_event: due.timestamp_iso, event_elapsed_ms: due.elapsed_ms, t_send: null, t_ack: null, t_display: null, t_hide: null,
+      display_time_source: 'unavailable', receipt: null, error: blocked };
+    this.store.intervention(message); s.state.attention.push(`${a.stage_id}:${blocked}`);
+    this.log(s, 'message_failed', { request_id: message.request_id, reason: blocked, retry: false, timing: 'T2', trigger_event_id: due.event_id, rest_id: r.rest_id }, { stage_id: a.stage_id, unit_id: `${a.stage_id}_U2`, condition: a.condition });
+  }
+  private interruptRests(s: Session, reason: string) {
+    for (const r of Object.values(s.state.rests ?? {})) if (r.status !== 'done') {
+      r.status = 'done'; r.end_reason = reason;
+      this.log(s, 'rest_interrupted', { rest_id: r.rest_id, rest_key: r.key, reason, started_elapsed_ms: r.started_elapsed_ms });
+    }
+  }
+  private restClick(s: Session, client: unknown) {
+    const key = this.restKey(s);
+    if (!key) throw new HttpError(409, '当前页面没有休息功能。');
+    const c = s.snapshot.content.in_unit_rest!, prior = s.state.rests?.[key], reminders = s.state.rest_reminders?.[key] ?? [];
+    const u2 = this.u2Elapsed(s, key), windowMs = this.restWindow(s, key);
+    const disposition = prior ? (prior.status === 'done' ? 'already_rested' : 'already_resting') : key !== 'TUTORIAL' && (u2 === null || u2 < windowMs) ? 'too_early' : 'rest_requested';
+    const restId = disposition === 'rest_requested' ? randomUUID() : prior?.rest_id ?? null;
+    const event = this.log(s, 'rest_clicked', { rest_key: key, rest_id: restId, disposition, u2_elapsed_ms: u2, window_min_ms: windowMs, window_open: key === 'TUTORIAL' || (u2 !== null && u2 >= windowMs), reminder_count: reminders.length, client });
+    const text = disposition === 'too_early' ? c.early_click_text : disposition === 'already_rested' ? c.already_rested_text : null;
+    if (text) (s.state.rest_feedback ??= {})[key] = { id: event.event_id, text };
+    if (disposition === 'rest_requested') (s.state.rests ??= {})[key] = { rest_id: restId!, key, status: 'requested', click_event_id: event.event_id, requested_elapsed_ms: event.elapsed_ms, after_reminder: reminders.length > 0,
+      started_at: null, started_elapsed_ms: null, until_ms: null, countdown_ended_elapsed_ms: null, returned_elapsed_ms: null, paused_ms: 0, paused_during: false, t2_due_ms: null, t2_fired: false };
+  }
+  /** 休息页实际可见才算休息开始；记录作答进度与答案快照，T2组排定送达时刻。 */
+  private restDisplayed(s: Session, client: { visibility_state?: string }) {
+    const key = this.restKey(s), r = key ? s.state.rests?.[key] : undefined;
+    if (!key || !r) throw new HttpError(409, '当前没有待开始的休息。');
+    if (client.visibility_state !== 'visible') throw new HttpError(422, '只有实际可见页面才能报告休息开始。');
+    if (r.status !== 'requested') return;
+    const c = s.snapshot.content.in_unit_rest!, fields = this.fields(s), draft = s.state.drafts[this.draftKey(s)] ?? {};
+    const answered = fields.filter(f => Array.isArray(draft[f.id]) ? (draft[f.id] as unknown[]).length > 0 : draft[f.id] !== undefined && draft[f.id] !== null && String(draft[f.id]).trim() !== '').length;
+    const a = key === 'TUTORIAL' ? undefined : s.snapshot.participant.stages.find(x => x.stage_id === key);
+    const t2 = !!a?.condition.endsWith('T2') && !this.store.interventions(s.id).some(m => m.stage_id === key);
+    const started = this.log(s, 'rest_started', { rest_id: r.rest_id, rest_key: key, client, click_event_id: r.click_event_id, duration_ms: this.restDuration(s, key), after_reminder: r.after_reminder,
+      reminder_count: (s.state.rest_reminders?.[key] ?? []).length, answered_fields: answered, total_fields: fields.length, answer_snapshot: draft,
+      scratchpad_length: (s.state.scratchpads?.[key === 'TUTORIAL' ? 'TUTORIAL' : `${key}_U2`] ?? '').length, u2_elapsed_ms: this.u2Elapsed(s, key), window_min_ms: this.restWindow(s, key) });
+    r.status = 'resting'; r.started_at = started.timestamp_iso; r.started_elapsed_ms = started.elapsed_ms; r.until_ms = started.elapsed_ms + this.restDuration(s, key);
+    if (t2) { r.t2_due_ms = started.elapsed_ms + c.t2_delay_ms; this.log(s, 'rest_t2_planned', { rest_id: r.rest_id, planned_elapsed_ms: r.t2_due_ms, delay_ms: c.t2_delay_ms, message_id: a!.message_id }); this.wake(s.id, c.t2_delay_ms); }
+    this.wake(s.id, this.restDuration(s, key));
+  }
+  private restReturned(s: Session, client: unknown) {
+    const key = this.restKey(s), r = key ? s.state.rests?.[key] : undefined;
+    if (!r || r.status !== 'returning') return;
+    const now = this.elapsed(s);
+    const event = this.log(s, 'rest_ended', { rest_id: r.rest_id, rest_key: key, client, started_elapsed_ms: r.started_elapsed_ms, countdown_ended_elapsed_ms: r.countdown_ended_elapsed_ms,
+      actual_rest_ms: now - r.started_elapsed_ms!, planned_rest_ms: this.restDuration(s, key!), paused_ms: r.paused_ms, paused_during: r.paused_during });
+    r.status = 'done'; r.returned_elapsed_ms = event.elapsed_ms;
+  }
+  private restView(s: Session) {
+    const key = this.restKey(s), c = s.snapshot.content.in_unit_rest;
+    if (!key || !c) return null;
+    const r = s.state.rests?.[key], duration = this.restDuration(s, key), now = s.state.paused_at_ms ?? this.elapsed(s);
+    const reminder = (s.state.rest_reminders?.[key] ?? []).at(-1);
+    return { key, button_label: c.button_label, state: (r?.status ?? 'idle') as string, title: c.rest_title, paragraphs: c.rest_paragraphs, show_countdown: c.show_countdown,
+      duration_ms: duration, remaining_ms: r?.status === 'resting' ? Math.max(0, r.until_ms! - now) : !r ? duration : r.status === 'requested' ? duration : 0,
+      countdown_started: r?.status === 'resting', feedback: s.state.rest_feedback?.[key] ?? null,
+      reminder: reminder ? { id: reminder.id, text: reminder.text, display_ms: c.reminder_display_ms, displayed: reminder.displayed } : null };
+  }
+  private restSummary(s: Session) {
+    const c = s.snapshot.content.in_unit_rest;
+    if (!c || s.state.phase.startsWith('TUTORIAL') || ['INTRO', 'COMPLETED', 'ABORTED'].includes(s.state.phase)) return null;
+    const stageId = s.snapshot.content.stages[s.state.stage].stage_id, r = s.state.rests?.[stageId], reminders = s.state.rest_reminders?.[stageId] ?? [];
+    const now = s.state.paused_at_ms ?? this.elapsed(s), inU2 = s.state.phase === 'UNIT' && s.state.unit === 1, afterU2 = ['COMPREHENSION', 'RATINGS'].includes(s.state.phase);
+    const u2 = inU2 ? this.u2Elapsed(s, stageId, now) : null, windowMs = this.restWindow(s, stageId);
+    const status = inU2 ? (r ? (r.status === 'done' ? 'rested' : r.status) : u2 === null || u2 < windowMs ? 'before_window' : 'available') : afterU2 ? (r ? 'rested' : 'not_rested') : 'not_in_u2';
+    const a = this.assignment(s), message = this.store.interventions(s.id).find(m => m.stage_id === stageId);
+    const t2 = !a.condition.endsWith('T2') ? null : message ? (message.status === 'failed' ? 'failed' : 'sent') : r?.status === 'resting' && r.t2_due_ms !== null ? 'scheduled' : afterU2 ? 'not_triggered' : 'awaiting_rest';
+    return { status, u2_elapsed_ms: u2, window_min_ms: windowMs, remaining_ms: r?.status === 'resting' ? Math.max(0, r.until_ms! - now) : null,
+      reminder_count: reminders.length, last_reminder_at: reminders.at(-1)?.sent_at ?? null, after_reminder: r?.after_reminder ?? false, rest_started_at: r?.started_at ?? null,
+      t2, t2_due_in_ms: t2 === 'scheduled' ? Math.max(0, r!.t2_due_ms! - now) : null };
   }
   view(id: string) {
     this.tick(id);
@@ -355,11 +484,14 @@ export class Engine {
       } : null,
       remaining_ms: 0, break_countdown_started: false, can_continue: true, can_skip_break: false,
       // 当前任务组说明卡中的情景时间，被试端在任务栏固定显示；旧快照无此字段时为null。
-      tutorial: state.phase.startsWith('TUTORIAL'), scene_time: content.stages[state.stage]?.scene_time ?? null };
+      tutorial: state.phase.startsWith('TUTORIAL'), scene_time: content.stages[state.stage]?.scene_time ?? null, rest: this.restView(s) };
     if (state.paused_at_ms !== null) return { ...base, phase: 'PAUSED', title: '实验已暂停，请等待实验员。', can_continue: false };
     if (state.phase.startsWith('TUTORIAL')) {
-      base.title = state.phase === 'TUTORIAL_INTRO' ? '操作练习：认识工作台' : state.phase === 'TUTORIAL_NOTICE' ? '操作练习：阅读通知' : '操作练习：回答问题';
-      base.paragraphs = state.phase === 'TUTORIAL_INTRO' ? [base.confirmation_enabled ? '右上角“已阅读通知”用于阅读眼镜消息后确认，“草稿本”可以记录思路。请试着打开草稿本。' : '右上角“草稿本”可以记录思路。请试着打开草稿本。', '右下角显示当前任务的情境时间；进入不同任务情境时，时间会更新。准备好后点击下一步。'] : state.phase === 'TUTORIAL_NOTICE' ? ['请阅读眼镜中的练习通知，阅读完毕后点击右上角“已阅读通知”，再点击下一步。'] : ['请根据刚才的眼镜通知回答问题，答对后进入实验说明。'];
+      const restCopy = content.in_unit_rest;
+      base.title = state.phase === 'TUTORIAL_INTRO' ? '操作练习：认识工作台' : state.phase === 'TUTORIAL_REST' ? '操作练习：休息一次' : state.phase === 'TUTORIAL_NOTICE' ? '操作练习：阅读通知' : '操作练习：回答问题';
+      base.paragraphs = state.phase === 'TUTORIAL_INTRO' ? [base.confirmation_enabled ? '右上角“已阅读通知”用于阅读眼镜消息后确认，“草稿本”可以记录思路。请试着打开草稿本。' : '右上角“草稿本”可以记录思路。请试着打开草稿本。', '右下角显示当前任务的情境时间；进入不同任务情境时，时间会更新。准备好后点击下一步。']
+        : state.phase === 'TUTORIAL_REST' && restCopy ? [`每组任务的第二单元中，右上角会有“${restCopy.button_label}”按钮。点击后进入休息页，任务内容会暂时遮住，约${restCopy.duration_ms / 1000}秒后自动回到任务，已填写的答案和草稿都会保留。`, `注意：${restCopy.instruction}每组只能休息一次。`, `现在请点击右上角“${restCopy.button_label}”试一次（练习时休息较短），回到这里后点击下一步。`]
+        : state.phase === 'TUTORIAL_NOTICE' ? ['请阅读眼镜中的练习通知，阅读完毕后点击右上角“已阅读通知”，再点击下一步。'] : ['请根据刚才的眼镜通知回答问题，答对后进入实验说明。'];
       base.scratchpad = {label:'草稿本',placeholder:'在这里记录你的思考...',max_length:5000,text:state.scratchpads?.TUTORIAL ?? ''};
     } else if (state.phase === 'INTRO') Object.assign(base, content.intro);
     else if (state.phase === 'CARD') { base.title = content.stages[state.stage].title; base.paragraphs = [content.stages[state.stage].card]; }
@@ -378,7 +510,7 @@ export class Engine {
     }
     else if (state.phase === 'BREAK') {
       base.title = '休息'; base.break_countdown_started = state.break_until_ms !== null;
-      base.remaining_ms = state.break_until_ms === null ? content.break_ms : Math.max(0, state.break_until_ms - this.elapsed(s));
+      base.remaining_ms = state.break_until_ms === null ? this.breakMs(s) : Math.max(0, state.break_until_ms - this.elapsed(s));
       base.can_continue = base.break_countdown_started && base.remaining_ms === 0;
       base.can_skip_break = s.snapshot.content.allow_break_skip !== false;
     }
@@ -387,7 +519,7 @@ export class Engine {
     base.fields = this.fields(s); base.answer = state.drafts[this.draftKey(s)] ?? {};
     return base;
   }
-  private schedule(s: Session, event: EventRecord, timing: 'T0' | 'T1') {
+  private schedule(s: Session, event: EventRecord, timing: Timing) {
     const a = this.assignment(s);
     if (a.condition === 'NONE' || !a.condition.endsWith(timing) || this.store.interventions(s.id).some(m => m.stage_id === a.stage_id)) return;
     this.requirePreviousMessageFinished(s);
@@ -540,21 +672,33 @@ export class Engine {
         if (client.visibility_state !== 'visible') throw new HttpError(422, '只有实际可见页面才能报告显示事件。');
         if (!state.displayed[state.page_token]) {
           state.displayed[state.page_token] = true;
-          const eventName = { TUTORIAL_INTRO:'tutorial_intro_displayed', TUTORIAL_NOTICE:'tutorial_notice_displayed', TUTORIAL_CHECK:'tutorial_check_displayed', INTRO: 'intro_displayed', CARD: 'card_displayed', UNIT: 'unit_displayed', COMPREHENSION: 'comprehension_displayed', RATINGS: 'ratings_displayed', BREAK: 'break_displayed', COMPLETED: 'completion_displayed', ABORTED: 'termination_displayed' }[state.phase];
+          const eventName = { TUTORIAL_INTRO:'tutorial_intro_displayed', TUTORIAL_REST:'tutorial_rest_displayed', TUTORIAL_NOTICE:'tutorial_notice_displayed', TUTORIAL_CHECK:'tutorial_check_displayed', INTRO: 'intro_displayed', CARD: 'card_displayed', UNIT: 'unit_displayed', COMPREHENSION: 'comprehension_displayed', RATINGS: 'ratings_displayed', BREAK: 'break_displayed', COMPLETED: 'completion_displayed', ABORTED: 'termination_displayed' }[state.phase];
           const displayed = this.log(s, eventName, { client, page_token: state.page_token });
           if (state.phase === 'BREAK') {
             state.break_displayed_at = displayed.timestamp_iso; state.break_displayed_elapsed_ms = displayed.elapsed_ms;
             if (state.break_until_ms === null) {
-              state.break_until_ms = displayed.elapsed_ms + s.snapshot.content.break_ms;
-              this.log(s, 'break_started', { break_id: state.page_token, duration_ms: s.snapshot.content.break_ms, until_elapsed_ms: state.break_until_ms, displayed_event_id: displayed.event_id });
+              state.break_until_ms = displayed.elapsed_ms + this.breakMs(s);
+              this.log(s, 'break_started', { break_id: state.page_token, duration_ms: this.breakMs(s), until_elapsed_ms: state.break_until_ms, displayed_event_id: displayed.event_id });
             }
           }
           if (state.phase === 'TUTORIAL_NOTICE' && !this.store.interventions(id).some(m=>m.stage_id==='TUTORIAL')) {this.requirePreviousMessageFinished(s); this.scheduleAuxiliary(s, 'TUTORIAL', '练习会议安排在二号会议室。', this.mode(s), 'tutorial', randomUUID());}
-          if (state.phase === 'UNIT' && state.unit === 1) this.schedule(s, this.log(s, 'u2_displayed', { client }), 'T1');
+          if (state.phase === 'UNIT' && state.unit === 1) {
+            const u2 = this.log(s, 'u2_displayed', { client });
+            (state.u2_displayed_elapsed ??= {})[this.assignment(s).stage_id] ??= u2.elapsed_ms;
+            this.schedule(s, u2, 'T1');
+          }
         }
       } else {
         if (!state.displayed[state.page_token]) throw new HttpError(409, '当前页面尚未报告实际可见。');
-        if (state.phase.startsWith('TUTORIAL') && ['continue','submit','draft'].includes(command.action)) {
+        if (command.action === 'rest_click') this.restClick(s, client);
+        else if (command.action === 'rest_displayed') this.restDisplayed(s, client);
+        else if (command.action === 'rest_return_displayed') this.restReturned(s, client);
+        else if (command.action === 'rest_reminder_displayed') {
+          const key = this.restKey(s), reminder = key ? s.state.rest_reminders?.[key]?.find(r => r.id === command.reminder_id) : undefined;
+          if (!reminder) throw new HttpError(409, '提醒不属于当前页面。');
+          if (!reminder.displayed) { reminder.displayed = true; this.log(s, 'rest_reminder_displayed', { reminder_id: reminder.id, text: reminder.text, client }); }
+        } else if (state.phase.startsWith('TUTORIAL') && ['continue','submit','draft'].includes(command.action)) {
+          this.requireNotResting(s);
           if (state.phase === 'TUTORIAL_CHECK') {
             const raw = command.answer ?? {}; state.drafts[this.draftKey(s)] = raw;
             if (command.action === 'submit') {
@@ -563,7 +707,16 @@ export class Engine {
               else { this.log(s,'tutorial_completed'); this.transition(s,'INTRO'); }
             }
           } else if (command.action !== 'draft') {
-            if (state.phase === 'TUTORIAL_INTRO') { this.log(s,'tutorial_intro_continue'); if(!this.sessionModes(s).includes('confirm_until_ack'))this.log(s,'tutorial_completed',{tools_only:true}); this.transition(s,this.sessionModes(s).includes('confirm_until_ack') ? 'TUTORIAL_NOTICE' : 'INTRO'); }
+            const notice = this.sessionModes(s).includes('confirm_until_ack');
+            if (state.phase === 'TUTORIAL_INTRO' && s.snapshot.content.in_unit_rest) { this.log(s,'tutorial_intro_continue'); this.transition(s,'TUTORIAL_REST'); }
+            else if (state.phase === 'TUTORIAL_INTRO' || state.phase === 'TUTORIAL_REST') {
+              if (state.phase === 'TUTORIAL_REST') {
+                if (!['returning','done'].includes(state.rests?.TUTORIAL?.status ?? '')) throw new HttpError(422, '请先点击右上角按钮练习一次休息，回到本页后再继续。');
+                this.log(s,'tutorial_rest_continue');
+              } else this.log(s,'tutorial_intro_continue');
+              if (!notice) this.log(s,'tutorial_completed',{tools_only:true});
+              this.transition(s, notice ? 'TUTORIAL_NOTICE' : 'INTRO');
+            }
             else {
               const m=this.store.interventions(id).find(m=>m.stage_id==='TUTORIAL');
               if (!m || (this.messageMode(s,m)==='confirm_until_ack' && !m.confirmation_requested_at) || (m.source==='device' ? !m.device_events?.some(e=>e.kind==='hidden') : this.messageMode(s,m)==='confirm_until_ack' ? m.confirmation_status!=='accepted' : !m.t_send || this.wallNow()-Date.parse(m.t_send)<m.duration_ms)) throw new HttpError(409,'请先阅读并确认练习通知，等待眼镜收起后再继续。');
@@ -571,6 +724,7 @@ export class Engine {
             }
           }
         } else if (command.action === 'reveal') {
+          this.requireNotResting(s);
           if (state.phase !== 'UNIT' || !this.unit(s).reveal || typeof command.open !== 'boolean') throw new HttpError(409, '当前任务没有此操作。');
           const unit = this.unit(s); const reveal = state.reveals[unit.unit_id] ?? { open: false, requested: false, displayed: false };
           if (command.open && !reveal.displayed) this.guardTrigger(s, 'T0');
@@ -582,6 +736,7 @@ export class Engine {
           if (!reveal?.open || !reveal.requested || client.visibility_state !== 'visible') throw new HttpError(409, '补充资料尚未展开或不可见。');
           if (!reveal.displayed) { reveal.displayed = true; this.schedule(s, this.log(s, 'reveal_displayed', { client, marker: 'E' }), 'T0'); }
         } else if (command.action === 'scratchpad') {
+          this.requireNotResting(s);
           if (!state.phase.startsWith('TUTORIAL') && (state.phase !== 'UNIT' || !this.unit(s).scratchpad)) throw new HttpError(409, '当前单元没有草稿本。');
           const options = state.phase.startsWith('TUTORIAL') ? {max_length:5000} : this.unit(s).scratchpad!;
           const scratchKey = state.phase.startsWith('TUTORIAL') ? 'TUTORIAL' : this.unit(s).unit_id;
@@ -595,6 +750,7 @@ export class Engine {
           this.skipBreak(s, 'participant', '被试主动跳过休息');
         } else if (command.action === 'draft' || command.action === 'submit') {
           if (!['UNIT', 'COMPREHENSION', 'RATINGS'].includes(state.phase)) throw new HttpError(409, '当前页面不可提交答案。');
+          this.requireNotResting(s);
           const raw = command.answer;
           if (!raw || typeof raw !== 'object' || Array.isArray(raw) || JSON.stringify(raw).length > 20000) throw new HttpError(422, '答案格式无效。');
           const fields = this.fields(s);
@@ -613,12 +769,20 @@ export class Engine {
                 this.log(s, 'unit_scored', { score: value });
                 if (unit.unit_id === 'SH05_U1' && !this.store.events(id).some(e => e.event_type === 'F_candidate')) this.log(s, 'F_candidate', { semantics: 'first_submission', criterion_version: 'user-2026-10-18', score: value, complete: true });
                 if (state.unit === 0) { this.log(s, 'unit_transition_started', { from: unit.unit_id, to: unit.unit_id.replace('U1', 'U2') }); state.unit = 1; this.transition(s, 'UNIT'); }
-                else if (this.assignment(s).condition === 'NONE') {
-                  this.log(s, 'comprehension_skipped', { reason: 'no_message', message_id: null });
-                  this.log(s, 'ratings_skipped', { reason: 'no_message', message_id: null });
-                  this.stageEnd(s);
+                else {
+                  const a = this.assignment(s), restKey = a.stage_id;
+                  if (state.rests?.[restKey]?.status === 'returning') this.restReturned(s, { source: 'u2_submitted_before_return_report' });
+                  if (s.snapshot.content.in_unit_rest && !state.rests?.[restKey]) this.log(s, 'rest_not_taken', { reminder_count: (state.rest_reminders?.[restKey] ?? []).length, u2_elapsed_ms: this.u2Elapsed(s, restKey), window_min_ms: this.restWindow(s, restKey) });
+                  // T2未休息即提交：不补发（提交是系统断点），跳过理解题与量表，按缺失处理；与发送失败分开记录。
+                  const t2Missing = a.condition.endsWith('T2') && !this.store.interventions(id).some(m => m.stage_id === a.stage_id);
+                  if (t2Missing) this.log(s, 't2_not_triggered', { message_id: a.message_id, rest_taken: !!state.rests?.[restKey], semantics: 'no_rest_before_u2_submit_no_resend' });
+                  if (a.condition === 'NONE' || t2Missing) {
+                    const reason = t2Missing ? 't2_not_triggered' : 'no_message', messageId = t2Missing ? a.message_id : null;
+                    this.log(s, 'comprehension_skipped', { reason, message_id: messageId });
+                    this.log(s, 'ratings_skipped', { reason, message_id: messageId });
+                    this.stageEnd(s);
+                  } else this.transition(s, 'COMPREHENSION');
                 }
-                else this.transition(s, 'COMPREHENSION');
               } else if (state.phase === 'COMPREHENSION') {
                 this.log(s, 'comprehension_submitted', { ...(normalized.message_notice === undefined ? {} : { message_notice: normalized.message_notice }), answer: normalized.answer, correct: normalized.answer === this.stimulus(s).correct_option, message_id: this.stimulus(s).message_id });
                 if (s.snapshot.content.survey_pages?.ratings.skip_if_not_noticed && normalized.message_notice === 'not_noticed') {
@@ -637,7 +801,7 @@ export class Engine {
           if (state.phase === 'INTRO') { this.log(s, 'intro_continue'); this.transition(s, 'CARD'); }
           else if (state.phase === 'CARD') { this.log(s, 'card_continue'); state.unit = 0; this.transition(s, 'UNIT'); }
           else if (state.phase === 'BREAK') {
-            if (state.break_until_ms === null || this.elapsed(s) < state.break_until_ms) throw new HttpError(422, `休息尚未满${s.snapshot.content.break_ms / 1000}秒。`);
+            if (state.break_until_ms === null || this.elapsed(s) < state.break_until_ms) throw new HttpError(422, `休息尚未满${this.breakMs(s) / 1000}秒。`);
             this.completeBreak(s);
             this.log(s, 'continue_clicked', { break_id: state.page_token, client, actual_rest_ms: this.actualRest(s) });
             this.nextAfterBreak(s);
@@ -676,11 +840,30 @@ export class Engine {
       if (s.state.status !== 'active') throw new HttpError(409, '会话已结束。');
       const elapsed = this.elapsed(s);
       if (action === 'skip_break') this.skipBreak(s, 'admin', reason);
-      else if (action === 'pause' && s.state.paused_at_ms === null) s.state.paused_at_ms = elapsed;
+      else if (action === 'remind_rest') {
+        // 只由主试判断并点击；固定提醒语显示在被试电脑上，不发到眼镜。之后的休息自动标为“提醒后”。
+        const key = this.restKey(s);
+        if (!key || key === 'TUTORIAL' || s.state.paused_at_ms !== null || s.state.rests?.[key]) throw new HttpError(409, '只有被试处于第二单元且本组尚未休息时才能提醒休息。');
+        const c = s.snapshot.content.in_unit_rest!, reminder = { id: randomUUID(), text: c.reminder_text, sent_at: this.iso(), sent_elapsed_ms: elapsed, displayed: false };
+        ((s.state.rest_reminders ??= {})[key] ??= []).push(reminder);
+        this.log(s, 'rest_reminder_sent', { reminder_id: reminder.id, text: reminder.text, reason, u2_elapsed_ms: this.u2Elapsed(s, key, elapsed), display_ms: c.reminder_display_ms, reminder_index: s.state.rest_reminders[key].length });
+      }
+      else if (action === 'pause' && s.state.paused_at_ms === null) {
+        s.state.paused_at_ms = elapsed;
+        for (const r of Object.values(s.state.rests ?? {})) if (ACTIVE_REST.includes(r.status)) r.paused_during = true;
+      }
       else if (action === 'resume' && s.state.paused_at_ms !== null) {
-        if (s.state.break_until_ms !== null) s.state.break_until_ms += elapsed - s.state.paused_at_ms;
+        const paused = elapsed - s.state.paused_at_ms;
+        if (s.state.break_until_ms !== null) s.state.break_until_ms += paused;
+        // 人工暂停冻结休息倒计时与T2计划送达时刻。
+        for (const r of Object.values(s.state.rests ?? {})) if (r.status === 'resting') {
+          r.until_ms! += paused; r.paused_ms += paused;
+          if (r.t2_due_ms !== null && !r.t2_fired) { r.t2_due_ms += paused; this.wake(id, r.t2_due_ms - elapsed); }
+          this.wake(id, r.until_ms! - elapsed);
+        }
         s.state.paused_at_ms = null;
       } else if (action === 'stop') {
+        this.interruptRests(s, 'session_stopped');
         s.state.paused_at_ms = null; s.state.status = 'aborted'; s.state.ended_at = this.iso(); s.state.ended_elapsed_ms = elapsed; this.transition(s, 'ABORTED');
       } else throw new HttpError(409, '当前状态不支持该操作。');
       this.log(s, 'admin_intervention', { action, reason }); this.store.save(s);
@@ -703,17 +886,21 @@ export class Engine {
     else if (s.state.status === 'active') {
       actions.push(s.state.paused_at_ms === null ? 'pause' : 'resume', 'stop');
       if (s.state.phase === 'BREAK' && s.state.paused_at_ms === null && s.snapshot.content.allow_break_skip !== false) actions.push('skip_break');
+      const key = this.restKey(s);
+      if (key && key !== 'TUTORIAL' && s.state.paused_at_ms === null && !s.state.rests?.[key]) actions.push('remind_rest');
     }
     else actions.push('delete');
     if (!s.state.deleted) actions.push('debug_jump');
     const message = this.store.interventions(id).find(m => m.stage_id === this.assignment(s).stage_id);
+    const rest = this.restSummary(s);
+    const t2Status = !message && this.assignment(s).condition.endsWith('T2') ? (rest?.t2 === 'not_triggered' ? 't2_not_triggered' : 'awaiting_rest') : null;
     return { session_id: id, display_mode: this.sessionModes(s).length === 1 ? this.sessionModes(s)[0] : 'mixed', message_duration_ms: s.snapshot.content.message_duration_ms, participant_id: s.snapshot.participant.participant_id, version_label: s.snapshot.participant.version_label,
       is_debug: this.isDebug(s), copied_from: s.snapshot.participant.copied_from ?? null, current_title: this.view(id).title,
       deleted: !!s.state.deleted, deleted_at: s.state.deleted?.deleted_at ?? null, deletion_reason: s.state.deleted?.reason ?? null,
       answered_fields: answered, total_fields: fields.length, reveal_observed: s.state.phase === 'UNIT' ? s.state.reveals[this.unit(s).unit_id]?.displayed ?? false : null,
-      available_actions: actions, last_event_type: lastEvent?.event_type ?? null, last_event_at: lastEvent?.timestamp_iso ?? null, message_status: message?.status ?? (this.assignment(s).condition === 'NONE' ? 'NONE' : 'not_triggered'),
+      available_actions: actions, last_event_type: lastEvent?.event_type ?? null, last_event_at: lastEvent?.timestamp_iso ?? null, message_status: message?.status ?? t2Status ?? (this.assignment(s).condition === 'NONE' ? 'NONE' : 'not_triggered'), rest,
       phase: s.state.phase, stage_id: s.snapshot.content.stages[s.state.stage].stage_id, unit: s.state.unit + 1, status: s.state.status, paused: s.state.paused_at_ms !== null,
-      started_at: s.state.started_at, ended_at: s.state.ended_at, elapsed_ms: s.state.ended_elapsed_ms ?? this.elapsed(s), remaining_ms: s.state.phase === 'BREAK' ? (s.state.break_until_ms === null ? s.snapshot.content.break_ms : Math.max(0, s.state.break_until_ms - (s.state.paused_at_ms ?? this.elapsed(s)))) : null,
+      started_at: s.state.started_at, ended_at: s.state.ended_at, elapsed_ms: s.state.ended_elapsed_ms ?? this.elapsed(s), remaining_ms: s.state.phase === 'BREAK' ? (s.state.break_until_ms === null ? this.breakMs(s) : Math.max(0, s.state.break_until_ms - (s.state.paused_at_ms ?? this.elapsed(s)))) : null,
       content_version: s.snapshot.content.content_version, config_hash: s.snapshot.config_hash, attention: s.state.attention,
       device_id: s.state.device_id ?? null, adapter: this.adapter.getStatus(),
       message_evidence: message?.device_events?.some(e => e.kind === 'failed') ? 'failed' : message?.device_events?.some(e => e.kind === 'hidden') ? 'hidden' : message?.device_events?.some(e => e.kind === 'drawn') ? 'drawn' : null,

@@ -30,7 +30,17 @@ export interface TaskContent {
     ratings: { title: string; paragraphs: string[]; skip_if_not_noticed?: boolean };
   };
   ratings: { id: string; label: string; min: number; max: number; min_label?: string; max_label?: string }[];
-  interview_prompts: string[]; break_ms: number; break_start_on_display?: boolean; allow_break_skip?: boolean; message_duration_ms: number; completion_text: string;
+  interview_prompts: string[]; message_duration_ms: number; completion_text: string;
+  /** 旧快照的组间休息；V2起取消，由 in_unit_rest 替代。 */
+  break_ms?: number; break_start_on_display?: boolean; allow_break_skip?: boolean;
+  in_unit_rest?: InUnitRest;
+}
+/** V2：每组第二单元内由被试自主发起一次休息；T2在休息页实际可见后延迟送达。 */
+export interface InUnitRest {
+  duration_ms: number; window_min_ms: number; window_min_ms_by_stage?: Record<string, number>; t2_delay_ms: number;
+  button_label: string; early_click_text: string; already_rested_text: string;
+  rest_title: string; rest_paragraphs: string[]; show_countdown: boolean;
+  reminder_text: string; reminder_display_ms: number; tutorial_duration_ms: number; instruction: string;
 }
 export interface Snapshot {
   display_mode?: import('./contracts.ts').DisplayMode;
@@ -42,7 +52,7 @@ export const hash = (value: unknown) => createHash('sha256').update(JSON.stringi
 export async function loadMaterial() {
   const content = await readJson<TaskContent>('content/tasks.json');
   const material = await readJson<{ content_version: string; stimuli: Stimulus[] }>('content/stimuli.json');
-  if (content.stages.length !== 5 || content.stages.some(s => s.units.length !== 2)) throw new Error('任务配置必须包含五组、每组两个单元。');
+  if (content.stages.length !== 7 || content.stages.some(s => s.units.length !== 2)) throw new Error('任务配置必须包含七组、每组两个单元。');
   const assets: Snapshot['assets'] = {};
   for (const stage of content.stages) for (const unit of stage.units) {
     for (const asset of [...(unit.assets ?? []), ...(unit.reveal?.assets ?? [])]) {

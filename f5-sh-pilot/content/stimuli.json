@@ -1,5 +1,5 @@
 {
-  "content_version": "sh-current-presentation-2026-10-25-v4",
+  "content_version": "sh-v2-presentation-2026-10-26-v5",
   "stimuli": [
     {
       "stage_id": "SH01",
@@ -279,6 +279,126 @@
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
         "range": "A11:I11"
+      }
+    },
+    {
+      "stage_id": "SH06",
+      "message_id": "N06",
+      "text": "明日的体验流程介绍要提前到10:30开始。",
+      "duration_ms": 11000,
+      "question": "明日的体验流程介绍调整到几点开始？",
+      "options": [
+        {
+          "id": "A",
+          "text": "10:30"
+        },
+        {
+          "id": "B",
+          "text": "11:00"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 10:30",
+      "source_ref": {
+        "file": "A5 SH实验V2变更决策文档",
+        "date": "2026-10-26",
+        "section": "9",
+        "table": "消息与理解题",
+        "row": "N06"
+      }
+    },
+    {
+      "stage_id": "SH06",
+      "message_id": "A06",
+      "text": "明日需介绍体验流程，可以帮你整理一份讲解提纲。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你准备什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "资料打印清单"
+        },
+        {
+          "id": "B",
+          "text": "体验流程讲解提纲"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 体验流程讲解提纲",
+      "source_ref": {
+        "file": "A5 SH实验V2变更决策文档",
+        "date": "2026-10-26",
+        "section": "9",
+        "table": "消息与理解题",
+        "row": "A06"
+      }
+    },
+    {
+      "stage_id": "SH07",
+      "message_id": "N07",
+      "text": "明日活动的签到地点要改到一楼的大厅服务台。",
+      "duration_ms": 11000,
+      "question": "明日活动的签到地点调整到哪里？",
+      "options": [
+        {
+          "id": "A",
+          "text": "体验厅门口"
+        },
+        {
+          "id": "B",
+          "text": "一楼大厅服务台"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 一楼大厅服务台",
+      "source_ref": {
+        "file": "A5 SH实验V2变更决策文档",
+        "date": "2026-10-26",
+        "section": "9",
+        "table": "消息与理解题",
+        "row": "N07"
+      }
+    },
+    {
+      "stage_id": "SH07",
+      "message_id": "A07",
+      "text": "可为你提前制作明日的各组人员签到表。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你制作什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "各组人员签到表"
+        },
+        {
+          "id": "B",
+          "text": "各组人员到场通知"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 各组人员签到表",
+      "source_ref": {
+        "file": "A5 SH实验V2变更决策文档",
+        "date": "2026-10-26",
+        "section": "9",
+        "table": "消息与理解题",
+        "row": "A07"
       }
     }
   ]

@@ -32,6 +32,19 @@ async function fixture(mode: DisplayMode = 'confirm_until_ack') {
   return { store, engine, adapter, material, config, created, id, send, trigger, requests, emit, advance: (ms: number) => { clock += ms; }, confirms: () => confirms, cancels: () => cancels, reject: (value: boolean) => { rejectConfirm = value; } };
 }
 
+/** V2教程练习休息：点击、休息页可见、推进练习时长后回到任务页（状态 returning），之后才能继续。 */
+function practiceRest(f: Awaited<ReturnType<typeof fixture>>, id: string, cmd: (action: string, extra?: object) => unknown, returnDisplayed = false) {
+  const rest = f.material.content.in_unit_rest!;
+  assert.equal(f.engine.view(id).phase, 'TUTORIAL_REST'); cmd('displayed');
+  assert.throws(() => cmd('submit', { answer: {} }), /练习一次休息/);
+  cmd('rest_click'); cmd('rest_displayed');
+  assert.throws(() => cmd('submit', { answer: {} }), /正在休息/);
+  f.advance(rest.tutorial_duration_ms); f.engine.tick(id);
+  assert.equal(f.engine.view(id).rest?.state, 'returning');
+  if (returnDisplayed) { cmd('rest_return_displayed'); assert.equal(f.engine.view(id).rest?.state, 'done'); }
+  cmd('submit', { answer: {} });
+}
+
 test('策略固定于快照；未绘制不能确认，超11秒仍待确认，重复确认幂等且继续当前任务', async () => {
   const f = await fixture();
   try {
@@ -222,7 +235,7 @@ test('逐通知 JSON 优先；跨到不同策略的任务仍可确认上一条�
 });
 
 
-test('确认模式三页教程：先绘制、确认、收到消失才能继续，答错留痕，教程不计正式呈现', async () => {
+test('确认模式四页教程（含练习休息）：先绘制、确认、收到消失才能继续，答错留痕，教程不计正式呈现', async () => {
   const f = await fixture(); const out=await mkdtemp(join(tmpdir(),'a5-tutorial-'));
   try {
     f.engine.adminAction(f.id,'stop','');
@@ -230,6 +243,7 @@ test('确认模式三页教程：先绘制、确认、收到消失才能继续�
     const cmd=(action:string,extra={})=>f.engine.command(id,{command_id:randomUUID(),page_token:f.engine.view(id).page_token,action,client:{visibility_state:'visible'},...extra});
     assert.equal(f.engine.view(id).phase,'TUTORIAL_INTRO'); assert.ok(f.engine.view(id).scene_time);
     cmd('displayed');cmd('scratchpad',{text:'练习草稿'});cmd('submit',{answer:{}});
+    practiceRest(f,id,cmd);
     assert.equal(f.engine.view(id).phase,'TUTORIAL_NOTICE'); cmd('displayed');await f.engine.settle();
     assert.equal(f.requests.length,1);assert.equal(f.requests[0].text,'练习会议安排在二号会议室。');
     assert.throws(()=>cmd('submit',{answer:{}}),/阅读并确认/);f.emit('drawn');
@@ -242,16 +256,18 @@ test('确认模式三页教程：先绘制、确认、收到消失才能继续�
     assert.equal(f.engine.presentation(id).device_drawn_messages,0);
     const exported=await exportData(f.engine,[id],out); const files=unzipSync(exported.bytes);
     assert.ok(strFromU8(files['tutorial.csv']).includes('tutorial_answer_submitted'));
+    assert.ok(strFromU8(files['tutorial.csv']).includes('tutorial_rest_continue'));
     assert.ok(strFromU8(files['interventions.csv']).includes('tutorial'));
   } finally {await f.engine.settle();f.store.close();await rm(out,{recursive:true,force:true});}
 });
 
-test('无确认策略只有一页工具教程；进行中手动确认通知不改变正式进度与正式统计', async () => {
+test('无确认策略只有工具与练习休息两页教程；进行中手动确认通知不改变正式进度与正式统计', async () => {
  const f=await fixture();
  try {
   f.engine.adminAction(f.id,'stop','');const id=f.engine.create('000',{display_mode:'legacy_8500',tutorial_enabled:true}).session_id;
   const cmd=(action:string,extra={})=>f.engine.command(id,{command_id:randomUUID(),page_token:f.engine.view(id).page_token,action,client:{visibility_state:'visible'},...extra});
-  cmd('displayed');cmd('submit',{answer:{}});assert.equal(f.engine.view(id).phase,'INTRO');assert.equal(f.requests.length,0);
+  cmd('displayed');cmd('submit',{answer:{}});practiceRest(f,id,cmd,true);assert.equal(f.engine.view(id).phase,'INTRO');assert.equal(f.requests.length,0);
+  assert.equal(f.store.events(id).filter(e=>e.event_type==='rest_started'&&e.data_kind==='tutorial').length,1);
   const requestId=randomUUID();f.engine.manualNotification(id,requestId,'手动通知','confirm_until_ack');await f.engine.settle();f.emit('drawn');
   assert.equal(f.engine.view(id).confirmation_enabled,true);assert.equal(f.engine.view(id).phase,'INTRO');
   await f.engine.confirmMessage(id,requestId);f.emit('hidden');
@@ -261,18 +277,19 @@ test('无确认策略只有一页工具教程；进行中手动确认通知不�
 });
 
 
-test('000及主试跳转列表包含教程；按会话快照决定一页或三页，跳回练习不重发旧通知',async()=>{
+test('000及主试跳转列表包含教程（含练习休息）；按会话快照决定两页或四页，跳回练习不重发旧通知',async()=>{
  const f=await fixture();
  try{
   const targets=f.engine.view(f.id).debug_targets;
-  assert.deepEqual(targets.slice(0,3).map(t=>t.id),['TUTORIAL_INTRO','TUTORIAL_NOTICE','TUTORIAL_CHECK']);
+  assert.deepEqual(targets.slice(0,4).map(t=>t.id),['TUTORIAL_INTRO','TUTORIAL_REST','TUTORIAL_NOTICE','TUTORIAL_CHECK']);
+  f.send('jump',{target:'TUTORIAL_REST'});assert.equal(f.engine.view(f.id).phase,'TUTORIAL_REST');
   f.send('jump',{target:'TUTORIAL_INTRO'});assert.equal(f.engine.view(f.id).phase,'TUTORIAL_INTRO');
   f.send('jump',{target:'TUTORIAL_NOTICE'});f.send('displayed');await f.engine.settle();assert.equal(f.requests.length,1);
   f.send('jump',{target:'INTRO'});f.send('jump',{target:'TUTORIAL_NOTICE'});f.send('displayed');await f.engine.settle();assert.equal(f.requests.length,1);
   f.engine.adminAction(f.id,'debug_jump','','TUTORIAL_CHECK');assert.equal(f.engine.view(f.id).phase,'TUTORIAL_CHECK');
  }finally{await f.engine.settle();f.store.close();}
  const quiet=await fixture('legacy_8500');
- try{assert.deepEqual(quiet.engine.view(quiet.id).debug_targets.filter(t=>t.id.startsWith('TUTORIAL')).map(t=>t.id),['TUTORIAL_INTRO']);}
+ try{assert.deepEqual(quiet.engine.view(quiet.id).debug_targets.filter(t=>t.id.startsWith('TUTORIAL')).map(t=>t.id),['TUTORIAL_INTRO','TUTORIAL_REST']);}
  finally{await quiet.engine.settle();quiet.store.close();}
 });
 

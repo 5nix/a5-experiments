@@ -9,6 +9,7 @@ import { Store } from '../src/store.ts';
 import { Engine } from '../src/engine.ts';
 import { loadMaterial, minutes, normalize, score } from '../src/tasks.ts';
 import { readJson } from '../src/preflight.ts';
+import { testConfig } from './fixtures.ts';
 import { validateConfig } from '../src/config.ts';
 import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
 import { exportData } from '../src/export.ts';
@@ -16,28 +17,36 @@ import { createApp } from '../src/app.ts';
 import type { ParticipantConfig } from '../src/contracts.ts';
 
 const material = await loadMaterial();
-const config = await readJson<ParticipantConfig>('config/participants.source.json');
+const config = await testConfig();
+/** 旧快照兼容：V2之前的会话快照没有 in_unit_rest，仍走组间30秒休息。 */
+const legacy = { ...material, content: { ...material.content, in_unit_rest: undefined, break_ms: 30000, break_start_on_display: true, allow_break_skip: true } };
 const visible = { visibility_state: 'visible' };
-function fixture() {
+function fixture(mat: typeof material = material) {
   let now = Date.parse('2026-10-19T08:00:00Z');
   const store = new Store(':memory:');
-  const engine = new Engine(store, new MockGlassesAdapter(), material, config, { wall: () => now, mono: () => now });
+  const engine = new Engine(store, new MockGlassesAdapter(), mat, config, { wall: () => now, mono: () => now });
   const debug = engine.create('000');
   const send = (action: string, extra = {}) => engine.command(debug.session_id, { command_id: randomUUID(), page_token: engine.view(debug.session_id).page_token, action, client: visible, ...extra });
   return { store, engine, debug, send, advance: (ms: number) => { now += ms; } };
 }
 
-test('18张表格来自内嵌Excel且不再含图片；M1—M6使用已批准修订和新版XLSX', () => {
-  const tables = material.content.stages.flatMap(s => s.units.flatMap(u => [...(u.tables ?? []), ...(u.reveal?.tables ?? [])]));
-  assert.equal(tables.length, 18); assert.equal(new Set(tables.map(t => t.id)).size, 18);
-  for (const table of tables) { assert.match(table.source_ref!.embedded_file, /^word\/embeddings\/.+\.xlsx$/); assert.ok(table.rows.every(r => r.length === table.columns.length)); }
+test('SH01—SH05的18张表格来自内嵌Excel，V2新增SH06/SH07的4张表格来自V2决策文档；不再含图片', () => {
+  const tableOf = (stages: typeof material.content.stages) => stages.flatMap(s => s.units.flatMap(u => [...(u.tables ?? []), ...(u.reveal?.tables ?? [])]));
+  const tables = tableOf(material.content.stages);
+  assert.equal(tables.length, 22); assert.equal(new Set(tables.map(t => t.id)).size, 22);
+  for (const table of tables) assert.ok(table.rows.every(r => r.length === table.columns.length));
+  const original = tableOf(material.content.stages.slice(0, 5)), added = tableOf(material.content.stages.slice(5));
+  assert.equal(original.length, 18);
+  for (const table of original) assert.match(table.source_ref!.embedded_file, /^word\/embeddings\/.+\.xlsx$/);
+  assert.deepEqual(added.map(t => t.id), ['table-19', 'table-20', 'table-21', 'table-22']);
+  for (const table of added) { assert.equal(table.source_ref!.embedded_file, undefined); assert.equal((table.source_ref as unknown as Record<string, unknown>).revision_id, 'a5-sh-v2-decision-2026-10-26'); }
   assert.deepEqual(material.assets, {});
   assert.equal(tables.find(t => t.id === 'table-05')?.rows[0][1], '9:45');
   assert.equal(tables.find(t => t.id === 'table-13')?.rows[0][1], '12:40');
   assert.equal(tables.find(t => t.id === 'table-18')?.rows[3][4], '125元');
   // 日常工作语气修订：M1仍为筛选当前基本方案且可多选；补充资料以文件附件名呈现，题干按文件名引用。
   assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('可以选择多个方案，也可以选择无方案')));
-  assert.equal(material.content.content_version, 'sh-current-2026-10-25-v10');
+  assert.equal(material.content.content_version, 'sh-v2-2026-10-26-v11');
   for (const unit of material.content.stages.map(s => s.units[0])) {
     assert.match(unit.reveal!.button_label, /\.(xlsx|docx)$/);
     assert.ok(unit.paragraphs.some(p => p.includes(`《${unit.reveal!.button_label}》`)));
@@ -119,8 +128,14 @@ test('固定000可自行往返跳题；正式被试只能由后台跳题且保�
   } finally { await f.engine.settle(); f.store.close(); }
 });
 
-test('跳过休息由被试或管理员记录，不伪造30秒完成；状态框操作随暂停恢复变化', async () => {
-  const f = fixture();
+test('旧快照：跳过休息由被试或管理员记录，不伪造30秒完成；状态框操作随暂停恢复变化；V2快照无休息跳转', async () => {
+  const current = fixture();
+  try {
+    assert.ok(!current.engine.debugTargets(current.engine.session(current.debug.session_id)).some(t => t.phase === 'BREAK'));
+    assert.throws(() => current.send('jump', { target: 'SH01_BREAK' }), /目标无效/);
+    assert.ok(!current.engine.summary(current.debug.session_id).available_actions.includes('skip_break'));
+  } finally { await current.engine.settle(); current.store.close(); }
+  const f = fixture(legacy);
   try {
     f.send('jump', { target: 'SH01_BREAK' }); f.send('displayed'); f.advance(12000);
     assert.equal(f.engine.view(f.debug.session_id).can_skip_break, true);

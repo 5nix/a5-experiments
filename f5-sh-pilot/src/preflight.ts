@@ -18,10 +18,13 @@ export async function preflight() {
     readJson<TaskContent>('content/tasks.json'),
   ]);
   const pilotErrors = validateConfig(pilot, material.stimuli);
-  const sourceErrors = validateConfig(source, material.stimuli);
+  // participants.source.json 是原工作簿（V1，5组）的历史来源，V2起不再作为可用预分配校验。
+  const sourceStages = new Set(source.participants.flatMap(p => p.stages.map(s => s.stage_id)));
   const materialErrors: string[] = [];
-  if (tasks.stages.length !== 5 || tasks.stages.some(s => s.units.length !== 2)) materialErrors.push('任务配置必须为5组10单元。');
-  if (tasks.break_ms !== 30000 || tasks.break_start_on_display !== true || tasks.message_duration_ms !== 11000) materialErrors.push('任务休息或消息目标时长与当前协议不一致。');
+  if (tasks.stages.length !== 7 || tasks.stages.some(s => s.units.length !== 2)) materialErrors.push('任务配置必须为7组14单元。');
+  const rest = tasks.in_unit_rest;
+  if (tasks.message_duration_ms !== 11000) materialErrors.push('消息目标时长与当前协议不一致。');
+  if (!rest || !(rest.duration_ms > 0) || !(rest.tutorial_duration_ms > 0) || !(rest.t2_delay_ms >= 0 && rest.t2_delay_ms < rest.duration_ms) || !(rest.window_min_ms >= 0) || Object.values(rest.window_min_ms_by_stage ?? {}).some(v => !(v >= 0)) || !rest.reminder_text || !rest.early_click_text) materialErrors.push('第二单元休息配置缺失或无效：需正的休息时长，T2延迟须小于休息时长，窗口下限不能为负。');
   for (const stage of tasks.stages) for (const unit of stage.units) {
     if (!unit.fields.length || unit.fields.some(f => !f.required)) materialErrors.push(`${unit.unit_id}必须配置完整必答字段。`);
     for (const table of [...(unit.tables ?? []), ...(unit.reveal?.tables ?? [])]) {
@@ -56,8 +59,9 @@ export async function preflight() {
       text_tables: tasks.stages.reduce((sum, s) => sum + s.units.reduce((n, u) => n + (u.tables?.length ?? 0) + (u.reveal?.tables?.length ?? 0), 0), 0), sheets: manifest.sheet_names, sh_stimuli: material.stimuli.length },
     pilot_participants: pilot.participants.map(p => p.participant_id),
     pilot_errors: pilotErrors,
-    source_config_errors: sourceErrors,
+    source_config_errors: [] as string[],
+    source_config_note: `participants.source.json 为原工作簿历史来源（${source.participants.length}人、${sourceStages.size}组），V2不再用于创建会话。`,
     material_errors: materialErrors,
-    remaining: ['雷鸟显示端真机部署与实际硬件呈现验证', '材料最终确认版本替换', 'Windows现场实机验证', '由后续Agent完成可视化设计'],
+    remaining: ['雷鸟显示端真机部署与实际硬件呈现验证', '用第一次pilot数据确定休息窗口下限（当前window_min_ms为占位值）', 'SH06/SH07材料待设计者确认（见V2变更文档第9节）', 'Windows现场实机验证'],
   };
 }

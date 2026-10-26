@@ -1,4 +1,4 @@
-"""从Word原文与内嵌Excel生成文本表格，应用经用户批准的独立文案修订。"""
+"""从Word原文与内嵌Excel生成文本表格，应用经用户批准的独立文案修订；追加V2新增的SH06、SH07与U2内休息配置。"""
 import json
 import re
 from pathlib import Path
@@ -11,8 +11,13 @@ embedded = json.loads((ROOT / 'content/source/embedded-workbooks.json').read_tex
 workbooks = {int(re.search(r'Worksheet(\d+)', w['source_member']).group(1)): w for w in embedded['workbooks']}
 
 
+v2 = revisions['v2_stages']
+rest = revisions['rest_settings']
+
+
 def paragraphs(*indexes):
-    return [revisions['paragraph_overrides'].get(str(i), blocks[i]['text']) for i in indexes]
+    # V2覆盖（如导入页“七个不同阶段”）优先于M1—M6修订，再回退到Word原文。
+    return [v2['intro_paragraph_overrides'].get(str(i), revisions['paragraph_overrides'].get(str(i), blocks[i]['text'])) for i in indexes]
 
 
 def source(*indexes):
@@ -129,6 +134,32 @@ units = [
           [field('plan', '补充方案', 'single', plans[:4]), field('badge_surplus', '多出胸牌（张）', 'integer_or_na'), field('record_surplus', '多出体验记录表（张）', 'integer_or_na')],
           exact({'plan': 'D', 'badge_surplus': 1, 'record_surplus': 3}, 143))],
 ]
+def v2_source(**extra):
+    return {'file': v2['source_ref']['file'], 'date': v2['source_ref']['date'], 'section': v2['source_ref']['section'], 'revision_id': v2['revision_id'], **extra}
+
+
+def v2_unit(spec):
+    # V2新增组（SH06、SH07）的内容来自revisions.v2_stages，结构与SH01—SH05生成结果一致。
+    unit_id = spec['unit_id']
+    tables = [{**t, 'source_ref': v2_source(unit_id=unit_id)} for t in spec['tables']]
+    fields = [field(f['id'], f['label'], f['type'], [(o['value'], o['label']) for o in f.get('options', [])] or None, f.get('exclusive_value')) for f in spec['fields']]
+    expected = {k: sorted(v) if isinstance(v, list) else v for k, v in spec['expected'].items()}
+    value = {'unit_id': unit_id, 'title': spec['title'], 'paragraphs': spec['paragraphs'], 'tables': tables, 'assets': [], 'fields': fields,
+             'scoring': {'type': 'exact', 'expected': expected, 'source_ref': v2_source(unit_id=unit_id, item='answers')},
+             'source_ref': v2_source(unit_id=unit_id),
+             'scratchpad': {'label': '草稿本', 'placeholder': work['scratchpad_placeholder'], 'max_length': 20000}}
+    if 'reveal' in spec:
+        value['reveal'] = {'button_label': spec['reveal']['button_label'], 'paragraphs': spec['reveal']['paragraphs'], 'assets': [],
+                           'source_ref': v2_source(unit_id=unit_id, item=spec['reveal']['button_label'])}
+    return value
+
+
+def v2_stage(spec):
+    assert not spec['card'].startswith('现在'), spec['card']
+    return {'stage_id': spec['stage_id'], 'title': spec['title'], 'card': spec['card'], 'scene_time': spec['scene_time'],
+            'source_ref': v2_source(), 'units': [v2_unit(u) for u in spec['units']]}
+
+
 def scene_time(card):
     # 说明卡中的情景时间，供被试端任务栏时钟固定显示（不走动），文字取自原卡片。
     match = re.match(r'现在的时间是：(\d+月\d+日 周.) (\d{1,2}:\d{2})', card)
@@ -137,16 +168,20 @@ def scene_time(card):
 
 
 data = {
-    'schema_version': '1.2', 'content_version': 'sh-current-2026-10-25-v10', 'revision_id': revisions['revision_id'], 'wording_revision_id': work['revision_id'],
+    'schema_version': '1.3', 'content_version': 'sh-v2-2026-10-26-v11', 'revision_id': revisions['revision_id'], 'wording_revision_id': work['revision_id'], 'v2_revision_id': v2['revision_id'],
     'intro': {'title': '情景导入', 'paragraphs': paragraphs(6, 7), 'source_ref': source(6, 7)},
     'stages': [{'stage_id': f'SH{i+1:02}', 'title': blocks[t]['text'], 'card': work.get('stage_cards', {}).get(f'SH{i+1:02}', blocks[c]['text']), 'scene_time': scene_time(blocks[c]['text']), 'source_ref': {**source(t, c), 'wording_revision_id': work['revision_id']}, 'units': pair}
-               for i, (t, c, pair) in enumerate(zip([11, 40, 66, 93, 116], [13, 42, 68, 95, 118], units))],
+               for i, (t, c, pair) in enumerate(zip([11, 40, 66, 93, 116], [13, 42, 68, 95, 118], units))] + [v2_stage(spec) for spec in v2['stages']],
     'survey_revision_id': revisions['survey_revision']['revision_id'],
     'survey_pages': revisions['survey_revision']['survey_pages'],
     'ratings': revisions['survey_revision']['ratings'],
     'interview_prompts': paragraphs(154, 155, 156),
-    'break_ms': revisions['break_settings']['duration_ms'], 'break_start_on_display': revisions['break_settings']['start_on_display'], 'allow_break_skip': True, 'message_duration_ms': revisions['message_presentation']['fixed_duration_ms'],
-    'completion_text': '五组任务已完成，请等待实验员进行访谈。',
+    # V2取消组间休息（不再输出break_ms等键），改为U2内被试自主休息一次。
+    'in_unit_rest': {k: v for k, v in rest.items() if k not in {'revision_id', 'approval'}},
+    'rest_revision_id': rest['revision_id'],
+    'message_duration_ms': revisions['message_presentation']['fixed_duration_ms'],
+    'completion_text': v2['completion_text'],
 }
+assert [s['stage_id'] for s in data['stages']] == [f'SH{i:02}' for i in range(1, 8)] and all(len(s['units']) == 2 for s in data['stages'])
 (ROOT / 'content/tasks.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
-print('已生成5组10单元、18张文本表格、已批准M1—M6修订、日常工作语气措辞、文件式附件、可跳过休息和全任务草稿本配置。')
+print('已生成7组14单元（SH01—SH05沿用原文与M1—M6修订，SH06、SH07来自V2变更决策文档）、22张文本表格、日常工作语气措辞、文件式附件、U2内自主休息配置（取消组间休息）和全任务草稿本配置。')

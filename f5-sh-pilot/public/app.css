@@ -203,7 +203,7 @@ details[open] > summary::before { transform: rotate(45deg); }
 .attention li { padding-left: 26px; font-size: 13px; }
 
 .state-current { font-size: 17px; font-weight: 600; line-height: 1.4; margin-bottom: 12px; overflow-wrap: anywhere; }
-.stepper { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 14px; }
+.stepper { display: grid; grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr)); gap: 6px; margin-bottom: 14px; }
 .stepper li { display: flex; flex-direction: column; gap: 4px; }
 .step-bar { height: 4px; border-radius: 2px; background: #e3e3e3; }
 .step-label { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
@@ -232,6 +232,12 @@ details[open] > summary::before { transform: rotate(45deg); }
 .message-steps [data-tone="pending"] .step-value { color: var(--warn); } .message-steps [data-tone="pending"] .step-value::before { background: #c88a00; }
 .message-steps [data-tone="bad"] .step-value { color: var(--bad); } .message-steps [data-tone="bad"] .step-value::before { background: var(--bad); }
 .message-steps [data-tone="neutral"] .step-value { color: var(--text-2); font-weight: 500; }
+/* 本组休息：与消息框同款容器，事实列表沿用 .facts，T2状态按色调着色 */
+.rest-box .facts { margin-top: 8px; }
+.rest-box dd[data-tone="ok"] { color: var(--ok); font-weight: 600; }
+.rest-box dd[data-tone="pending"] { color: var(--warn); font-weight: 600; }
+.rest-box dd[data-tone="bad"] { color: var(--bad); font-weight: 600; }
+#remind-help { margin-top: 8px; }
 
 /* 干预 */
 #control-help { margin-bottom: 12px; }

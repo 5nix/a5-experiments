@@ -12,16 +12,23 @@ import { createApp } from '../src/app.ts';
 import { ConfigFiles } from '../src/config-files.ts';
 import type { ParticipantConfig } from '../src/contracts.ts';
 
-test('六份通知配置保持20人分配，000三种模式均来自文件', async () => {
+test('六份通知配置保持28人7组分配，000三种模式均来自文件且为V1列七组', async () => {
   const material = await loadMaterial();
   const original = await readJson<ParticipantConfig>('config/participants.pilot.json');
   const files = new ConfigFiles(join(experimentRoot, 'config/notifications'), material.stimuli);
-  assert.equal((await files.list()).filter(f => f.valid).length, 6);
+  const listed = await files.list();
+  assert.equal(listed.filter(f => f.valid).length, 6);
+  assert.ok(!listed.some(f => f.filename.startsWith('20-participants')));
   for (const mode of ['legacy_8500', 'tone_8500', 'confirm_until_ack']) {
-    for (const prefix of ['000', '20-participants']) {
+    for (const prefix of ['000', '28-participants']) {
       const cfg = await files.read(`${prefix}.${mode}.json`);
-      assert.equal(cfg.participants.length, prefix === '000' ? 0 : 20);
+      assert.equal(cfg.participants.length, prefix === '000' ? 0 : 28);
       if (prefix !== '000') assert.deepEqual(cfg.participants.map(p => [p.participant_id, p.stages.map(a => [a.stage_id,a.condition,a.message_id])]), original.participants.map(p => [p.participant_id,p.stages.map(a => [a.stage_id,a.condition,a.message_id])]));
+      assert.ok(cfg.participants.every(p => p.stages.length === 7));
+      assert.deepEqual(cfg.debug_participant!.stages.map(a => [a.stage_id, a.condition, a.message_id]), [
+        ['SH01', 'N-T0', 'N01'], ['SH02', 'N-T1', 'N02'], ['SH03', 'A-T0', 'A03'], ['SH04', 'A-T1', 'A04'],
+        ['SH05', 'N-T2', 'N05'], ['SH06', 'A-T2', 'A06'], ['SH07', 'NONE', null],
+      ]);
       assert.ok(cfg.debug_participant!.stages.filter(a => a.condition !== 'NONE').every(a => a.display_mode === mode));
       assert.ok(cfg.participants.every(p => p.stages.filter(a => a.condition !== 'NONE').every(a => a.display_mode === mode)));
     }

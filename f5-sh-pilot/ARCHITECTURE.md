@@ -21,7 +21,7 @@ Node.js 24+使用内置SQLite；其他运行依赖见package.json。公共启动
 
 ## 状态与服务端权威
 
-新建HTTP会话先进入教程，再进入INTRO、CARD、UNIT、COMPREHENSION、RATINGS、BREAK及终态；完整分支见 [DECISIONS.md](DECISIONS.md)。暂停保留底层阶段，通过view呈现PAUSED。直接使用Engine的内部调用可保留无教程的兼容路径。
+新建HTTP会话先进入教程（TUTORIAL_INTRO、TUTORIAL_REST，确认模式另有TUTORIAL_NOTICE/CHECK），再进入INTRO、CARD、UNIT、COMPREHENSION、RATINGS及终态；本组结束直接进入下一组CARD。内容快照含 `in_unit_rest` 才启用V2休息；没有它的旧快照仍走BREAK组间休息。完整分支见 [DECISIONS.md](DECISIONS.md)。暂停保留底层阶段，通过view呈现PAUSED。直接使用Engine的内部调用可保留无教程的兼容路径。
 
 每页具有page_token，旧页面不能提交；command_id与完整请求指纹用于操作去重。评分和正确答案只在服务端，公开view不包含答案。配置文件在创建请求中重新读取，防止多个主试页面切换配置时使用错误预分配；已有会话继续使用其快照。
 
@@ -29,7 +29,11 @@ Node.js 24+使用内置SQLite；其他运行依赖见package.json。公共启动
 
 SQLite启用WAL、synchronous=FULL及外键。状态、事件和发送意图在事务中保存；事件表与设备原始事件禁止更新或删除。会话删除仅写state.deleted，默认读取和全部导出排除它，被试接口返回410。
 
-elapsed_ms由服务器单调时钟计算，暂停期间仍累计，休息截止时间相应顺延。重启取持久化时长与墙钟跨度的较大值续接并记录server_restarted。浏览器可见证据、服务器接收时间和设备原始时间分别保存，不把电脑与眼镜时钟直接相减。
+elapsed_ms由服务器单调时钟计算，暂停期间仍累计，休息截止时间与T2计划时刻相应顺延。重启取持久化时长与墙钟跨度的较大值续接并记录server_restarted。浏览器可见证据、服务器接收时间和设备原始时间分别保存，不把电脑与眼镜时钟直接相减。
+
+## U2休息状态
+
+休息状态按组保存在 `state.rests`（教程键为TUTORIAL），依次为 requested（已点击、待休息页可见）→ resting（rest_displayed后起算）→ returning（倒计时到零）→ done（回到U2可见）。休息中服务端拒绝草稿、提交、附件和草稿本操作（409）；跳转会中断进行中的休息并记rest_interrupted。窗口下限按U2首次实际呈现时刻计算。主试提醒保存在 `state.rest_reminders`，被试端显示后回报rest_reminder_displayed。
 
 ## 消息生命周期
 
@@ -37,6 +41,8 @@ elapsed_ms由服务器单调时钟计算，暂停期间仍累计，休息截止�
 2. 先保存request_id和发送意图，再异步调用适配器，不阻塞答题。
 3. 接受回执和后续设备事件按request_id、设备身份合并；迟到事件仍落原请求。
 4. 确认按消息归属校验，跨页有效，重复确认不重播。下一条触发前检查待确认或仍在显示的通知。
+
+T2由引擎在休息页可见时排定（rest_t2_planned），到期由tick和精确定时器触发（rest_t2_due）；第5秒眼镜不可用则直接记失败，不排队。U2提交时仍未发送则记t2_not_triggered，不补发。
 
 重启时未完成的发送标为unknown，不重放。设备另有永久去重账本；任一端超时都不能据此推断未显示。协议与显示计时见 [RAYNEO.md](RAYNEO.md)。
 

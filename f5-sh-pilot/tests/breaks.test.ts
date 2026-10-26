@@ -9,21 +9,24 @@ import { Store } from '../src/store.ts';
 import { Engine } from '../src/engine.ts';
 import { loadMaterial } from '../src/tasks.ts';
 import { readJson } from '../src/preflight.ts';
+import { testConfig } from './fixtures.ts';
 import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
 import { exportData } from '../src/export.ts';
 import type { ParticipantConfig } from '../src/contracts.ts';
 
 const material = await loadMaterial();
-const config = await readJson<ParticipantConfig>('config/participants.source.json');
+/** 旧快照兼容：V2之前的会话快照没有 in_unit_rest，仍走组间30秒休息。 */
+const legacy = { ...material, content: { ...material.content, in_unit_rest: undefined, break_ms: 30000, break_start_on_display: true, allow_break_skip: true } };
+const config = await testConfig();
 const visible = { visibility_state: 'visible' };
 const ratings = Object.fromEntries(material.content.ratings.map(r => [r.id, '4']));
-function fixture(path = ':memory:') {
+function fixture(path = ':memory:', mat: typeof material = legacy) {
   let now = Date.parse('2026-10-25T08:00:00Z');
   const clock = { wall: () => now, mono: () => now };
   const f = { store: new Store(path), engine: null! as Engine, id: '', advance: (ms: number) => { now += ms; },
     send(action: string, extra = {}) { return this.engine.command(this.id, { command_id: randomUUID(), page_token: this.engine.view(this.id).page_token, action, client: visible, ...extra }); },
-    async reopen() { await this.engine.settle(); this.store.close(); this.store = new Store(path); this.engine = new Engine(this.store, new MockGlassesAdapter(), material, config, clock); } };
-  f.engine = new Engine(f.store, new MockGlassesAdapter(), material, config, clock);
+    async reopen() { await this.engine.settle(); this.store.close(); this.store = new Store(path); this.engine = new Engine(this.store, new MockGlassesAdapter(), mat, config, clock); } };
+  f.engine = new Engine(f.store, new MockGlassesAdapter(), mat, config, clock);
   f.id = f.engine.create('000').session_id;
   return f;
 }
@@ -40,11 +43,28 @@ function csvRows(text: string) {
   return rows.slice(1).map(values => Object.fromEntries(rows[0].map((key, i) => [key, values[i]])));
 }
 
-test('问卷耗时及休息页显示前延迟均不计时；仅可见回执起算，重复回执不重置', async () => {
+test('V2新快照没有组间休息：问卷提交后直接进入下一组说明卡，跳转列表无BREAK', async () => {
+  const f = fixture(':memory:', material);
+  try {
+    assert.ok(material.content.in_unit_rest);
+    assert.ok(!f.engine.view(f.id).debug_targets.some(t => t.id.endsWith('_BREAK')));
+    assert.throws(() => f.send('jump', { target: 'SH01_BREAK' }), /调试跳转目标无效/);
+    f.send('jump', { target: 'SH01_COMPREHENSION' }); f.send('displayed');
+    f.send('submit', { answer: { message_notice: 'fully_read', answer: 'C' } });
+    f.send('displayed'); f.send('submit', { answer: ratings });
+    assert.equal(f.engine.view(f.id).phase, 'CARD');
+    assert.equal(f.engine.view(f.id).stage_number, 2);
+    assert.ok(!f.engine.summary(f.id).available_actions.includes('skip_break'));
+    assert.throws(() => f.engine.adminAction(f.id, 'skip_break', '测试'), /不是可跳过的休息状态/);
+    assert.equal(f.store.events(f.id).filter(e => e.event_type.startsWith('break_')).length, 0);
+  } finally { await f.engine.settle(); f.store.close(); }
+});
+
+test('旧快照：问卷耗时及休息页显示前延迟均不计时；仅可见回执起算，重复回执不重置', async () => {
   const f = fixture();
   try {
-    assert.equal(material.content.break_ms, 30000);
-    assert.equal(material.content.break_start_on_display, true);
+    assert.equal(legacy.content.break_ms, 30000);
+    assert.equal(legacy.content.break_start_on_display, true);
     f.send('jump', { target: 'SH01_COMPREHENSION' }); f.send('displayed'); f.advance(90000);
     f.send('submit', { answer: { message_notice: 'fully_read', answer: 'C' } });
     assert.equal(f.engine.view(f.id).phase, 'RATINGS');
@@ -72,7 +92,7 @@ test('问卷耗时及休息页显示前延迟均不计时；仅可见回执起�
   } finally { await f.engine.settle(); f.store.close(); }
 });
 
-test('延迟检测仍记录30秒到零时刻；继续前停留、重启及重复提交不丢失休息记录', async () => {
+test('旧快照：延迟检测仍记录30秒到零时刻；继续前停留、重启及重复提交不丢失休息记录', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'a5-breaks-'));
   const f = fixture(join(directory, 'test.sqlite'));
   try {
@@ -108,7 +128,7 @@ test('延迟检测仍记录30秒到零时刻；继续前停留、重启及重复
   } finally { await f.engine.settle(); f.store.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
-test('人工暂停冻结倒计时，实际休息包含暂停与到零后等待；提前跳过保留真实时长', async () => {
+test('旧快照：人工暂停冻结倒计时，实际休息包含暂停与到零后等待；提前跳过保留真实时长', async () => {
   const f = fixture();
   try {
     f.send('jump', { target: 'SH01_BREAK' }); f.send('displayed'); f.advance(10000);

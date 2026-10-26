@@ -1,9 +1,9 @@
-import { stageIds } from './contracts.ts';
+import { conditions as conditionList, stageIds } from './contracts.ts';
 import type { Stimulus } from './contracts.ts';
 
 type ObjectValue = Record<string, unknown>;
 const object = (value: unknown): value is ObjectValue => typeof value === 'object' && value !== null && !Array.isArray(value);
-const conditions = new Set(['N-T0', 'N-T1', 'A-T0', 'A-T1', 'NONE']);
+const conditions = new Set<string>(conditionList);
 
 /** 接收未知 JSON；仅报错，绝不重新分配或修正源数据。 */
 export function validateConfig(input: unknown, stimuli: Stimulus[]): string[] {

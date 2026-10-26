@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { Snapshot } from './tasks.ts';
 
-export type Phase = 'TUTORIAL_INTRO' | 'TUTORIAL_NOTICE' | 'TUTORIAL_CHECK' | 'INTRO' | 'CARD' | 'UNIT' | 'COMPREHENSION' | 'RATINGS' | 'BREAK' | 'COMPLETED' | 'ABORTED';
+export type Phase = 'TUTORIAL_INTRO' | 'TUTORIAL_REST' | 'TUTORIAL_NOTICE' | 'TUTORIAL_CHECK' | 'INTRO' | 'CARD' | 'UNIT' | 'COMPREHENSION' | 'RATINGS' | 'BREAK' | 'COMPLETED' | 'ABORTED';
 export interface State {
   phase: Phase; stage: number; unit: number; page_token: string;
   displayed: Record<string, boolean>; drafts: Record<string, Record<string, unknown>>;
@@ -12,10 +12,23 @@ export interface State {
   started_at: string; ended_at: string | null; ended_elapsed_ms: number | null; last_elapsed_ms: number;
   break_until_ms: number | null; break_completed: boolean;
   break_displayed_at?: string | null; break_displayed_elapsed_ms?: number | null;
+  /** V2单元内休息：键为TUTORIAL或任务组编号，每组最多一次。 */
+  rests?: Record<string, RestState>;
+  rest_feedback?: Record<string, { id: string; text: string }>;
+  rest_reminders?: Record<string, RestReminder[]>;
+  u2_displayed_elapsed?: Record<string, number>;
   paused_at_ms: number | null; attention: string[]; status: 'active' | 'completed' | 'aborted';
   device_id?: string; delivery_source?: 'mock' | 'device';
   deleted?: { deleted_at: string; reason: string };
 }
+export interface RestState {
+  rest_id: string; key: string; status: 'requested' | 'resting' | 'returning' | 'done';
+  click_event_id: string; requested_elapsed_ms: number; after_reminder: boolean;
+  started_at: string | null; started_elapsed_ms: number | null; until_ms: number | null;
+  countdown_ended_elapsed_ms: number | null; returned_elapsed_ms: number | null;
+  paused_ms: number; paused_during: boolean; t2_due_ms: number | null; t2_fired: boolean; end_reason?: string;
+}
+export interface RestReminder { id: string; text: string; sent_at: string; sent_elapsed_ms: number; displayed: boolean }
 export interface Session { id: string; token_hash: string; state: State; snapshot: Snapshot }
 export interface EventRecord {
   data_kind?: string;

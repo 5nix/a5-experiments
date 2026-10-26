@@ -15,22 +15,32 @@ test('检出后的源材料通过字节完整性及启动检查（含 Windows �
   assert.equal(result.startup_ok, true);
 });
 
-test('默认直接使用P01—P20预分配，不重新分组', () => {
+test('默认直接使用P01—P28预分配（V1—V7各4人、7组），不重新分组', () => {
   assert.deepEqual(validateConfig(pilot, stimuli), []);
-  assert.deepEqual(pilot.participants.map(p => p.participant_id), Array.from({ length: 20 }, (_, i) => `P${String(i + 1).padStart(2, '0')}`));
-  assert.deepEqual(pilot.participants[0].stages.map(s => [s.condition, s.message_id]), [
-    ['N-T0', 'N01'], ['N-T1', 'N02'], ['NONE', null], ['A-T0', 'A04'], ['A-T1', 'A05'],
+  assert.deepEqual(pilot.participants.map(p => p.participant_id), Array.from({ length: 28 }, (_, i) => `P${String(i + 1).padStart(2, '0')}`));
+  assert.deepEqual(pilot.participants.map(p => p.version_label), Array.from({ length: 28 }, (_, i) => `V${Math.floor(i / 4) + 1}`));
+  assert.ok(pilot.participants.every(p => p.stages.length === 7));
+  assert.deepEqual(pilot.participants[0].stages.map(s => [s.stage_id, s.condition, s.message_id]), [
+    ['SH01', 'N-T0', 'N01'], ['SH02', 'N-T1', 'N02'], ['SH03', 'A-T0', 'A03'], ['SH04', 'A-T1', 'A04'],
+    ['SH05', 'N-T2', 'N05'], ['SH06', 'A-T2', 'A06'], ['SH07', 'NONE', null],
   ]);
+  // 拉丁方：每名被试7种条件各一次，每组在7个版本中也覆盖7种条件。
+  for (const p of pilot.participants) assert.equal(new Set(p.stages.map(s => s.condition)).size, 7);
+  for (let stage = 0; stage < 7; stage++) assert.equal(new Set(pilot.participants.map(p => p.stages[stage].condition)).size, 7);
 });
 
-test('新版源表V5修订有效；构造错误编号仍报告且不静默修改', () => {
-  const before = JSON.stringify(source);
-  assert.deepEqual(validateConfig(source, stimuli), []);
-  for (const id of ['017', '018', '019', '020']) assert.equal(source.participants.find(p => p.participant_id === id)?.stages[1].message_id, 'N02');
-  const invalid = structuredClone(source); invalid.participants.find(p => p.participant_id === '017')!.stages[1].message_id = 'N01';
-  assert.ok(validateConfig(invalid, stimuli).some(e => e.includes('017') && e.includes('SH02') && e.includes('N01')));
-  assert.equal(invalid.participants.find(p => p.participant_id === '017')!.stages[1].message_id, 'N01');
-  assert.equal(JSON.stringify(source), before);
+test('历史5组源表不再作为V2配置；28人表构造错误编号仍报告且不静默修改', () => {
+  // participants.source.json 只保留为V1历史来源（5组），按V2校验会报告缺少SH06/SH07，而不是被静默补齐。
+  const sourceBefore = JSON.stringify(source);
+  assert.ok(source.participants.every(p => p.stages.length === 5));
+  assert.ok(validateConfig(source, stimuli).some(e => e.includes('缺少 SH06')));
+  assert.equal(JSON.stringify(source), sourceBefore);
+  const before = JSON.stringify(pilot);
+  for (const id of ['P17', 'P18', 'P19', 'P20']) assert.equal(pilot.participants.find(p => p.participant_id === id)?.stages[1].message_id, 'A02');
+  const invalid = structuredClone(pilot); invalid.participants.find(p => p.participant_id === 'P17')!.stages[1].message_id = 'N02';
+  assert.ok(validateConfig(invalid, stimuli).some(e => e.includes('P17') && e.includes('SH02') && e.includes('N02')));
+  assert.equal(invalid.participants.find(p => p.participant_id === 'P17')!.stages[1].message_id, 'N02');
+  assert.equal(JSON.stringify(pilot), before);
 });
 
 test('重复被试、重复/缺失任务、NONE绑定消息均拒绝', () => {

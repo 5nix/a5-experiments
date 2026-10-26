@@ -12,47 +12,67 @@ import { loadMaterial, normalize, score } from '../src/tasks.ts';
 import type { Unit } from '../src/tasks.ts';
 import type { ParticipantConfig } from '../src/contracts.ts';
 import { readJson } from '../src/preflight.ts';
+import { testConfig } from './fixtures.ts';
 import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
 import { exportData } from '../src/export.ts';
 
 const material = await loadMaterial();
-const config = await readJson<ParticipantConfig>('config/participants.source.json');
+const config = await testConfig();
 config.participants = config.participants.slice(0, 4); // 此流程用例保留原表的四人固定夹具。
 const visible = { visibility_state: 'visible', monotonic_ms: 10, time_origin_ms: 1000, timestamp_iso: '2026-10-19T00:00:00.000Z' };
 const correct = (unit: Unit) => unit.scoring.type === 'exact' ? structuredClone(unit.scoring.expected) : { checkin: '许宁', guide: '林晨', equipment: unit.unit_id.endsWith('U1') ? '赵禾' : '梁欣' };
-function fixture(path = ':memory:', adapter = new MockGlassesAdapter()) {
+/** 旧快照兼容：V2之前的会话快照没有 in_unit_rest，仍走组间30秒休息。 */
+const legacy = { ...material, content: { ...material.content, in_unit_rest: undefined, break_ms: 30000, break_start_on_display: true, allow_break_skip: true } };
+function fixture(path = ':memory:', adapter = new MockGlassesAdapter(), mat: typeof material = material) {
   let now = Date.parse('2026-10-19T00:00:00.000Z');
   const store = new Store(path); const clock = { wall: () => now, mono: () => now };
-  const engine = new Engine(store, adapter, material, config, clock);
+  const engine = new Engine(store, adapter, mat, config, clock);
   const created = engine.create('001');
   const send = (action: string, extra = {}) => engine.command(created.session_id, { command_id: randomUUID(), page_token: engine.view(created.session_id).page_token, action, client: visible, ...extra });
   const display = () => send('displayed');
   return { store, engine, created, send, display, advance: (ms: number) => { now += ms; }, clock };
 }
 
-test('完整五组闭环：10单元、4次消息、4份问卷、4次30秒休息及休息记录导出', async () => {
+test('完整七组闭环：14单元、6次消息（含2次T2）、6份问卷、无组间休息，T2组在U2休息后送达并导出', async () => {
   const f = fixture(); const directory = await mkdtemp(join(tmpdir(), 'a5-export-'));
+  const rest = material.content.in_unit_rest!;
+  const assignments = config.participants[0].stages;
+  const messageStages = assignments.filter(a => a.condition !== 'NONE');
   try {
+    assert.equal(material.content.stages.length, 7);
     f.display(); f.send('continue');
-    for (let stage = 0; stage < 5; stage++) {
+    for (let stage = 0; stage < 7; stage++) {
+      const assignment = assignments[stage];
       assert.equal(f.engine.view(f.created.session_id).phase, 'CARD');
       f.display(); f.send('continue');
       for (let unit = 0; unit < 2; unit++) {
         const configured = material.content.stages[stage].units[unit];
         assert.equal(f.engine.view(f.created.session_id).phase, 'UNIT'); f.display();
         if (unit === 0) { f.send('reveal', { open: true }); f.send('reveal_displayed'); }
+        if (unit === 1 && assignment.condition.endsWith('T2')) {
+          // U2内休息：窗口开放后点击休息，休息页可见后第t2_delay_ms毫秒送达T2，倒计时结束回到任务再提交。
+          f.advance(rest.window_min_ms + 1000); f.send('rest_click'); f.send('rest_displayed');
+          assert.equal(f.store.interventions(f.created.session_id).filter(m => m.stage_id === assignment.stage_id).length, 0);
+          f.advance(rest.t2_delay_ms); f.engine.tick(f.created.session_id);
+          assert.equal(f.store.interventions(f.created.session_id).filter(m => m.stage_id === assignment.stage_id).length, 1);
+          f.advance(rest.duration_ms - rest.t2_delay_ms); f.engine.tick(f.created.session_id);
+          assert.equal(f.engine.view(f.created.session_id).rest?.state, 'returning');
+          f.send('rest_return_displayed');
+        }
         const view = f.send('submit', { answer: correct(configured) });
         assert.ok(!JSON.stringify(view).includes('correct_option')); assert.ok(!JSON.stringify(view).includes('scoring'));
         if (unit === 0) assert.equal(view.phase, 'UNIT');
       }
-      if (stage !== 4) {
+      if (assignment.condition !== 'NONE') {
         assert.equal(f.engine.view(f.created.session_id).phase, 'COMPREHENSION'); f.display();
-        const stimulus = material.stimuli.find(s => s.message_id === config.participants[0].stages[stage].message_id && s.stage_id === config.participants[0].stages[stage].stage_id)!;
+        const stimulus = material.stimuli.find(s => s.message_id === assignment.message_id && s.stage_id === assignment.stage_id)!;
         f.send('submit', { answer: { message_notice: 'fully_read', answer: stimulus.correct_option } }); f.display();
         f.send('submit', { answer: { timing: '4', attention_distraction: '3', thought_disruption: '2', task_interference: '6', perceived_disturbance: '5' } });
-        assert.equal(f.engine.view(f.created.session_id).phase, 'BREAK'); f.display();
-        f.advance(29999); assert.throws(() => f.send('continue'), /休息尚未/);
-        f.advance(1); assert.equal(f.engine.view(f.created.session_id).can_continue, true); f.send('continue');
+      }
+      // V2取消组间休息：问卷（或NONE组U2）提交后直接进入下一组说明卡。
+      if (stage < 6) {
+        assert.equal(f.engine.view(f.created.session_id).phase, 'CARD');
+        assert.equal(f.engine.view(f.created.session_id).stage_number, stage + 2);
       }
     }
     assert.equal(f.engine.view(f.created.session_id).phase, 'COMPLETED');
@@ -61,21 +81,33 @@ test('完整五组闭环：10单元、4次消息、4份问卷、4次30秒休息�
     f.engine.note(f.created.session_id, 'interview', '=原始访谈记录', null);
     assert.equal(f.engine.summary(f.created.session_id).elapsed_ms, duration);
     const events = f.store.events(f.created.session_id);
-    assert.equal(events.filter(e => e.event_type === 'submission_recorded').length, 10);
-    assert.equal(events.filter(e => e.event_type === 'unit_scored' && e.payload.score === 1).length, 10);
+    assert.equal(events.filter(e => e.event_type === 'submission_recorded').length, 14);
+    assert.equal(events.filter(e => e.event_type === 'unit_scored' && e.payload.score === 1).length, 14);
     assert.equal(events.filter(e => e.event_type === 'F_candidate').length, 1);
-    assert.equal(events.filter(e => e.event_type === 'break_started').length, 4);
-    assert.equal(events.filter(e => e.event_type === 'comprehension_submitted').length, 4);
-    assert.equal(f.store.interventions(f.created.session_id).length, 4);
-    assert.ok(f.store.interventions(f.created.session_id).every(m => m.duration_ms === 11000 && m.source === 'mock' && m.t_display === null && m.t_hide === null));
+    assert.equal(events.filter(e => e.event_type.startsWith('break_')).length, 0);
+    assert.equal(events.filter(e => e.event_type === 'rest_started').length, 2);
+    assert.equal(events.filter(e => e.event_type === 'rest_ended').length, 2);
+    assert.equal(events.filter(e => e.event_type === 'rest_t2_due').length, 2);
+    assert.equal(events.filter(e => e.event_type === 't2_not_triggered').length, 0);
+    assert.equal(events.filter(e => e.event_type === 'comprehension_submitted').length, messageStages.length);
+    assert.equal(events.filter(e => e.event_type === 'ratings_submitted').length, messageStages.length);
+    const messages = f.store.interventions(f.created.session_id);
+    assert.equal(messageStages.length, 6);
+    assert.deepEqual(messages.map(m => m.stage_id).sort(), messageStages.map(a => a.stage_id).sort());
+    assert.ok(messages.every(m => m.duration_ms === 11000 && m.source === 'mock' && m.t_display === null && m.t_hide === null));
+    assert.equal(events.filter(e => e.event_type === 'message_scheduled' && e.payload.timing === 'T2').length, 2);
     assert.ok(events.every((e, i) => i === 0 || e.elapsed_ms >= events[i - 1].elapsed_ms));
     const output = await exportData(f.engine, [f.created.session_id], directory);
-    assert.deepEqual(output.row_counts, { events: events.length, trials: 10, interventions: 4, surveys: 4, breaks: 4, sessions: 1, notes: 1 });
+    const counts = output.row_counts as Record<string, number>;
+    assert.equal(counts.events, events.length);
+    assert.equal(counts.trials, 14); assert.equal(counts.interventions, 6); assert.equal(counts.surveys, 6);
+    assert.equal(counts.sessions, 1); assert.equal(counts.notes, 1);
+    if (counts.rests !== undefined) assert.equal(counts.rests, 7);
     const files = unzipSync(output.bytes);
-    for (const name of ['events.jsonl', 'trials.csv', 'interventions.csv', 'surveys.csv', 'breaks.csv', 'sessions.csv', 'notes.csv', 'snapshots.json', 'manifest.json']) assert.ok(files[name]);
+    for (const name of ['events.jsonl', 'trials.csv', 'interventions.csv', 'surveys.csv', 'sessions.csv', 'notes.csv', 'snapshots.json', 'manifest.json']) assert.ok(files[name]);
     assert.ok(strFromU8(files['notes.csv']).includes("'=原始访谈记录"));
     assert.ok(strFromU8(files['events.jsonl']).includes('=原始访谈记录'));
-    assert.equal(JSON.parse(strFromU8(files['manifest.json'])).row_counts.trials, 10);
+    assert.equal(JSON.parse(strFromU8(files['manifest.json'])).row_counts.trials, 14);
   } finally { await f.engine.settle(); f.store.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
@@ -170,8 +202,8 @@ test('落盘恢复：草稿、文本表格快照、时间衔接、发送不重�
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
-test('暂停时拒绝作答，休息暂停不计时；停止会话留下人工干预', async () => {
-  const f = fixture();
+test('暂停时拒绝作答，旧快照组间休息暂停不计时；停止会话留下人工干预', async () => {
+  const f = fixture(':memory:', new MockGlassesAdapter(), legacy);
   try {
     f.display(); f.engine.adminAction(f.created.session_id, 'pause', '现场检查');
     assert.equal(f.engine.view(f.created.session_id).phase, 'PAUSED'); assert.throws(() => f.send('continue'), /已暂停/);

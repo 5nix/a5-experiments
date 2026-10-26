@@ -9,12 +9,13 @@ import { Store } from '../src/store.ts';
 import { Engine } from '../src/engine.ts';
 import { loadMaterial } from '../src/tasks.ts';
 import { readJson } from '../src/preflight.ts';
+import { testConfig } from './fixtures.ts';
 import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
 import { exportData } from '../src/export.ts';
 import type { ParticipantConfig } from '../src/contracts.ts';
 
 const material = await loadMaterial();
-const config = await readJson<ParticipantConfig>('config/participants.source.json');
+const config = await testConfig();
 config.debug_participant = { participant_id: '000', debug: true, copied_from: '001', stages: material.content.stages.map((s, index) => ({ stage_id: s.stage_id, condition: 'N-T0', message_id: `N0${index + 1}` })) };
 const ratingAnswer = { timing: '1', attention_distraction: '2', thought_disruption: '3', task_interference: '6', perceived_disturbance: '7' };
 const visible = { visibility_state: 'visible' };
@@ -22,7 +23,7 @@ const send = (engine: Engine, id: string, action: string, extra = {}) => engine.
   command_id: randomUUID(), page_token: engine.view(id).page_token, action, client: visible, ...extra,
 });
 
-test('五组任务按注意情况跳转：两题独立必答，内容题A/B/C及正误不影响跳转', async () => {
+test('七组任务按注意情况跳转：两题独立必答，内容题A/B/C及正误不影响跳转', async () => {
   for (const notice of ['not_noticed', 'partially_read', 'fully_read']) for (const answer of ['A', 'B', 'C']) {
     const store = new Store(':memory:');
     const engine = new Engine(store, new MockGlassesAdapter(), material, config);
@@ -55,7 +56,7 @@ test('五组任务按注意情况跳转：两题独立必答，内容题A/B/C及
         assert.equal(event.payload.answer, answer);
         assert.equal(event.payload.correct, answer === stimulus.correct_option);
         if (notice === 'not_noticed') {
-          assert.equal(engine.view(id).phase, stage.stage_id === 'SH05' ? 'COMPLETED' : 'BREAK');
+          assert.equal(engine.view(id).phase, stage.stage_id === 'SH07' ? 'COMPLETED' : 'CARD');
           const events = store.events(id).filter(e => e.stage_id === stage.stage_id);
           const skipped = events.find(e => e.event_type === 'ratings_skipped')!;
           assert.equal(skipped.payload.reason, 'not_noticed');
@@ -83,7 +84,7 @@ test('五组任务按注意情况跳转：两题独立必答，内容题A/B/C及
         }
         assert.throws(() => send(engine, id, 'submit', { answer: { ...ratingAnswer, timing: '8' } }), /选项无效/);
         send(engine, id, 'submit', { answer: ratingAnswer });
-        assert.equal(engine.view(id).phase, stage.stage_id === 'SH05' ? 'COMPLETED' : 'BREAK');
+        assert.equal(engine.view(id).phase, stage.stage_id === 'SH07' ? 'COMPLETED' : 'CARD');
         assert.deepEqual(store.events(id).filter(e => e.event_type === 'ratings_submitted').at(-1)!.payload.ratings,
           Object.fromEntries(Object.entries(ratingAnswer).map(([k, v]) => [k, Number(v)])));
       }
@@ -114,7 +115,9 @@ test('理解及量表草稿重启后恢复，正式答案落盘并完整导出�
     assert.deepEqual(engine.view(id).answer, ratingAnswer);
     send(engine, id, 'submit', { answer: engine.view(id).answer });
     await reopen();
-    assert.equal(engine.view(id).phase, 'BREAK');
+    // V2取消组间休息：量表提交后直接进入下一组说明卡。
+    assert.equal(engine.view(id).phase, 'CARD');
+    assert.equal(engine.view(id).stage_number, 2);
     const files = unzipSync((await exportData(engine, [id], directory)).bytes);
     const rows = strFromU8(files['surveys.csv']).trim().split('\r\n').map(line => line.split(',').map(cell => cell.replace(/^"|"$/g, '')));
     const row = Object.fromEntries(rows[0].map((key, index) => [key, rows[1][index]]));
@@ -154,11 +157,12 @@ test('未注意到提示时先保存理解题再跳过量表：落盘恢复、�
     store.save = save;
     assert.equal(engine.view(id).phase, 'COMPREHENSION');
     assert.equal(store.events(id).filter(e => ['comprehension_submitted', 'ratings_skipped'].includes(e.event_type)).length, 0);
-    assert.equal(engine.command(id, command).phase, 'BREAK');
-    assert.equal(engine.command(id, command).phase, 'BREAK');
+    assert.equal(engine.command(id, command).phase, 'CARD');
+    assert.equal(engine.command(id, command).phase, 'CARD');
     await engine.settle(); store.close();
     store = new Store(path); engine = new Engine(store, new MockGlassesAdapter(), material, config);
-    assert.equal(engine.view(id).phase, 'BREAK');
+    assert.equal(engine.view(id).phase, 'CARD');
+    assert.equal(engine.view(id).stage_number, 2);
     const events = store.events(id);
     assert.equal(events.filter(e => e.event_type === 'comprehension_submitted').length, 1);
     assert.equal(events.filter(e => e.event_type === 'ratings_skipped').length, 1);
@@ -176,13 +180,22 @@ test('未注意到提示时先保存理解题再跳过量表：落盘恢复、�
     for (const key of Object.keys(ratingAnswer)) assert.equal(row[key], '');
     const savedEvents = strFromU8(files['events.jsonl']).trim().split('\n').map(line => JSON.parse(line));
     assert.equal(savedEvents.find(e => e.event_type === 'ratings_skipped').payload.reason, 'not_noticed');
-    send(engine, id, 'displayed'); send(engine, id, 'skip_break');
-    assert.equal(engine.view(id).phase, 'CARD');
-    assert.equal(engine.view(id).stage_number, 2);
   } finally { await engine.settle(); store.close(); await rm(directory, { recursive: true, force: true }); }
+  // 旧快照（无 in_unit_rest）：跳过量表后仍进入组间休息，可跳过休息进入下一组。
+  const legacy = { ...material, content: { ...material.content, in_unit_rest: undefined, break_ms: 30000, break_start_on_display: true, allow_break_skip: true } };
+  const oldStore = new Store(':memory:'), oldEngine = new Engine(oldStore, new MockGlassesAdapter(), legacy, config);
+  const oldId = oldEngine.create('000').session_id;
+  try {
+    send(oldEngine, oldId, 'jump', { target: 'SH01_COMPREHENSION' }); send(oldEngine, oldId, 'displayed');
+    assert.equal(send(oldEngine, oldId, 'submit', { answer: { message_notice: 'not_noticed', answer: 'C' } }).phase, 'BREAK');
+    assert.equal(oldStore.events(oldId).filter(e => e.event_type === 'ratings_skipped' && e.payload.reason === 'not_noticed').length, 1);
+    send(oldEngine, oldId, 'displayed'); send(oldEngine, oldId, 'skip_break');
+    assert.equal(oldEngine.view(oldId).phase, 'CARD');
+    assert.equal(oldEngine.view(oldId).stage_number, 2);
+  } finally { await oldEngine.settle(); oldStore.close(); }
 });
 
-test('无消息条件五组均跳过两页并记录原因，不伪造问卷回答或评分', async () => {
+test('无消息条件七组均跳过两页并记录原因，不伪造问卷回答或评分', async () => {
   const noneConfig = structuredClone(config);
   noneConfig.debug_participant!.stages = material.content.stages.map(s => ({ stage_id: s.stage_id, condition: 'NONE', message_id: null }));
   const store = new Store(':memory:');
@@ -199,7 +212,7 @@ test('无消息条件五组均跳过两页并记录原因，不伪造问卷回�
         send(engine, id, 'submit', { answer });
         if (unit.unit_id.endsWith('U1')) send(engine, id, 'displayed');
       }
-      assert.equal(engine.view(id).phase, stage.stage_id === 'SH05' ? 'COMPLETED' : 'BREAK');
+      assert.equal(engine.view(id).phase, stage.stage_id === 'SH07' ? 'COMPLETED' : 'CARD');
       const events = store.events(id).filter(e => e.stage_id === stage.stage_id);
       assert.equal(events.filter(e => e.event_type === 'comprehension_skipped' && e.payload.reason === 'no_message').length, 1);
       assert.equal(events.filter(e => e.event_type === 'ratings_skipped' && e.payload.reason === 'no_message').length, 1);

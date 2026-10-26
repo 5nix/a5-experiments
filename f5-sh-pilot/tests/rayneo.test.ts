@@ -13,6 +13,7 @@ import { Engine } from '../src/engine.ts';
 import { Store } from '../src/store.ts';
 import { loadMaterial } from '../src/tasks.ts';
 import { readJson } from '../src/preflight.ts';
+import { testConfig } from './fixtures.ts';
 import { exportData } from '../src/export.ts';
 
 // 使用真实 TCP 帧测试电脑协议；此服务不替代 Android 或光学验收。
@@ -86,7 +87,7 @@ test('USB协议原样传输两种固定策略的11000ms及设备隐藏原因，�
 
 const visible = { visibility_state: 'visible', monotonic_ms: 10, time_origin_ms: 1000, timestamp_iso: '2026-10-19T00:00:00.000Z' };
 async function fixture(adapter: GlassesAdapter, db = ':memory:') {
-  const store = new Store(db), material = await loadMaterial(), config = await readJson<ParticipantConfig>('config/participants.source.json');
+  const store = new Store(db), material = await loadMaterial(), config = await testConfig();
   const engine = new Engine(store, adapter, material, config);
   const created = engine.create('000');
   const send = (action: string, extra = {}) => engine.command(created.session_id, { command_id: randomUUID(), page_token: engine.view(created.session_id).page_token, action, client: visible, ...extra });

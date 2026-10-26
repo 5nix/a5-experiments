@@ -1,6 +1,7 @@
-export const stageIds = ['SH01', 'SH02', 'SH03', 'SH04', 'SH05'] as const;
+export const stageIds = ['SH01', 'SH02', 'SH03', 'SH04', 'SH05', 'SH06', 'SH07'] as const;
 export type StageId = typeof stageIds[number];
-export type Condition = 'N-T0' | 'N-T1' | 'A-T0' | 'A-T1' | 'NONE';
+export const conditions = ['N-T0', 'N-T1', 'N-T2', 'A-T0', 'A-T1', 'A-T2', 'NONE'] as const;
+export type Condition = typeof conditions[number];
 export type DisplayMode = 'legacy_8500' | 'tone_8500' | 'confirm_until_ack';
 
 export interface Assignment {

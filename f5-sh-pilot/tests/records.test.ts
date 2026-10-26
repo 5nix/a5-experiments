@@ -9,12 +9,13 @@ import { Store } from '../src/store.ts';
 import { Engine } from '../src/engine.ts';
 import { loadMaterial } from '../src/tasks.ts';
 import { readJson } from '../src/preflight.ts';
+import { testConfig } from './fixtures.ts';
 import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
 import { createApp } from '../src/app.ts';
 import type { ParticipantConfig } from '../src/contracts.ts';
 
 const material = await loadMaterial();
-const config = await readJson<ParticipantConfig>('config/participants.source.json');
+const config = await testConfig();
 
 test('删除记录可恢复且跨重启保留；进行中不可删，已删除记录不可作答或修改，原始数据不抹除', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'a5-records-'));

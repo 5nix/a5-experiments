@@ -20,6 +20,8 @@ NS = {
     "s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
 }
 VERSION = 'sh-source-2026-10-19-v2'
+# V2新增的N06、A06、N07、A07不在原刺激工作簿中，来自revisions.json的v2_stimuli（《A5 SH实验V2变更决策文档》第9节）。
+V2_STIMULI = json.loads((EXPERIMENT / 'content' / 'revisions.json').read_text(encoding='utf-8'))['v2_stimuli']
 
 
 def read_workbook(data):
@@ -140,7 +142,9 @@ def main():
                         "duration_ms": 11000, "question": cell("G"), "options": options,
                         "correct_option": cell("I")[0], "source_answer": cell("I"),
                         "source_ref": {"file": "刺激材料的属性判断.xlsx", "sheet": "文案呈现与问答表", "range": f"A{row}:I{row}"}})
-    save(EXPERIMENT / "content" / "stimuli.json", {"content_version": VERSION, "stimuli": stimuli})
+    # 原工作簿提取逻辑不变，只在其后追加V2刺激，并写入V2刺激版本号。
+    stimuli += [dict(s) for s in V2_STIMULI["stimuli"]]
+    save(EXPERIMENT / "content" / "stimuli.json", {"content_version": V2_STIMULI["content_version"], "stimuli": stimuli})
     matrix = workbook["每个场景中的试次顺序安排"]
     participants = []
     for version, col in enumerate("CDEFG", 1):

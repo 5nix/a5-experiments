@@ -5,7 +5,7 @@
 const params = new URLSearchParams(location.hash.slice(1));
 const sessionId = params.get('session'), token = params.get('token');
 const endpoint = `/api/participant/sessions/${sessionId}`;
-let current, generation = 0, queue = Promise.resolve(), pending = 0, urls = [], breakClock, ready = false;
+let current, generation = 0, queue = Promise.resolve(), pending = 0, urls = [], breakClock, restClock, ready = false;
 let gated = [];
 
 /* ───────────────────────── 协议层 ───────────────────────── */
@@ -560,7 +560,10 @@ async function closeViewer() {
 function unitPage(view) {
   const submit = primary('下一步', null);
   submit.type = 'submit'; submit.setAttribute('form', 'answer-form');
-  const tools = view.scratchpad ? [h('button', { type: 'button', class: 'btn subtle', onclick: openNotepad }, icon('note', 16), h('span', { text: view.scratchpad.label }))] : [];
+  const tools = [
+    view.scratchpad ? h('button', { type: 'button', class: 'btn subtle', onclick: openNotepad }, icon('note', 16), h('span', { text: view.scratchpad.label })) : null,
+    view.rest ? restTool(view.rest) : null,
+  ];
   const doc = h('article', { class: 'doc' });
   const materials = h('div', { class: 'materials pane', tabIndex: -1 }, doc);
   prose(view.paragraphs, doc);
@@ -650,6 +653,148 @@ function debugTray(view) {
   tray.append(toggle, form);
 }
 
+/* ───────────────────────── 第二单元自主休息 ───────────────────────── */
+
+// 休息按钮外观全程不变（不禁用、不换样式），点击结果完全由服务端决定，避免按钮本身成为休息提示。
+// 休息页只是覆盖在桌面上的遮罩：工作台、作答表单与草稿本保持原状，结束后原样露出。
+let restScreen = null, restBusy = false, restNudged = 0;
+const restReported = new Set(), reminderShown = new Set(), reminderReported = new Set();
+const COVERING = ['requested', 'resting'];
+const restTag = (rest, step) => `${current?.page_token}|${rest.key}|${step}`;
+
+function restTool(rest) {
+  const button = h('button', { type: 'button', id: 'rest-button', class: 'btn subtle', onclick: clickRest }, icon('coffee', 16), h('span', { text: rest.button_label }));
+  return h('span', { id: 'rest-tool', class: 'rest-tool' }, button);
+}
+async function clickRest() {
+  // 先把草稿本与作答草稿排进串行队列，再发送点击；休息开始后服务端不再接受草稿。
+  flushScratch().catch(() => {});
+  document.querySelector('#answer-form')?.flushDraft?.();
+  try { await adopt(await command('rest_click')); }
+  catch (problem) { showError(problem); if (problem.status === 409) await refresh(); }
+}
+/** 命令返回的新view：切页则整体渲染，否则只更新休息与确认状态。 */
+async function adopt(view) {
+  if (!current || view.page_token !== current.page_token || view.phase !== current.phase) { await render(view); return; }
+  current.message_confirmation = view.message_confirmation;
+  applyRest(view.rest);
+}
+function applyRest(rest) {
+  if (!current) return;
+  current.rest = rest ?? null;
+  const covering = Boolean(rest) && current.phase !== 'PAUSED' && COVERING.includes(rest.state);
+  if (covering) showRestScreen(rest); else hideRestScreen();
+  restClock = covering ? { remaining: rest.remaining_ms ?? rest.duration_ms, origin: performance.now(), running: rest.state === 'resting' && rest.countdown_started } : null;
+  tickRest();
+  showRestFeedback(rest?.feedback);
+  if (ready) reportRest();
+}
+function showRestScreen(rest) {
+  const signature = JSON.stringify([rest.key, rest.title, rest.paragraphs, rest.show_countdown]);
+  if (restScreen?.dataset.sig === signature) return;
+  const fresh = !restScreen;
+  restScreen?.remove();
+  const box = h('div', { class: 'status' }, h('span', { class: 'status-icon' }, icon('coffee', 44)), h('h1', { id: 'rest-title', tabIndex: -1, text: rest.title }));
+  if (rest.show_countdown) box.append(h('div', { class: 'break-clock' }, h('span', { class: 'break-time', id: 'rest-countdown' })));
+  prose(rest.paragraphs, box);
+  restScreen = h('div', { class: 'rest-screen', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'rest-title' }, box);
+  restScreen.dataset.sig = signature;
+  // 遮罩期间桌面窗口与任务栏应用不可操作，避免在看不见的表单里输入或误最小化工作台。
+  for (const win of windows) win.node.inert = true;
+  taskbarApps.inert = true;
+  desktop.append(restScreen);
+  if (fresh) restScreen.querySelector('h1').focus({ preventScroll: true });
+}
+function hideRestScreen() {
+  if (!restScreen) return;
+  restScreen.remove(); restScreen = null;
+  for (const win of windows) win.node.inert = false;
+  taskbarApps.inert = false;
+  if (document.activeElement === document.body) pageNode.querySelector('h1')?.focus({ preventScroll: true });
+}
+function tickRest() {
+  if (!restClock || !restScreen) return;
+  const remaining = Math.max(0, restClock.remaining - (restClock.running ? performance.now() - restClock.origin : 0));
+  const time = restScreen.querySelector('#rest-countdown');
+  if (time) { const seconds = Math.ceil(remaining / 1000); time.textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
+  // 本地倒计时到零后尽快读取最新状态，不等下一次轮询。
+  if (restClock.running && remaining <= 0 && !pending && performance.now() - restNudged > 800) {
+    restNudged = performance.now();
+    api().then(adopt).catch(() => {});
+  }
+}
+function showRestFeedback(feedback) {
+  if (!feedback?.id) return;
+  // 同一反馈只显示一次；刷新页面后不重复出现。
+  const key = `a5-rest-feedback:${sessionId}`;
+  let previous = null; try { previous = sessionStorage.getItem(key); sessionStorage.setItem(key, feedback.id); } catch {}
+  if (previous === feedback.id) return;
+  const tool = document.querySelector('#rest-tool');
+  if (!tool) return;
+  tool.querySelector('.rest-tip')?.remove();
+  const tip = h('span', { class: 'rest-tip', role: 'status', text: feedback.text });
+  tool.append(tip);
+  setTimeout(() => tip.remove(), 3000);
+}
+async function overlayPaint(ticket, node) {
+  // 与visiblePaint相同的判定：文档可见，再等两帧绘制。
+  while (document.visibilityState !== 'visible') {
+    await new Promise(resolve => document.addEventListener('visibilitychange', resolve, { once: true }));
+    if (ticket !== generation || restScreen !== node) return false;
+  }
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  return ticket === generation && restScreen === node && document.visibilityState === 'visible';
+}
+/** 补报休息页可见、回到任务页可见及提醒语显示；失败时由下一次轮询重试。 */
+async function reportRest() {
+  const rest = current?.rest;
+  if (!ready || !rest) return;
+  showReminder(rest.reminder);
+  if (restBusy) return;
+  const ticket = generation;
+  let tag = null;
+  restBusy = true;
+  try {
+    if (rest.state === 'requested' && restScreen && !restReported.has(tag = restTag(rest, 'shown'))) {
+      restReported.add(tag);
+      if (await overlayPaint(ticket, restScreen)) await adopt(await command('rest_displayed'));
+      else restReported.delete(tag);
+    } else if (rest.state === 'returning' && !restScreen && !restReported.has(tag = restTag(rest, 'back'))) {
+      restReported.add(tag);
+      if (await visiblePaint(ticket) && !restScreen) await adopt(await command('rest_return_displayed'));
+      else restReported.delete(tag);
+    }
+  } catch (problem) {
+    if (tag) restReported.delete(tag);
+    showError(problem); if (problem.status === 409) await refresh();
+  } finally { restBusy = false; }
+}
+async function showReminder(reminder) {
+  if (!reminder?.id || reminder.displayed || current?.phase === 'PAUSED') return;
+  const id = reminder.id;
+  if (reminderShown.has(id)) {
+    // 已显示但报告失败：只补报，不再重复显示。
+    if (!reminderReported.has(id)) sendReminder(id);
+    return;
+  }
+  reminderShown.add(id);
+  while (document.visibilityState !== 'visible') await new Promise(resolve => document.addEventListener('visibilitychange', resolve, { once: true }));
+  desktop.querySelector('.rest-reminder')?.remove();
+  const note = h('div', { class: 'rest-reminder', role: 'status' },
+    h('p', { class: 'rest-reminder-app' }, appIcon('work', 16), h('span', { text: '工作台' })),
+    h('p', { class: 'rest-reminder-text', text: reminder.text }));
+  desktop.append(note);
+  setTimeout(() => note.remove(), reminder.display_ms ?? 5000);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  if (note.isConnected && document.visibilityState === 'visible') sendReminder(id);
+}
+function sendReminder(id) {
+  reminderReported.add(id);
+  command('rest_reminder_displayed', { reminder_id: id })
+    .then(view => { if (view.page_token === current?.page_token && view.phase === current?.phase && current.rest && view.rest) current.rest.reminder = view.rest.reminder; })
+    .catch(() => reminderReported.delete(id));
+}
+
 /* ───────────────────────── 渲染与可见报告 ───────────────────────── */
 
 async function visiblePaint(ticket, win = main) {
@@ -678,7 +823,7 @@ async function render(view) {
   restore(main); focusWindow(main);
   debugTray(view); sceneClock(view);
   let unit = null;
-  if (view.tutorial || view.phase === 'UNIT') unit = unitPage(view);
+  if (view.tutorial || view.phase === 'UNIT' || view.phase === 'TUTORIAL_REST') unit = unitPage(view);
   else if (view.fields.length) formPage(view);
   else if (view.phase === 'INTRO') readingPage(view, '阅读完毕，继续', { progress: false });
   else if (view.phase === 'CARD') readingPage(view, '开始任务');
@@ -689,6 +834,8 @@ async function render(view) {
   renderMessageConfirmation(view);
   syncFooter();
   bindScratchpad(view, pageChanged);
+  // 休息遮罩同步建立，刷新时不先露出题目；可见报告等页面就绪后再发。
+  applyRest(view.rest);
   if (view.phase === 'PAUSED') return;
   if (unit) {
     await assets(view.assets, unit.doc);
@@ -710,7 +857,9 @@ async function render(view) {
     for (const button of gated) button.disabled = false;
     if (view.phase === 'BREAK') tickBreak();
     document.querySelector('#answer-form')?.flushDraft?.();
-    if (!notepad.node.contains(document.activeElement) && !viewer.node.contains(document.activeElement)) pageNode.querySelector('h1')?.focus({ preventScroll: true });
+    if (restScreen) restScreen.querySelector('h1')?.focus({ preventScroll: true });
+    else if (!notepad.node.contains(document.activeElement) && !viewer.node.contains(document.activeElement)) pageNode.querySelector('h1')?.focus({ preventScroll: true });
+    reportRest();
   }
 }
 async function refresh() { try { await render(await api()); } catch (problem) { showError(problem); } }
@@ -745,7 +894,7 @@ async function confirmMessage() {
   }catch(problem){showError(problem);}
 }
 
-setInterval(tickBreak, 200);
+setInterval(() => { tickBreak(); tickRest(); }, 200);
 setInterval(async () => {
   if (!current || pending || document.visibilityState !== 'visible') return;
   try {
@@ -754,6 +903,7 @@ setInterval(async () => {
     // 只有page_token或phase变化才整体切页，避免打断输入法、焦点与草稿本编辑。
     if (view.page_token !== current.page_token || view.phase !== current.phase) await render(view);
     else if (view.phase === 'BREAK') breakClock = { remaining: view.remaining_ms, origin: performance.now(), running: view.break_countdown_started };
+    else applyRest(view.rest);
   } catch (problem) { showError(problem); }
 }, 1500);
 addEventListener('blur', () => { if (current && current.phase !== 'PAUSED') command('blur').catch(() => {}); });

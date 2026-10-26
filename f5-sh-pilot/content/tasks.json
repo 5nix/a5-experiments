@@ -1,13 +1,14 @@
 {
-  "schema_version": "1.2",
-  "content_version": "sh-current-2026-10-25-v10",
+  "schema_version": "1.3",
+  "content_version": "sh-v2-2026-10-26-v11",
   "revision_id": "user-approved-M1-M6-2026-10-19",
   "wording_revision_id": "user-requested-task-copy-2026-10-25",
+  "v2_revision_id": "a5-sh-v2-decision-2026-10-26",
   "intro": {
     "title": "情景导入",
     "paragraphs": [
       "你是新品体验活动的筹备工作人员，活动定于2026年11月20日周五14:00至17:00，在创新中心一层体验厅举行，计划接待24名参与者。",
-      "接下来，你将在电脑上完成五个不同阶段的工作片段。每个任务有两个单元。先处理并提交第一单元，再根据第二单元的资料完成后续工作。"
+      "接下来，你将在电脑上完成七个不同阶段的工作片段。每个任务有两个单元。先处理并提交第一单元，再根据第二单元的资料完成后续工作。"
     ],
     "source_ref": {
       "file": "A5 SH任务pilot.docx",
@@ -1945,6 +1946,545 @@
           }
         }
       ]
+    },
+    {
+      "stage_id": "SH06",
+      "title": "SH06任务：计算资料打印数量",
+      "card": "新品体验活动将于明天下午举行。你正在核对资料打印需要多少张纸。明天11:00你需要在二楼会议室介绍体验的流程，相关材料已经准备好。",
+      "scene_time": {
+        "date": "11月19日 周四",
+        "time": "16:00"
+      },
+      "source_ref": {
+        "file": "A5 SH实验V2变更决策文档",
+        "date": "2026-10-26",
+        "section": "9",
+        "revision_id": "a5-sh-v2-decision-2026-10-26"
+      },
+      "units": [
+        {
+          "unit_id": "SH06_U1",
+          "title": "第一单元：资料打印用纸核算",
+          "paragraphs": [
+            "明天活动需要打印三种资料：工作人员手册、设备操作说明和讲解资料。请先查看下表中每种资料的打印份数，再打开《资料说明.docx》，查看打印方式和每份资料的页数。",
+            "请分别计算三种资料各需要多少张纸，再计算三种资料合计需要多少张纸。办公室现有500张打印纸，请判断是否够用。"
+          ],
+          "tables": [
+            {
+              "id": "table-19",
+              "caption": "资料打印份数",
+              "columns": [
+                "资料",
+                "打印份数"
+              ],
+              "rows": [
+                [
+                  "工作人员手册",
+                  "12份"
+                ],
+                [
+                  "设备操作说明",
+                  "11份"
+                ],
+                [
+                  "讲解资料",
+                  "15份"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH实验V2变更决策文档",
+                "date": "2026-10-26",
+                "section": "9",
+                "revision_id": "a5-sh-v2-decision-2026-10-26",
+                "unit_id": "SH06_U1"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "handbook",
+              "label": "工作人员手册：用纸张数（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "manual",
+              "label": "设备操作说明：用纸张数（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "briefing",
+              "label": "讲解资料：用纸张数（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "total",
+              "label": "三种资料合计用纸张数（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "enough",
+              "label": "现有500张纸是否够用？",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "够用",
+                  "label": "够用"
+                },
+                {
+                  "value": "不够用",
+                  "label": "不够用"
+                }
+              ]
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "handbook": 168,
+              "manual": 176,
+              "briefing": 180,
+              "total": 524,
+              "enough": "不够用"
+            },
+            "source_ref": {
+              "file": "A5 SH实验V2变更决策文档",
+              "date": "2026-10-26",
+              "section": "9",
+              "revision_id": "a5-sh-v2-decision-2026-10-26",
+              "unit_id": "SH06_U1",
+              "item": "answers"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH实验V2变更决策文档",
+            "date": "2026-10-26",
+            "section": "9",
+            "revision_id": "a5-sh-v2-decision-2026-10-26",
+            "unit_id": "SH06_U1"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "在这里记录你的思考...",
+            "max_length": 20000
+          },
+          "reveal": {
+            "button_label": "资料说明.docx",
+            "paragraphs": [
+              "三种资料均为单面打印，每页使用一张纸。每份资料的页数如下：",
+              "工作人员手册：每份14页。",
+              "设备操作说明：每份16页。",
+              "讲解资料：每份12页。"
+            ],
+            "assets": [],
+            "source_ref": {
+              "file": "A5 SH实验V2变更决策文档",
+              "date": "2026-10-26",
+              "section": "9",
+              "revision_id": "a5-sh-v2-decision-2026-10-26",
+              "unit_id": "SH06_U1",
+              "item": "资料说明.docx"
+            }
+          }
+        },
+        {
+          "unit_id": "SH06_U2",
+          "title": "第二单元：资料打印用纸核算",
+          "paragraphs": [
+            "现在打印份数有变化：设备操作说明改为9份，讲解资料改为13份，仍为单面打印、每页一张纸。工作人员手册份数不变，用纸张数已算好，为168张。",
+            "请根据本页资料，重新计算设备操作说明和讲解资料的用纸张数，以及三种资料的合计用纸张数，并判断现有500张纸是否够用。"
+          ],
+          "tables": [
+            {
+              "id": "table-20",
+              "caption": "更新后的资料打印信息",
+              "columns": [
+                "资料",
+                "打印份数",
+                "每份页数",
+                "用纸张数"
+              ],
+              "rows": [
+                [
+                  "工作人员手册",
+                  "12份",
+                  "14页",
+                  "168张"
+                ],
+                [
+                  "设备操作说明",
+                  "9份",
+                  "16页",
+                  "待计算"
+                ],
+                [
+                  "讲解资料",
+                  "13份",
+                  "12页",
+                  "待计算"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH实验V2变更决策文档",
+                "date": "2026-10-26",
+                "section": "9",
+                "revision_id": "a5-sh-v2-decision-2026-10-26",
+                "unit_id": "SH06_U2"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "manual",
+              "label": "设备操作说明：用纸张数（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "briefing",
+              "label": "讲解资料：用纸张数（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "total",
+              "label": "三种资料合计用纸张数（张）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "enough",
+              "label": "现有500张纸是否够用？",
+              "type": "single",
+              "required": true,
+              "options": [
+                {
+                  "value": "够用",
+                  "label": "够用"
+                },
+                {
+                  "value": "不够用",
+                  "label": "不够用"
+                }
+              ]
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "manual": 144,
+              "briefing": 156,
+              "total": 468,
+              "enough": "够用"
+            },
+            "source_ref": {
+              "file": "A5 SH实验V2变更决策文档",
+              "date": "2026-10-26",
+              "section": "9",
+              "revision_id": "a5-sh-v2-decision-2026-10-26",
+              "unit_id": "SH06_U2",
+              "item": "answers"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH实验V2变更决策文档",
+            "date": "2026-10-26",
+            "section": "9",
+            "revision_id": "a5-sh-v2-decision-2026-10-26",
+            "unit_id": "SH06_U2"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "在这里记录你的思考...",
+            "max_length": 20000
+          }
+        }
+      ]
+    },
+    {
+      "stage_id": "SH07",
+      "title": "SH07任务：计算各组的接待费用",
+      "card": "明天参加新品体验活动的24名参与者已分好组，你现在需要计算各组的接待费用。明天下午13:00需要到体验厅门口开始签到进场，你需要提前向各组发送到场的通知。",
+      "scene_time": {
+        "date": "11月19日 周四",
+        "time": "16:30"
+      },
+      "source_ref": {
+        "file": "A5 SH实验V2变更决策文档",
+        "date": "2026-10-26",
+        "section": "9",
+        "revision_id": "a5-sh-v2-decision-2026-10-26"
+      },
+      "units": [
+        {
+          "unit_id": "SH07_U1",
+          "title": "第一单元：各组接待费用核算",
+          "paragraphs": [
+            "明天参加活动的24名参与者分为A、B、C三组。请先查看各组人数，再打开《接待费用.docx》，了解接待费用的计算方式。",
+            "请分别计算A、B、C三组的接待费用，再选出接待费用不超过350元的所有组，可以选择多个组；如果没有符合的组，请选择“没有符合的组”。"
+          ],
+          "tables": [
+            {
+              "id": "table-21",
+              "caption": "各组人数",
+              "columns": [
+                "组别",
+                "人数"
+              ],
+              "rows": [
+                [
+                  "A组",
+                  "6人"
+                ],
+                [
+                  "B组",
+                  "10人"
+                ],
+                [
+                  "C组",
+                  "8人"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH实验V2变更决策文档",
+                "date": "2026-10-26",
+                "section": "9",
+                "revision_id": "a5-sh-v2-decision-2026-10-26",
+                "unit_id": "SH07_U1"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "group_a",
+              "label": "A组接待费用（元）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "group_b",
+              "label": "B组接待费用（元）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "group_c",
+              "label": "C组接待费用（元）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "groups",
+              "label": "接待费用不超过350元的组",
+              "type": "multi",
+              "required": true,
+              "options": [
+                {
+                  "value": "A",
+                  "label": "A组"
+                },
+                {
+                  "value": "B",
+                  "label": "B组"
+                },
+                {
+                  "value": "C",
+                  "label": "C组"
+                },
+                {
+                  "value": "NONE",
+                  "label": "没有符合的组"
+                }
+              ],
+              "exclusive_value": "NONE"
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "group_a": 240,
+              "group_b": 360,
+              "group_c": 300,
+              "groups": [
+                "A",
+                "C"
+              ]
+            },
+            "source_ref": {
+              "file": "A5 SH实验V2变更决策文档",
+              "date": "2026-10-26",
+              "section": "9",
+              "revision_id": "a5-sh-v2-decision-2026-10-26",
+              "unit_id": "SH07_U1",
+              "item": "answers"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH实验V2变更决策文档",
+            "date": "2026-10-26",
+            "section": "9",
+            "revision_id": "a5-sh-v2-decision-2026-10-26",
+            "unit_id": "SH07_U1"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "在这里记录你的思考...",
+            "max_length": 20000
+          },
+          "reveal": {
+            "button_label": "接待费用.docx",
+            "paragraphs": [
+              "各组的接待费用按以下规则计算：",
+              "耗材：每人12元。",
+              "茶歇：每人18元。",
+              "讲解服务费：每组另收60元。"
+            ],
+            "assets": [],
+            "source_ref": {
+              "file": "A5 SH实验V2变更决策文档",
+              "date": "2026-10-26",
+              "section": "9",
+              "revision_id": "a5-sh-v2-decision-2026-10-26",
+              "unit_id": "SH07_U1",
+              "item": "接待费用.docx"
+            }
+          }
+        },
+        {
+          "unit_id": "SH07_U2",
+          "title": "第二单元：各组接待费用核算",
+          "paragraphs": [
+            "现在B组和C组的茶歇改为每人16元，耗材和讲解服务费不变。A组的接待费用已算好，为240元。",
+            "请根据本页资料，重新计算B组和C组的接待费用，再选出接待费用不超过350元的所有组，可以选择多个组；如果没有符合的组，请选择“没有符合的组”。"
+          ],
+          "tables": [
+            {
+              "id": "table-22",
+              "caption": "更新后的接待费用资料",
+              "columns": [
+                "组别",
+                "人数",
+                "耗材（每人）",
+                "茶歇（每人）",
+                "讲解服务费（每组）",
+                "接待费用"
+              ],
+              "rows": [
+                [
+                  "A组",
+                  "6人",
+                  "12元",
+                  "18元",
+                  "60元",
+                  "240元"
+                ],
+                [
+                  "B组",
+                  "10人",
+                  "12元",
+                  "16元",
+                  "60元",
+                  "待计算"
+                ],
+                [
+                  "C组",
+                  "8人",
+                  "12元",
+                  "16元",
+                  "60元",
+                  "待计算"
+                ]
+              ],
+              "source_ref": {
+                "file": "A5 SH实验V2变更决策文档",
+                "date": "2026-10-26",
+                "section": "9",
+                "revision_id": "a5-sh-v2-decision-2026-10-26",
+                "unit_id": "SH07_U2"
+              }
+            }
+          ],
+          "assets": [],
+          "fields": [
+            {
+              "id": "group_b",
+              "label": "B组接待费用（元）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "group_c",
+              "label": "C组接待费用（元）",
+              "type": "integer",
+              "required": true
+            },
+            {
+              "id": "groups",
+              "label": "接待费用不超过350元的组",
+              "type": "multi",
+              "required": true,
+              "options": [
+                {
+                  "value": "A",
+                  "label": "A组"
+                },
+                {
+                  "value": "B",
+                  "label": "B组"
+                },
+                {
+                  "value": "C",
+                  "label": "C组"
+                },
+                {
+                  "value": "NONE",
+                  "label": "没有符合的组"
+                }
+              ],
+              "exclusive_value": "NONE"
+            }
+          ],
+          "scoring": {
+            "type": "exact",
+            "expected": {
+              "group_b": 340,
+              "group_c": 284,
+              "groups": [
+                "A",
+                "B",
+                "C"
+              ]
+            },
+            "source_ref": {
+              "file": "A5 SH实验V2变更决策文档",
+              "date": "2026-10-26",
+              "section": "9",
+              "revision_id": "a5-sh-v2-decision-2026-10-26",
+              "unit_id": "SH07_U2",
+              "item": "answers"
+            }
+          },
+          "source_ref": {
+            "file": "A5 SH实验V2变更决策文档",
+            "date": "2026-10-26",
+            "section": "9",
+            "revision_id": "a5-sh-v2-decision-2026-10-26",
+            "unit_id": "SH07_U2"
+          },
+          "scratchpad": {
+            "label": "草稿本",
+            "placeholder": "在这里记录你的思考...",
+            "max_length": 20000
+          }
+        }
+      ]
     }
   ],
   "survey_revision_id": "user-requested-surveys-2026-10-25-v2",
@@ -2031,9 +2571,25 @@
     "你当时怎么处理这条消息？看完后继续做任务是否顺利？",
     "如果由你决定，这条消息在哪个步骤出现更合适？为什么？"
   ],
-  "break_ms": 30000,
-  "allow_break_skip": true,
+  "in_unit_rest": {
+    "duration_ms": 30000,
+    "window_min_ms": 60000,
+    "window_min_ms_by_stage": {},
+    "t2_delay_ms": 5000,
+    "button_label": "休息",
+    "early_click_text": "请先做一部分再休息",
+    "already_rested_text": "本单元已经休息过了",
+    "rest_title": "休息一下",
+    "rest_paragraphs": [
+      "请放松一下，暂时不用看题。时间到后会自动回到任务，已填写的答案和草稿都会保留。"
+    ],
+    "show_countdown": true,
+    "reminder_text": "别忘了在本单元中休息一次。",
+    "reminder_display_ms": 5000,
+    "tutorial_duration_ms": 5000,
+    "instruction": "第二单元做题过程中，在你觉得需要的时候休息一次，不要刚开始就休息，也不要在准备提交时休息。"
+  },
+  "rest_revision_id": "a5-sh-v2-decision-2026-10-26",
   "message_duration_ms": 11000,
-  "completion_text": "五组任务已完成，请等待实验员进行访谈。",
-  "break_start_on_display": true
+  "completion_text": "七组任务已完成，请等待实验员进行访谈。"
 }

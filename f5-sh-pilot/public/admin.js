@@ -34,12 +34,12 @@ function renderOnce(node, signatureValue, build) {
 const narrow = window.matchMedia('(max-width: 899px)');
 
 /* ───────── 中文文案 ───────── */
-const PHASES = { TUTORIAL_INTRO:'教程：工作台',TUTORIAL_NOTICE:'教程：阅读通知',TUTORIAL_CHECK:'教程：理解题', INTRO:'情景导入', CARD:'说明卡', UNIT:'主任务', COMPREHENSION:'信息识读理解题', RATINGS:'信息体验评价量表', BREAK:'组间休息', COMPLETED:'完成页', ABORTED:'结束页' };
-const MESSAGE_STATUS = { NONE:'本组无消息', not_triggered:'尚未触发', scheduled:'等待发送', send_requested:'已发出，等待回执', accepted:'请求已接受', failed:'发送失败', unacknowledged:'未收到回执', unknown:'发送结果待核查' };
-const MESSAGE_TONE = { NONE:'neutral', not_triggered:'neutral', scheduled:'pending', send_requested:'pending', accepted:'ok', failed:'bad', unacknowledged:'bad', unknown:'bad' };
+const PHASES = { TUTORIAL_INTRO:'教程：工作台',TUTORIAL_NOTICE:'教程：阅读通知',TUTORIAL_CHECK:'教程：理解题',TUTORIAL_REST:'教程：休息练习', INTRO:'情景导入', CARD:'说明卡', UNIT:'主任务', COMPREHENSION:'信息识读理解题', RATINGS:'信息体验评价量表', BREAK:'组间休息', COMPLETED:'完成页', ABORTED:'结束页' };
+const MESSAGE_STATUS = { NONE:'本组无消息', not_triggered:'尚未触发', awaiting_rest:'等待被试休息', t2_not_triggered:'T2未触发（未休息即提交）', scheduled:'等待发送', send_requested:'已发出，等待回执', accepted:'请求已接受', failed:'发送失败', unacknowledged:'未收到回执', unknown:'发送结果待核查' };
+const MESSAGE_TONE = { NONE:'neutral', not_triggered:'neutral', awaiting_rest:'pending', t2_not_triggered:'neutral', scheduled:'pending', send_requested:'pending', accepted:'ok', failed:'bad', unacknowledged:'bad', unknown:'bad' };
 const CATEGORIES = { interview:'访谈记录', observation:'任务观察', anomaly:'异常备注' };
-const ACTION_DONE = { pause:'已暂停实验', resume:'已恢复实验', stop:'已提前结束会话', skip_break:'已跳过休息', debug_jump:'已跳转到所选调试页面' };
-const ATTENTION = { message_delivery_unknown:'消息发送结果未知', message_failed:'消息发送失败', mock_disconnected:'模拟眼镜未连接', mock_no_ack:'模拟眼镜未返回回执', device_foreground_lost:'眼镜显示端离开前台', device_window_focus_lost:'眼镜显示端失去焦点', device_draw_timeout:'眼镜正文未及时完成绘制', device_hide_draw_timeout:'眼镜清屏未及时完成绘制', device_activity_destroyed_delivery_unknown:'眼镜显示页面被关闭，结果待核查', device_process_restarted_delivery_unknown:'眼镜显示端重启，结果待核查', adapter_send_timeout_delivery_unknown:'发送超时，是否显示待核查', server_restarted_delivery_unknown:'服务重启，发送结果待核查', failed:'消息发送失败', unacknowledged:'未收到消息回执' };
+const ACTION_DONE = { pause:'已暂停实验', resume:'已恢复实验', stop:'已提前结束会话', skip_break:'已跳过休息', remind_rest:'已向被试屏幕发送休息提醒', debug_jump:'已跳转到所选调试页面' };
+const ATTENTION = { device_not_ready_at_t2:'T2送达时眼镜未就绪，未发送且不补发', previous_message_pending:'T2送达时上一条消息尚未确认，未发送且不补发', message_delivery_unknown:'消息发送结果未知', message_failed:'消息发送失败', mock_disconnected:'模拟眼镜未连接', mock_no_ack:'模拟眼镜未返回回执', device_foreground_lost:'眼镜显示端离开前台', device_window_focus_lost:'眼镜显示端失去焦点', device_draw_timeout:'眼镜正文未及时完成绘制', device_hide_draw_timeout:'眼镜清屏未及时完成绘制', device_activity_destroyed_delivery_unknown:'眼镜显示页面被关闭，结果待核查', device_process_restarted_delivery_unknown:'眼镜显示端重启，结果待核查', adapter_send_timeout_delivery_unknown:'发送超时，是否显示待核查', server_restarted_delivery_unknown:'服务重启，发送结果待核查', failed:'消息发送失败', unacknowledged:'未收到消息回执' };
 
 const fmtDateTime = new Intl.DateTimeFormat('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
 const fmtTime = new Intl.DateTimeFormat('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
@@ -64,6 +64,7 @@ function statusOf(s) {
   if (s.status === 'aborted') return { key:'aborted', label:'提前结束' };
   if (s.paused) return { key:'paused', label:'已暂停' };
   if (s.phase === 'BREAK') return { key:'break', label:'休息中' };
+  if (s.rest?.status === 'resting') return { key:'break', label:'U2休息中' };
   return { key:'active', label:'进行中' };
 }
 function position(s) {
@@ -77,7 +78,8 @@ function conditionText(stage) {
   if (!stage) return '';
   if (stage.condition === 'NONE') return '本组无消息';
   const [type, timing] = stage.condition.split('-');
-  return `${type === 'N' ? '通知型消息' : 'AI 主动服务型消息'}，${timing === 'T0' ? '补充资料首次展示时' : '第2单元首次展示时'}（${stage.condition} · ${stage.message_id}）`;
+  const moment = { T0:'补充资料首次展示时', T1:'第2单元首次展示时', T2:'第2单元休息开始5秒后' }[timing] ?? timing;
+  return `${type === 'N' ? '通知型消息' : 'AI 主动服务型消息'}，${moment}（${stage.condition} · ${stage.message_id}）`;
 }
 const conditionShort = stage => stage.condition === 'NONE' ? '无消息' : `${stage.condition.split('-')[0] === 'N' ? '通知' : 'AI'} · ${stage.condition.split('-')[1]}`;
 const isMock = s => s.delivery_source === 'mock' || s.validation_status === 'mock_only';
@@ -90,8 +92,10 @@ function messageStepTwo(s) {
   if (s.message_evidence === 'failed') return { text:'显示端报告异常，请核查', tone:'bad' };
   if (s.message_evidence === 'hidden') return { text:'双眼正文已绘制并已清屏（应用证据）', tone:'ok' };
   if (s.message_evidence === 'drawn') return { text:'双眼正文已绘制（应用证据）', tone:'ok' };
-  if (isMock(s)) return { text:s.message_status === 'not_triggered' ? '模拟模式：不会在眼镜上显示' : '模拟模式：未连接眼镜，没有显示证据', tone:'neutral' };
-  if (s.message_status === 'not_triggered') return { text:'尚未触发', tone:'neutral' };
+  if (s.message_status === 't2_not_triggered') return { text:'不发送、不补发', tone:'neutral' };
+  const waiting = ['not_triggered', 'awaiting_rest'].includes(s.message_status);
+  if (isMock(s)) return { text:waiting ? '模拟模式：不会在眼镜上显示' : '模拟模式：未连接眼镜，没有显示证据', tone:'neutral' };
+  if (waiting) return { text:'尚未触发', tone:'neutral' };
   if (s.message_status === 'accepted') return { text:'尚未收到眼镜绘制证据', tone:'pending' };
   return { text:'没有显示证据', tone: MESSAGE_TONE[s.message_status] === 'bad' ? 'bad' : 'pending' };
 }
@@ -99,12 +103,24 @@ function messageShort(s) {
   if (s.message_status === 'NONE') return '本组无消息';
   if (s.message_evidence === 'drawn' || s.message_evidence === 'hidden') return '消息：眼镜已绘制';
   if (s.message_evidence === 'failed') return '消息：显示端异常';
-  const mockTag = isMock(s) && !['not_triggered', 'accepted'].includes(s.message_status) ? '（模拟）' : '';
+  const mockTag = isMock(s) && !['not_triggered', 'awaiting_rest', 't2_not_triggered', 'accepted'].includes(s.message_status) ? '（模拟）' : '';
   return `消息：${messageStepOne(s)}${mockTag}`;
 }
 function attentionLabel(value) {
   const [stage, reason] = String(value).split(':');
   return `${stage}：${ATTENTION[reason] ?? '消息异常，请查看技术记录'}`;
+}
+const REST_STATUS = { before_window:'未到窗口', available:'可休息', requested:'等待休息页显示', resting:'休息中', returning:'正在返回任务', rested:'已休息', not_rested:'未休息即提交' };
+const REST_KIND = { available:'active', requested:'break', resting:'break', returning:'break', rested:'done', not_rested:'warn' };
+function restT2Text(rest) {
+  switch (rest.t2) {
+    case 'awaiting_rest': return { text:'等待被试休息', tone:'pending' };
+    case 'scheduled': return { text:Number.isFinite(rest.t2_due_in_ms) ? `休息后约 ${Math.max(0, Math.ceil(rest.t2_due_in_ms / 1000))} 秒发送` : '已排定，等待发送', tone:'pending' };
+    case 'sent': return { text:'已发送', tone:'ok' };
+    case 'not_triggered': return { text:'未触发（未休息即提交）', tone:'neutral' };
+    case 'failed': return { text:'发送失败', tone:'bad' };
+    default: return null;
+  }
 }
 /** 与 content/tasks.json 的 message_duration_ms 一致；显示端未声明支持时提示更新 APK。 */
 const FIXED_DURATION_MS = 11000;
@@ -454,7 +470,7 @@ function resetSessionUi(previous) {
   if (previous) noteDrafts.set(previous, { text: $('#note-text').value, category: noteCategory(), stage: $('#note-stage').value });
   $('#control').reset(); closeConfirm(); closeRecover();
   $('#events').replaceChildren(); $('#events').hidden = true; $('#details').textContent = ''; $('#tech').open = false;
-  for (const node of ['#state-values', '#stepper', '#message-steps', '#attention-list', '#selected-badges', '#notes', '#interventions', '#admin-debug-target', '#note-stage']) delete $(node).dataset.sig;
+  for (const node of ['#state-values', '#rest-values', '#stepper', '#message-steps', '#attention-list', '#selected-badges', '#notes', '#interventions', '#admin-debug-target', '#note-stage']) delete $(node).dataset.sig;
   delete $('#access-card').dataset.session;
   $('#note').reset();
 }
@@ -494,6 +510,7 @@ function renderDetail(data) {
   setText($('#state-current'), s.current_title || position(s));
   setText($('#state-updated'), `更新于 ${fmtTime.format(new Date())}`);
   const current = stages.findIndex(x => x.stage_id === s.stage_id);
+  $('#stepper').style.setProperty('--n', String(Math.max(1, stages.length)));
   renderOnce($('#stepper'), [stages.map(x => x.stage_id), current, s.phase, s.status], () => stages.map((x, index) => {
     const state = s.status === 'completed' || s.phase === 'COMPLETED' || index < current || (index === current && s.phase === 'BREAK') ? 'done' : index === current && s.phase !== 'INTRO' ? (s.status === 'active' ? 'current' : 'stopped') : 'todo';
     return el('li', { 'data-state': state, 'aria-current': state === 'current' ? 'step' : null, title: conditionText(x) }, el('span', { class: 'step-bar', 'aria-hidden': 'true' }), el('span', { class: 'step-label', text: x.stage_id }));
@@ -508,6 +525,26 @@ function renderDetail(data) {
     el('dt', { text: label }),
     el('dd', {}, el('span', { text: value }), kind === 'progress' ? progressBar(ratio) : null),
   ]));
+
+  // 本组休息（第2单元自主休息）
+  const rest = s.rest && s.rest.status !== 'not_in_u2' ? s.rest : null;
+  setHidden($('#rest'), !rest);
+  if (rest) {
+    setText($('#rest-title'), `本组休息 · ${s.stage_id}`);
+    const badge = $('#rest-status');
+    setText(badge, REST_STATUS[rest.status] ?? '状态待核查');
+    if (REST_KIND[rest.status]) badge.dataset.kind = REST_KIND[rest.status]; else delete badge.dataset.kind;
+    const restFacts = [];
+    if (rest.u2_elapsed_ms !== null && rest.u2_elapsed_ms !== undefined) restFacts.push(['U2已进行', `${duration(rest.u2_elapsed_ms)}（窗口下限 ${duration(rest.window_min_ms)}）`]);
+    if (['requested', 'resting', 'returning'].includes(rest.status) && rest.remaining_ms !== null && rest.remaining_ms !== undefined) restFacts.push(['休息剩余', `${duration(rest.remaining_ms)}${s.paused ? '（已暂停计时）' : ''}`]);
+    if (valid(rest.rest_started_at)) restFacts.push(['休息开始', `${when(rest.rest_started_at, fmtTime)}${rest.after_reminder ? ' · 提醒后' : ''}`]);
+    restFacts.push(['主试提醒', rest.reminder_count ? `已提醒 ${rest.reminder_count} 次 · 最近 ${when(rest.last_reminder_at, fmtTime)}` : '未提醒']);
+    const t2 = restT2Text(rest);
+    if (t2) restFacts.push(['T2消息', t2.text, t2.tone]);
+    renderOnce($('#rest-values'), restFacts, () => restFacts.flatMap(([label, value, tone]) => [
+      el('dt', { text: label }), el('dd', tone ? { 'data-tone': tone } : {}, el('span', { text: value })),
+    ]));
+  }
 
   // 消息
   const stage = stages.find(x => x.stage_id === s.stage_id);
@@ -552,10 +589,11 @@ function renderControls(s, actions, targets) {
   for (const button of $$('#regular-actions button')) { const allowed = actions.includes(button.value); setHidden(button, !allowed); button.disabled = controlling || !allowed; }
   setHidden($('#regular-actions'), !$$('#regular-actions button').some(b => !b.hidden));
   const pauseButton = $('#regular-actions [value=pause]'), skip = $('#regular-actions [value=skip_break]');
+  setHidden($('#remind-help'), !actions.includes('remind_rest'));
   if (skip) skip.classList.toggle('primary', actions.includes('skip_break'));
   pauseButton.classList.toggle('primary', !actions.includes('skip_break'));
   setText($('#control-help'), active
-    ? `所有干预都会连同原因写入记录。${s.paused ? '实验已暂停，被试页面被锁定，恢复后从原页面继续。' : s.phase === 'BREAK' ? '被试正在组间休息，可在必要时跳过休息。' : ''}`
+    ? `所有干预都会连同原因写入记录。${s.paused ? '实验已暂停，被试页面被锁定，恢复后从原页面继续。' : s.phase === 'BREAK' ? '被试正在组间休息，可在必要时跳过休息。' : actions.includes('remind_rest') ? '被试尚未休息时可提醒休息；提醒后发生的休息会自动标为“提醒后”，如另有口头提醒请写入备注。' : ''}`
     : `会话${statusOf(s).label}，无需常规干预。${actions.includes('delete') ? '如需整理记录，可在下方删除这一次会话（可恢复）。' : ''}`);
   // 调试跳转
   setHidden($('#admin-debug'), !actions.includes('debug_jump'));
@@ -740,7 +778,7 @@ $('#preflight').addEventListener('click', async () => {
           item(c.startup_ok ? 'ok' : 'bad', c.startup_ok ? '软件启动检查通过' : '软件启动检查未通过'),
           item(c.material_errors.length ? 'bad' : 'ok', `材料：文本表格 ${c.materials.text_tables} 张，消息材料 ${c.materials.sh_stimuli} 条；材料错误 ${c.material_errors.length} 项`),
           item(c.pilot_errors.length ? 'bad' : 'ok', `默认配置（${c.pilot_participants.length} 位被试）错误 ${c.pilot_errors.length} 项`),
-          item(c.source_config_errors.length ? 'bad' : 'ok', `源配置错误 ${c.source_config_errors.length} 项`),
+          c.source_config_note ? item('info', c.source_config_note) : item(c.source_config_errors.length ? 'bad' : 'ok', `源配置错误 ${c.source_config_errors.length} 项`),
           ...errors.map(e => item('bad', e)),
           item(deviceInfo(c.adapter).tone === 'ok' ? 'ok' : 'info', deviceInfo(c.adapter).long),
           item(c.pilot_ready ? 'ok' : 'info', c.pilot_ready ? '具备正式实验条件。' : '现场硬件呈现及计时尚待验收。')),
