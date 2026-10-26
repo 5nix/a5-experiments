@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.1",
-  "content_version": "sh-current-2026-10-20-v5",
+  "schema_version": "1.2",
+  "content_version": "sh-current-2026-10-25-v10",
   "revision_id": "user-approved-M1-M6-2026-10-19",
-  "wording_revision_id": "user-requested-task-copy-2026-10-20",
+  "wording_revision_id": "user-requested-task-copy-2026-10-25",
   "intro": {
     "title": "情景导入",
     "paragraphs": [
@@ -34,12 +34,12 @@
           13
         ],
         "revision_id": "user-approved-M1-M6-2026-10-19",
-        "wording_revision_id": "user-requested-task-copy-2026-10-20"
+        "wording_revision_id": "user-requested-task-copy-2026-10-25"
       },
       "units": [
         {
           "unit_id": "SH01_U1",
-          "title": "第1任务单元　筛选出符合预算要求的方案",
+          "title": "第一单元：筛选出符合要求的方案",
           "paragraphs": [
             "请从A、B、C、D四个方案中，选出同时满足以下条件的所有方案：",
             "基本报价≤5万元；筹备时间≤10天；每场可接待人数≥24人。",
@@ -141,7 +141,7 @@
               19
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -190,11 +190,10 @@
         },
         {
           "unit_id": "SH01_U2",
-          "title": "第2任务单元　核算最终费用",
+          "title": "第二单元：筛选出符合要求的方案",
           "paragraphs": [
-            "各方案现在需要增加其他费用。C方案的总费用已算好，请计算A、B、D三个方案的总费用。请以本页最新表格为准，完成以下两步：",
-            "分别计算A、B、D三个方案的最终费用，填写到右侧对应位置。",
-            "重新选择同时满足以下三个条件的所有方案：最终费用≤5万元、筹备时间≤10天、每场可接待人数≥24人。三个条件都符合，才确认合格，可以选择多个方案，也可以选择无方案。"
+            "各方案现在需要增加其他费用，C方案的总费用已计算完成。请按“总费用＝基本报价＋其他费用”，计算A、B、D的总费用。再根据本页全部资料，选出同时满足预算、筹备时间和接待人数要求的所有方案。",
+            "要求：预算≤5万元、筹备时间≤10天、接待人数≥24人。三个条件都符合，才确认合格，可以选择多个方案，也可以选择无方案。"
           ],
           "tables": [
             {
@@ -248,7 +247,7 @@
                 "sheet": "Bi211v",
                 "range": "A1:F5",
                 "sha256": "4f06eebc801c072e18d48bfaed3593cb57271a364c83ba29c0dc504b0f5c64f2",
-                "wording_revision_id": "user-requested-task-copy-2026-10-20"
+                "wording_revision_id": "user-requested-task-copy-2026-10-25"
               }
             }
           ],
@@ -330,7 +329,7 @@
               33
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -355,15 +354,15 @@
           42
         ],
         "revision_id": "user-approved-M1-M6-2026-10-19",
-        "wording_revision_id": "user-requested-task-copy-2026-10-20"
+        "wording_revision_id": "user-requested-task-copy-2026-10-25"
       },
       "units": [
         {
           "unit_id": "SH02_U1",
-          "title": "第1任务单元　安排最早可行的准备日程",
+          "title": "第一单元：准备日程安排",
           "paragraphs": [
-            "你需要安排设备调试、讲解培训和现场验收的日程。设备搬入时间已经确定为9:00开始—9:30结束，其余环节都要在满足要求的情况下尽早开始。",
-            "请先查看上表，再打开《人员时间安排.xlsx》，查看相关人员最早可以开始工作的时间。请在右侧填写三项任务（设备调试、讲解培训、现场验收）最早可开始工作的时间（不是结束的时间！），和能否在12点前完成相关任务的判断"
+            "你需要安排设备调试、讲解培训和现场验收的日程。设备搬入固定为9:00—9:30，其余环节都要在满足要求的情况下尽早开始。",
+            "请结合下表各环节的开始条件，再打开《人员时间安排.xlsx》，查看人员可开始工作的时间。最后填写调试、培训、验收最早可以开始的时间，并判断验收能否最晚在12:00完成。"
           ],
           "tables": [
             {
@@ -402,7 +401,7 @@
                 "sheet": "VenLap",
                 "range": "A2:B6",
                 "sha256": "de4b310a184f13c85d6aafc12a511f789c792cbafcdce72772daebfad3434339",
-                "wording_revision_id": "user-requested-task-copy-2026-10-20"
+                "wording_revision_id": "user-requested-task-copy-2026-10-25"
               }
             }
           ],
@@ -410,25 +409,25 @@
           "fields": [
             {
               "id": "debug",
-              "label": "设备调试最早可开始的时间",
+              "label": "设备调试开始时间",
               "type": "time",
               "required": true
             },
             {
               "id": "training",
-              "label": "讲解培训最早可开始的时间",
+              "label": "讲解培训开始时间",
               "type": "time",
               "required": true
             },
             {
               "id": "acceptance",
-              "label": "现场验收最早可开始的时间",
+              "label": "现场验收开始时间",
               "type": "time",
               "required": true
             },
             {
               "id": "on_time",
-              "label": "能否在12:00前完成验收？",
+              "label": "验收能否最晚在12:00完成？",
               "type": "single",
               "required": true,
               "options": [
@@ -468,7 +467,7 @@
               48
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -506,7 +505,7 @@
                   "sheet": "n2Gwnb",
                   "range": "A2:B5",
                   "sha256": "0b143140ca0fc8cb717708465421fdda00b85b290076566a02eca666d2a9fceb",
-                  "wording_revision_id": "user-requested-task-copy-2026-10-20"
+                  "wording_revision_id": "user-requested-task-copy-2026-10-25"
                 }
               }
             ]
@@ -514,11 +513,9 @@
         },
         {
           "unit_id": "SH02_U2",
-          "title": "第2任务单元　调整准备日程",
+          "title": "第二单元：准备日程安排",
           "paragraphs": [
-            "设备调试时间需要延长，现已确定为9:45开始，10:45结束；现场验收人员改为11:45起可以工作。",
-            "请根据下表，安排讲解培训和现场验收的时间。两个环节都要在满足要求的情况下尽早开始。",
-            "请在右侧填写两项任务（讲解培训、现场验收）最早可开始工作的时间（不是结束的时间！），和能否在12点前完成相关任务的判断"
+            "设备调试时段已确定为9:45—10:45，现场验收人员11:45起可以工作。请根据更新后的资料，填写培训和验收最早可以开始的时间，并判断验收能否最晚在12:00完成。"
           ],
           "tables": [
             {
@@ -552,7 +549,7 @@
                 "sheet": "F5Ku5h",
                 "range": "A1:C5",
                 "sha256": "309fad23d703781b7f7ca475f75b5c7f53d62bd9a6b0f679958d5b4a9b6165da",
-                "wording_revision_id": "user-requested-task-copy-2026-10-20"
+                "wording_revision_id": "user-requested-task-copy-2026-10-25"
               }
             }
           ],
@@ -560,19 +557,19 @@
           "fields": [
             {
               "id": "training",
-              "label": "讲解培训最早可开始的时间",
+              "label": "讲解培训开始时间",
               "type": "time",
               "required": true
             },
             {
               "id": "acceptance",
-              "label": "现场验收最早可开始的时间",
+              "label": "现场验收开始时间",
               "type": "time",
               "required": true
             },
             {
               "id": "on_time",
-              "label": "能否在12:00前完成验收？",
+              "label": "验收能否最晚在12:00完成？",
               "type": "single",
               "required": true,
               "options": [
@@ -610,7 +607,7 @@
               59
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -635,18 +632,15 @@
           68
         ],
         "revision_id": "user-approved-M1-M6-2026-10-19",
-        "wording_revision_id": "user-requested-task-copy-2026-10-20"
+        "wording_revision_id": "user-requested-task-copy-2026-10-25"
       },
       "units": [
         {
           "unit_id": "SH03_U1",
-          "title": "第1任务单元　核对有效确认人数",
+          "title": "第一单元：人数确认与替补",
           "paragraphs": [
-            "本次活动需要24名参与者，目前已有16人完成确认，且不在下方名单中。你现在需要核实的待确认人员信息只有同时满足以下三个条件，才能计入人数：可以全程参加；资料齐全；最新状态为“已确认”。",
-            "请先查看人员信息，再打开《人员的确认状态.xlsx》，核对每个人的最新状态。",
-            "完成核对后，请填写：",
-            "当前有效确认总人数：下方名单中符合要求的人数，加上已有的16人！",
-            "还需补充人数距离24人还差多少人。如果人数已经足够，请填“0”。"
+            "本次活动需要24名参与者，已有16人均符合参加要求，并已确定参加，不在下方名单中。你现在需要核实的是待确认的人员信息，只有同时满足三个条件，才能计入人数：可以全程参加；资料齐全；最新状态为“已确认”。请先查看人员信息，再打开《人员的确认状态.xlsx》，核对每个人的最新状态。",
+            "请先统计下表中符合全部条件的人数，加上原有16人，填写有效确认总人数。再计算距离24人还缺多少人；人数足够时填0。"
           ],
           "tables": [
             {
@@ -745,7 +739,7 @@
               72
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -790,10 +784,9 @@
         },
         {
           "unit_id": "SH03_U2",
-          "title": "第2任务单元　更新后的有效确认人数",
+          "title": "第二单元：人数确认与替补",
           "paragraphs": [
-            "现在收到以下更新：吴桐退出活动；陈晨已补齐资料；周宁已确认可以全程参加，状态为“已确认”。请先根据这三条更新条件，重新统计当前符合要求的人数，已有的16人仍然计入总人数！",
-            "参加要求不变可以全程参加、资料齐全、状态为“已确认”，如果不足24人，请按替补名单的排列顺序依次核实并选择，并填写目前可以有效确认的总人数和还需补充人数。"
+            "现在有以下更新：吴桐状态为已退出；陈晨资料为齐全；周宁状态为已确认。请先根据这三条更新条件，重新统计当前符合要求的人数，已确定的16人仍然计入总人数！然后，请按照替补名单顺序检查人员信息，只选择可以全程参加、资料齐全且已确认的人。到24人后停止；合格替补全部选完仍然不足24人时，填写还缺的人数。"
           ],
           "tables": [
             {
@@ -803,7 +796,7 @@
                 "姓名",
                 "可全程参加",
                 "资料情况",
-                "原确认状态"
+                "新确认状态"
               ],
               "rows": [
                 [
@@ -816,19 +809,19 @@
                   "周宁",
                   "是",
                   "齐全",
-                  "已报名未确认"
+                  "已确认"
                 ],
                 [
                   "陈晨",
                   "是",
-                  "缺一份",
+                  "齐全",
                   "已确认"
                 ],
                 [
                   "吴桐",
                   "是",
                   "齐全",
-                  "已确认"
+                  "已退出"
                 ],
                 [
                   "何佳",
@@ -860,7 +853,8 @@
                 "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet9.xlsx",
                 "sheet": "OCnV9M",
                 "range": "A2:D10",
-                "sha256": "44ea28a4879eab43bae2def9758e647a08129c2c9ddcc232aff8bf252fd7524f"
+                "sha256": "44ea28a4879eab43bae2def9758e647a08129c2c9ddcc232aff8bf252fd7524f",
+                "wording_revision_id": "user-requested-task-copy-2026-10-25"
               }
             },
             {
@@ -916,7 +910,7 @@
           "fields": [
             {
               "id": "substitutes",
-              "label": "应纳入的替补人员",
+              "label": "选择纳入的替补人员",
               "type": "multi",
               "required": true,
               "options": [
@@ -945,13 +939,13 @@
             },
             {
               "id": "total",
-              "label": "有效确认总人数（人）",
+              "label": "纳入替补后的有效确认总人数",
               "type": "integer",
               "required": true
             },
             {
               "id": "gap",
-              "label": "仍缺（人）",
+              "label": "纳入替补后仍缺多少人",
               "type": "integer",
               "required": true
             }
@@ -984,7 +978,7 @@
               87
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -1009,19 +1003,14 @@
           95
         ],
         "revision_id": "user-approved-M1-M6-2026-10-19",
-        "wording_revision_id": "user-requested-task-copy-2026-10-20"
+        "wording_revision_id": "user-requested-task-copy-2026-10-25"
       },
       "units": [
         {
           "unit_id": "SH04_U1",
-          "title": "第1任务单元　为岗位分配人员",
+          "title": "第一单元：人员排班",
           "paragraphs": [
-            "请为以下三个岗位各安排1名工作人员：签到、现场引导、设备管理。请先查看每个人可以承担的岗位，再打开《人员到岗时间安排.xlsx》，查看可到岗的时间。",
-            "安排人员时，需要同时满足以下要求：",
-            "该人员可以承担所选岗位；",
-            "该人员在岗位开始前或开始时到岗。例如，岗位13:00开始，13:00到岗也符合要求；",
-            "每人只能安排到一个岗位，不能重复使用。",
-            "请在三个岗位对应的下拉框中选择对应的工作人员。"
+            "请为以下三个岗位各安排1名工作人员：签到、现场引导、设备管理。先查看每个人可以承担的岗位，再打开《人员到岗时间安排.xlsx》，查看可到岗的时间。你需要为三个岗位各安排1人，所选人员必须具备对应岗位资格，并在岗位开始时或之前到岗。每人只能去一个岗位，满足全部要求的任一安排均可。"
           ],
           "tables": [
             {
@@ -1284,7 +1273,7 @@
               99
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -1337,10 +1326,9 @@
         },
         {
           "unit_id": "SH04_U2",
-          "title": "第2任务单元　根据人员变化重新排班",
+          "title": "第二单元：人员排班",
           "paragraphs": [
-            "现在收到以下人员变动：周悦缺席，不能安排任何岗位；赵禾改为13:10到岗；新加了梁欣，12:55到岗。请根据本页最新人员信息，为三个岗位重新各安排1人。每位人员都必须能够承担所选岗位，并且在岗位开始前或开始时到岗。每人只能安排到一个岗位。",
-            "请在三个岗位对应的下拉框中选择对应的工作人员。"
+            "现在收到以下人员变动：周悦缺席，不能安排任何岗位；赵禾改为13:10到岗；新加了梁欣，12:55到岗。你需要为三个岗位各安排1人，所选人员必须具备对应岗位资格，并在岗位开始时或之前到岗。每人只能去一个岗位，满足全部要求的任一安排均可。"
           ],
           "tables": [
             {
@@ -1635,7 +1623,7 @@
               109
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -1660,12 +1648,12 @@
           118
         ],
         "revision_id": "user-approved-M1-M6-2026-10-19",
-        "wording_revision_id": "user-requested-task-copy-2026-10-20"
+        "wording_revision_id": "user-requested-task-copy-2026-10-25"
       },
       "units": [
         {
           "unit_id": "SH05_U1",
-          "title": "第1任务单元　计算可用库存与物料缺口",
+          "title": "第一单元：库存清点与采购",
           "paragraphs": [
             "本次活动有24名参与者、再加上6名工作人员，共设置3个活动区域。请先查看库存表，再打开《配套规则.docx》，了解每种物料需要准备多少份。库存总数中包含损坏物料，损坏的物料不能使用。请分别计算以下两项数量：",
             "实际可用数量：库存总数减去损坏数量。",
@@ -1722,13 +1710,13 @@
             },
             {
               "id": "guide_available",
-              "label": "活动指南：实际可用数量（张）",
+              "label": "活动指南：实际可用数量（份）",
               "type": "integer",
               "required": true
             },
             {
               "id": "guide_gap",
-              "label": "活动指南：需要补充的数量（张）",
+              "label": "活动指南：需要补充的数量（份）",
               "type": "integer",
               "required": true
             },
@@ -1771,7 +1759,7 @@
               122
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -1798,10 +1786,10 @@
         },
         {
           "unit_id": "SH05_U2",
-          "title": "第2任务单元　选择补充方案",
+          "title": "第二单元：库存清点与采购",
           "paragraphs": [
-            "活动所需物料总数已经核实：胸牌需要30张，活动指南需要30份，体验记录表需要51张。请根据本页资料继续完成采购选择。采购需求：补充预算不超过130元，物料须在11月20日12:00前送达。",
-            "请从A、B、C、D四个补充方案中选择一个。选好后，请分别填写胸牌和体验记录表在补充后多出的数量：多出的数量＝原有实际可用数量＋所选方案补充数量－活动所需总数。"
+            "活动所需物料总数已经核实：胸牌需要30张，活动指南需要30份，体验记录表需要51张，请根据本页资料继续完成采购选择。",
+            "请从四个补充方案中选择一个合格的方案，所选方案必须同时满足：胸牌和体验记录表补充后均达到活动所需数量；总费用不超过130元；最晚于11月20日12:00送达。再填写补充后两种物料各多出多少。"
           ],
           "tables": [
             {
@@ -1809,24 +1797,20 @@
               "caption": "原库存数",
               "columns": [
                 "物料",
-                "原库存总数",
-                "损坏数"
+                "可用库存"
               ],
               "rows": [
                 [
                   "胸牌",
-                  "28张",
-                  "2张"
+                  "26张"
                 ],
                 [
                   "活动指南",
-                  "35份",
-                  "3份"
+                  "32份"
                 ],
                 [
                   "体验记录表",
-                  "48张",
-                  "4张"
+                  "44张"
                 ]
               ],
               "source_ref": {
@@ -1834,7 +1818,8 @@
                 "embedded_file": "word/embeddings/Microsoft_Excel_Worksheet17.xlsx",
                 "sheet": "J6IK0f",
                 "range": "A1:C4",
-                "sha256": "678727e0197a8e273a922db001e6663712b842a05fc1b55829e6a1389cbaecc8"
+                "sha256": "678727e0197a8e273a922db001e6663712b842a05fc1b55829e6a1389cbaecc8",
+                "wording_revision_id": "user-requested-task-copy-2026-10-25"
               }
             },
             {
@@ -1951,7 +1936,7 @@
               138
             ],
             "revision_id": "user-approved-M1-M6-2026-10-19",
-            "wording_revision_id": "user-requested-task-copy-2026-10-20"
+            "wording_revision_id": "user-requested-task-copy-2026-10-25"
           },
           "scratchpad": {
             "label": "草稿本",
@@ -1962,58 +1947,83 @@
       ]
     }
   ],
+  "survey_revision_id": "user-requested-surveys-2026-10-25-v2",
+  "survey_pages": {
+    "comprehension": {
+      "title": "信息识读理解题",
+      "paragraphs": [
+        "请根据刚才做任务时的实际情况，先回答是否注意到眼镜中的消息，再回答消息内容题，若不记得或无法确定消息内容，请选择“不记得或不确定”。"
+      ],
+      "notice_field": {
+        "id": "message_notice",
+        "label": "第1题：刚才做任务时，你注意到眼镜的信息提示了吗？",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "value": "not_noticed",
+            "label": "没有注意到任何消息提示"
+          },
+          {
+            "value": "partially_read",
+            "label": "注意到了提示，但没有完整读到消息内容"
+          },
+          {
+            "value": "fully_read",
+            "label": "完整读到了消息内容"
+          }
+        ]
+      },
+      "uncertain_option_text": "不记得或不确定"
+    },
+    "ratings": {
+      "title": "信息体验评价量表",
+      "paragraphs": [
+        "请回想刚才第一次注意到眼镜消息时的情况，以及它对你完成任务的影响，按实际感受回答。"
+      ],
+      "skip_if_not_noticed": true
+    }
+  },
   "ratings": [
     {
       "id": "timing",
-      "label": "时机的合适度：你觉得这条信息出现的时机合适吗？1分（非常不合适）7分（非常合适）",
+      "label": "结合你当时正在做的事，你觉得这条消息出现的时机合适吗？",
       "min": 1,
       "max": 7,
-      "source_ref": {
-        "file": "A5 SH任务pilot.docx",
-        "block_indexes": [
-          148
-        ],
-        "revision_id": "user-approved-M1-M6-2026-10-19"
-      }
+      "min_label": "非常不合适",
+      "max_label": "非常合适"
     },
     {
-      "id": "disruption",
-      "label": "打扰感：这条消息对你刚才做任务的打扰程度有多大？1分（完全没有打扰）7分（打扰非常大）",
+      "id": "attention_distraction",
+      "label": "这条消息分散了我做任务时的注意力。",
       "min": 1,
       "max": 7,
-      "source_ref": {
-        "file": "A5 SH任务pilot.docx",
-        "block_indexes": [
-          149
-        ],
-        "revision_id": "user-approved-M1-M6-2026-10-19"
-      }
+      "min_label": "完全不同意",
+      "max_label": "完全同意"
     },
     {
-      "id": "effort",
-      "label": "完成主任务的努力程度：因为这条消息，你需要多花多少精力才能继续完成任务？1分（完全不需要）7分（需要非常多）",
+      "id": "thought_disruption",
+      "label": "这条消息扰乱了我当时的思路。",
       "min": 1,
       "max": 7,
-      "source_ref": {
-        "file": "A5 SH任务pilot.docx",
-        "block_indexes": [
-          150
-        ],
-        "revision_id": "user-approved-M1-M6-2026-10-19"
-      }
+      "min_label": "完全不同意",
+      "max_label": "完全同意"
     },
     {
-      "id": "helpfulness",
-      "label": "帮助程度：结合情景，这条消息对你处理你之后要处理的事情有多大帮助？1分（完全没有帮助）7分（帮助非常大）",
+      "id": "task_interference",
+      "label": "这条消息妨碍了我继续完成任务。",
       "min": 1,
       "max": 7,
-      "source_ref": {
-        "file": "A5 SH任务pilot.docx",
-        "block_indexes": [
-          151
-        ],
-        "revision_id": "user-approved-M1-M6-2026-10-19"
-      }
+      "min_label": "完全不同意",
+      "max_label": "完全同意"
+    },
+    {
+      "id": "perceived_disturbance",
+      "label": "这条消息让我感到被打扰。",
+      "min": 1,
+      "max": 7,
+      "min_label": "完全不同意",
+      "max_label": "完全同意"
     }
   ],
   "interview_prompts": [
@@ -2021,8 +2031,9 @@
     "你当时怎么处理这条消息？看完后继续做任务是否顺利？",
     "如果由你决定，这条消息在哪个步骤出现更合适？为什么？"
   ],
-  "break_ms": 180000,
+  "break_ms": 30000,
   "allow_break_skip": true,
-  "message_duration_ms": 8500,
-  "completion_text": "五组任务已完成，请等待实验员进行访谈。"
+  "message_duration_ms": 11000,
+  "completion_text": "五组任务已完成，请等待实验员进行访谈。",
+  "break_start_on_display": true
 }

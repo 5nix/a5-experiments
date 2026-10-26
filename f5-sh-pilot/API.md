@@ -110,7 +110,7 @@ CSV使用UTF-8 BOM，公式前缀文本转义，未知时间为空。设备drawn
 | 页面继续/单元转换 | intro_continue、card_continue、continue_clicked、unit_transition_started、stage_completed、session_completed |
 | 附件与触发 | reveal_clicked（展开/收起）、reveal_displayed（E）、u2_displayed（T1触发依据）、F_candidate（SH05_U1首次完整提交候选） |
 | 作答与评分 | answer_changed、submit_clicked、submission_recorded、submission_rejected、unit_scored |
-| 理解与评价 | comprehension_submitted（答案及正确性）、ratings_submitted（四项评分） |
+| 理解与评价 | comprehension_submitted（两题答案及内容题正确性）、ratings_submitted（五项评分）、comprehension_skipped与ratings_skipped（跳过原因） |
 | 草稿本 | scratchpad_changed（内容变化）；目前没有独立的打开/关闭事件 |
 | 阅读按钮 | notice_read_clicked（每次点击，包括误点与未触发原因）、message_user_confirmed（首次有效确认意图） |
 | 消息派发 | message_scheduled、message_send_requested、message_send_accepted、message_failed、message_transport_error |
@@ -123,3 +123,31 @@ CSV使用UTF-8 BOM，公式前缀文本转义，未知时间为空。设备drawn
 | 全局设备/配置审计 | config_imported、device_status_changed、device_event_rejected、device_control（守护、探测、重连、手动通知、镜像及错误）；保存于settings/admin_audit/设备记录，不伪装成被试行为 |
 
 新会话事件包含event_id、session_id、participant_id、stage_id/unit_id、condition、data_kind、is_debug、内容版本、服务端ISO时间与会话相对毫秒。旧记录可能缺少后来新增的字段，原始数据不回填。客户端时间仅有实际客户端证据时记录；电脑与眼镜时钟未同步，跨设备绝对时差不当作呈现或注意延迟。网络完全不可用时客户端会提示记录失败，未送达的数据不能宣称已经落盘。
+
+### 任务包后的问卷数据（内容版本v7起）
+
+信息识读理解题的提交为 `{ message_notice, answer }`，两项独立必答。`message_notice` 的值为 `not_noticed`（没有注意到任何消息提示）、`partially_read`（注意到了提示，但没有完整读到消息内容）或 `fully_read`（完整读到了消息内容）；`answer` 仍为当前消息内容题的 A/B/C 选项。第1题不联动第2题，也不参与内容题判分。`comprehension_submitted` 事件同时保存两项答案，`correct` 只依据内容题原正确选项计算。
+
+量表提交保存五个1—7分整数：`timing`（时机）、`attention_distraction`（分散注意力）、`thought_disruption`（扰乱思路）、`task_interference`（妨碍继续完成任务）、`perceived_disturbance`（感到被打扰）。题目、端点和说明随内容快照固定；草稿沿用原有页面草稿机制。
+
+`surveys.csv` 增加 `message_notice` 和上述新量表字段；历史的 `disruption`、`effort`、`helpfulness` 列保留用于旧会话，不将旧题答案映射为新题答案。旧会话缺失的新字段导出为空，原始事件与会话快照不回填。现有 NONE 组处理和页面顺序不变。新配置仅用于新建会话。
+
+内容版本v8起，快照中的 `survey_pages.ratings.skip_if_not_noticed=true` 启用条件跳转。只有理解页两题通过校验并保存后，`not_noticed` 才跳过量表，`partially_read`、`fully_read` 进入量表；草稿改选不跳转，内容题正误与C选项均不影响跳转。跳过后沿用原来的组间休息或最终完成流程。没有该开关的历史快照保持原有流程。
+
+未注意到提示而跳过时，先记录 `comprehension_submitted`，再记录 `ratings_skipped`（`reason=not_noticed`、消息ID和注意情况）。无消息组在U2提交后记录 `comprehension_skipped`、`ratings_skipped`，两者均为 `reason=no_message`，不会生成虚假的问卷回答。上述事件及最终状态在同一个事务中保存，失败时整体回滚，重复提交不重复记录。
+
+`surveys.csv` 的 `ratings_status` 区分 `submitted`、`skipped`、`pending`，另有 `ratings_skip_reason` 和 `ratings_skipped_at`。跳过量表时各评分及 `ratings_submitted` 留空，不能当作0分；无消息组只在 `events.jsonl` 记录跳过原因，保持不生成问卷行。
+
+### 组间休息（内容版本v9起）
+
+`content/tasks.json` 的 `break_ms=30000`、`break_start_on_display=true`；生成来源是 `content/revisions.json` 的 `break_settings`。本组所有必填问卷提交后只进入待显示的休息页，收到可见的 `displayed` 命令才记录 `break_displayed` 并启动倒计时。问卷填写与显示前等待不计入休息。刷新或重复显示回执不重置计时，未满30秒的继续请求被拒绝；倒计时完成后按钮为“开始下一任务”。原有跳过与人工暂停规则保留，U1至U2衔接和消息、问卷跳转规则不变。
+
+`break_started`、`break_completed`、`continue_clicked`、`break_skipped` 通过 `break_id`（对应页面令牌）关联。`breaks.csv` 每次已显示的休息一行，包含 `displayed_at`、`countdown_ended_at`、`continue_clicked_at` 及 `actual_rest_ms`。实际时长为会话单调时间的显示至继续/跳过间隔，不封顶为30000毫秒；未点击时留空。提前跳过单独记主体、原因和剩余时间，不伪造完成。
+
+`countdown_ended_at` 是倒计时逻辑到零的时间，`completion_observed_at` 是服务端实际检测到零的时间；延迟轮询或重启不会把后者误作前者。人工暂停冻结倒计时并顺延到零时刻，实际休息间隔包含暂停和到零后等待。客户端显示与点击时间证据分别保留在 `display_client`、`continue_client`，服务端ISO时间和单调毫秒数同时保存。旧会话按原内容快照执行，历史缺失的字段不回填。
+
+### 消息固定时长与隐藏原因（内容版本v10、显示端1.1.4起）
+
+两种固定策略的新请求为 `duration_ms=11000`，保持 `legacy_8500`、`tone_8500` 策略标识及原有无声/有声设置。Android先记录双眼 `drawn`，再以该事件的设备单调时间加11000安排隐藏；`hidden` 在双眼内容清除绘制后记录。持续确认策略忽略协议duration_ms兼容值，不设置自动隐藏或确认后倒计时，确认收到后立即清除画面，声音配置不变。旧请求8500毫秒仍可由新版显示端按旧快照执行。
+
+设备事件增加 `display_mode`、`duration_ms` 和 `hide_reason`，后者仅在hidden时赋值，至少区分 `auto_timeout` 与 `user_confirmed`，取消/故障另记原因。`interventions.csv` 另列 `auto_hide_after_ms`（确认策略为空）、`device_drawn_wall_ms`、`device_drawn_monotonic_ms`、`device_hidden_wall_ms`、`device_hidden_monotonic_ms`、`hide_reason`、`device_confirmed_wall_ms`、`device_confirmed_monotonic_ms`。用户主机确认时刻仍保存于 `confirmation_requested_at`，设备确认事件则单独保存；不混用两端时钟。实际显示时长继续只用同一设备clock_id下的drawn至hidden差值，历史原因缺失时留空，不按模式猜测。

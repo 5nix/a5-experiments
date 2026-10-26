@@ -119,7 +119,7 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
   async send(request: GlassesRequest): Promise<GlassesReceipt> {
     const t_send = new Date().toISOString();
     if (request.device_id !== this.state.device_id) throw new Error('device_binding_mismatch');
-    if (Buffer.byteLength(request.text, 'utf8') > 16000 || !request.text.trim() || request.duration_ms !== 8500) throw new Error('device_invalid_stimulus');
+    if (Buffer.byteLength(request.text, 'utf8') > 16000 || !request.text.trim() || ![8500, 11000].includes(request.duration_ms)) throw new Error('device_invalid_stimulus');
     let evidence: unknown;
     try {
       // 不重连后补发；断线恢复仅用于状态和历史事件。
@@ -157,7 +157,8 @@ export class RayNeoGlassesAdapter implements GlassesAdapter {
         const event = item.event as GlassesEvent;
         if (!event || typeof event.event_id !== 'string' || typeof event.request_id !== 'string' || event.device_id !== this.state.device_id ||
           !['accepted', 'drawn', 'hidden', 'failed', 'confirmed', 'cue_started', 'cue_failed'].includes(event.kind) || !Number.isFinite(event.device_wall_ms) || !Number.isFinite(event.device_monotonic_ms) ||
-          typeof event.clock_id !== 'string' || !(event.error === null || typeof event.error === 'string')) throw new Error('device_invalid_event');
+          typeof event.clock_id !== 'string' || !(event.error === null || typeof event.error === 'string') ||
+          !(event.hide_reason === undefined || event.hide_reason === null || typeof event.hide_reason === 'string')) throw new Error('device_invalid_event');
         receive(event); // 持久化成功才前移游标；重复批次由 Store 去重。
         this.cursor = item.seq;
       }

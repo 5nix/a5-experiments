@@ -66,6 +66,24 @@ async function bridge() {
 }
 const request = (): GlassesRequest => ({ request_id: randomUUID(), session_id: randomUUID(), participant_id: '000', stage_id: 'SH01', message_id: 'N01',
   text: '通知：“线上方案评审会”\n调整为13:30开始。🙂 \\ $() `test`', duration_ms: 8500, device_id: 'adb:test-usb' });
+
+test('USB协议原样传输两种固定策略的11000ms及设备隐藏原因，不改写绘制和隐藏时间', async () => {
+  const b = await bridge();
+  try {
+    for (const display_mode of ['legacy_8500', 'tone_8500'] as const) {
+      const req: GlassesRequest = { ...request(), duration_ms: 11000, display_mode };
+      assert.equal((await b.adapter.send(req)).status, 'accepted');
+      assert.equal(b.requests.get(req.request_id)!.duration_ms, 11000);
+      assert.equal(b.requests.get(req.request_id)!.display_mode, display_mode);
+      const drawn = b.emit(req, 'drawn', { device_wall_ms: 9000, device_monotonic_ms: 4000 });
+      const hidden = b.emit(req, 'hidden', { device_wall_ms: 20016, device_monotonic_ms: 15016, hide_reason: 'auto_timeout', display_mode, duration_ms: 11000 });
+      const events: GlassesEvent[] = [];
+      await b.adapter.pollEvents(event => events.push(event));
+      assert.deepEqual(events.filter(e => e.request_id === req.request_id), [drawn, hidden]);
+    }
+  } finally { await b.close(); }
+});
+
 const visible = { visibility_state: 'visible', monotonic_ms: 10, time_origin_ms: 1000, timestamp_iso: '2026-10-19T00:00:00.000Z' };
 async function fixture(adapter: GlassesAdapter, db = ':memory:') {
   const store = new Store(db), material = await loadMaterial(), config = await readJson<ParticipantConfig>('config/participants.source.json');

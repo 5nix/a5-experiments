@@ -21,7 +21,7 @@ export async function preflight() {
   const sourceErrors = validateConfig(source, material.stimuli);
   const materialErrors: string[] = [];
   if (tasks.stages.length !== 5 || tasks.stages.some(s => s.units.length !== 2)) materialErrors.push('任务配置必须为5组10单元。');
-  if (tasks.break_ms !== 180000 || tasks.message_duration_ms !== 8500) materialErrors.push('任务休息或消息目标时长与当前协议不一致。');
+  if (tasks.break_ms !== 30000 || tasks.break_start_on_display !== true || tasks.message_duration_ms !== 11000) materialErrors.push('任务休息或消息目标时长与当前协议不一致。');
   for (const stage of tasks.stages) for (const unit of stage.units) {
     if (!unit.fields.length || unit.fields.some(f => !f.required)) materialErrors.push(`${unit.unit_id}必须配置完整必答字段。`);
     for (const table of [...(unit.tables ?? []), ...(unit.reveal?.tables ?? [])]) {

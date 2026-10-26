@@ -198,7 +198,7 @@ export class DeviceControl {
     if (!state.connected || !state.ready || state.busy) throw new HttpError(409, '显示端未就绪，请先点击“唤醒并打开显示端”。');
     const record: DebugRecord = { request_id: input.request_id, text: input.text, device_id: state.device_id, created_at: new Date(this.now()).toISOString(), display_mode:mode,status: 'sending', error: null, events: [] };
     this.save(record);
-    const request: GlassesRequest = { request_id: record.request_id, session_id: `device-debug:${randomUUID()}`, participant_id: 'DEVICE_DEBUG', stage_id: 'SH01', message_id: 'DEVICE_DEBUG', text: record.text, duration_ms: 8500, display_mode:mode, device_id: state.device_id };
+    const request: GlassesRequest = { request_id: record.request_id, session_id: `device-debug:${randomUUID()}`, participant_id: 'DEVICE_DEBUG', stage_id: 'SH01', message_id: 'DEVICE_DEBUG', text: record.text, duration_ms: mode === 'confirm_until_ack' ? 8500 : 11000, display_mode:mode, device_id: state.device_id };
     try {
       const receipt = await this.engine.adapter.send(request);
       const current = JSON.parse((this.engine.store.db.prepare('SELECT data FROM device_debug_requests WHERE request_id=?').get(record.request_id) as { data: string }).data) as DebugRecord;

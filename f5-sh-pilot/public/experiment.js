@@ -605,19 +605,19 @@ function breakPage(view) {
     const skip = primary('跳过休息', () => act(skip, () => command('skip_break')), 'standard');
     skip.id = 'skip-break'; actionsNode.append(skip);
   }
-  const next = primary('继续', () => act(next, () => command('continue'), { reenable: false }));
+  const next = primary('开始下一任务', () => act(next, () => command('continue')));
   next.id = 'continue-button'; actionsNode.append(next);
-  breakClock = { remaining: view.remaining_ms, origin: performance.now() };
+  breakClock = { remaining: view.remaining_ms, origin: performance.now(), running: view.break_countdown_started };
   tickBreak();
 }
 function tickBreak() {
   if (current?.phase !== 'BREAK' || !breakClock) return;
-  const remaining = Math.max(0, breakClock.remaining - (performance.now() - breakClock.origin));
+  const remaining = Math.max(0, breakClock.remaining - (breakClock.running ? performance.now() - breakClock.origin : 0));
   const seconds = Math.ceil(remaining / 1000);
   const time = document.querySelector('#countdown');
   if (time) time.textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
   const button = document.querySelector('#continue-button');
-  if (button && ready && !pending) button.disabled = remaining > 0;
+  if (button && ready && !pending) button.disabled = !breakClock.running || remaining > 0;
 }
 
 // 任务栏右下角的时钟固定显示当前任务组说明卡中的情景时间，全程不走动。
@@ -697,7 +697,8 @@ async function render(view) {
   }
   if (ticket !== generation) return;
   if (await visiblePaint(ticket)) {
-    await command('displayed');
+    const displayedView = await command('displayed');
+    if (view.phase === 'BREAK' && ticket === generation) breakClock = { remaining: displayedView.remaining_ms, origin: performance.now(), running: displayedView.break_countdown_started };
     if (view.reveal?.open && ticket === generation) {
       // 刷新前附件处于打开状态：工作台报告可见之后再恢复附件窗口。
       await fillViewer(view.reveal); showViewer();
@@ -752,7 +753,7 @@ setInterval(async () => {
     renderMessageConfirmation(view); current.message_confirmation = view.message_confirmation;
     // 只有page_token或phase变化才整体切页，避免打断输入法、焦点与草稿本编辑。
     if (view.page_token !== current.page_token || view.phase !== current.phase) await render(view);
-    else if (view.phase === 'BREAK') breakClock = { remaining: view.remaining_ms, origin: performance.now() };
+    else if (view.phase === 'BREAK') breakClock = { remaining: view.remaining_ms, origin: performance.now(), running: view.break_countdown_started };
   } catch (problem) { showError(problem); }
 }, 1500);
 addEventListener('blur', () => { if (current && current.phase !== 'PAUSED') command('blur').catch(() => {}); });

@@ -30,7 +30,7 @@ function fixture(path = ':memory:', adapter = new MockGlassesAdapter()) {
   return { store, engine, created, send, display, advance: (ms: number) => { now += ms; }, clock };
 }
 
-test('完整五组闭环：10单元、4次消息、4份问卷、4次180秒休息、6类导出', async () => {
+test('完整五组闭环：10单元、4次消息、4份问卷、4次30秒休息及休息记录导出', async () => {
   const f = fixture(); const directory = await mkdtemp(join(tmpdir(), 'a5-export-'));
   try {
     f.display(); f.send('continue');
@@ -48,10 +48,10 @@ test('完整五组闭环：10单元、4次消息、4份问卷、4次180秒休息
       if (stage !== 4) {
         assert.equal(f.engine.view(f.created.session_id).phase, 'COMPREHENSION'); f.display();
         const stimulus = material.stimuli.find(s => s.message_id === config.participants[0].stages[stage].message_id && s.stage_id === config.participants[0].stages[stage].stage_id)!;
-        f.send('submit', { answer: { answer: stimulus.correct_option } }); f.display();
-        f.send('submit', { answer: { timing: '4', disruption: '3', effort: '2', helpfulness: '6' } });
+        f.send('submit', { answer: { message_notice: 'fully_read', answer: stimulus.correct_option } }); f.display();
+        f.send('submit', { answer: { timing: '4', attention_distraction: '3', thought_disruption: '2', task_interference: '6', perceived_disturbance: '5' } });
         assert.equal(f.engine.view(f.created.session_id).phase, 'BREAK'); f.display();
-        f.advance(179999); assert.throws(() => f.send('continue'), /休息尚未/);
+        f.advance(29999); assert.throws(() => f.send('continue'), /休息尚未/);
         f.advance(1); assert.equal(f.engine.view(f.created.session_id).can_continue, true); f.send('continue');
       }
     }
@@ -67,12 +67,12 @@ test('完整五组闭环：10单元、4次消息、4份问卷、4次180秒休息
     assert.equal(events.filter(e => e.event_type === 'break_started').length, 4);
     assert.equal(events.filter(e => e.event_type === 'comprehension_submitted').length, 4);
     assert.equal(f.store.interventions(f.created.session_id).length, 4);
-    assert.ok(f.store.interventions(f.created.session_id).every(m => m.duration_ms === 8500 && m.source === 'mock' && m.t_display === null && m.t_hide === null));
+    assert.ok(f.store.interventions(f.created.session_id).every(m => m.duration_ms === 11000 && m.source === 'mock' && m.t_display === null && m.t_hide === null));
     assert.ok(events.every((e, i) => i === 0 || e.elapsed_ms >= events[i - 1].elapsed_ms));
     const output = await exportData(f.engine, [f.created.session_id], directory);
-    assert.deepEqual(output.row_counts, { events: events.length, trials: 10, interventions: 4, surveys: 4, sessions: 1, notes: 1 });
+    assert.deepEqual(output.row_counts, { events: events.length, trials: 10, interventions: 4, surveys: 4, breaks: 4, sessions: 1, notes: 1 });
     const files = unzipSync(output.bytes);
-    for (const name of ['events.jsonl', 'trials.csv', 'interventions.csv', 'surveys.csv', 'sessions.csv', 'notes.csv', 'snapshots.json', 'manifest.json']) assert.ok(files[name]);
+    for (const name of ['events.jsonl', 'trials.csv', 'interventions.csv', 'surveys.csv', 'breaks.csv', 'sessions.csv', 'notes.csv', 'snapshots.json', 'manifest.json']) assert.ok(files[name]);
     assert.ok(strFromU8(files['notes.csv']).includes("'=原始访谈记录"));
     assert.ok(strFromU8(files['events.jsonl']).includes('=原始访谈记录'));
     assert.equal(JSON.parse(strFromU8(files['manifest.json'])).row_counts.trials, 10);
@@ -133,7 +133,7 @@ test('慢回执不阻塞U1提交，F与正误无关，问卷必答', async () =>
     assert.equal(f.send('submit', { answer: { plans: ['A'] } }).phase, 'UNIT');
     f.display(); f.send('submit', { answer: correct(material.content.stages[0].units[1]) }); f.display();
     assert.throws(() => f.send('submit', { answer: {} }), /完整填写/);
-    f.send('submit', { answer: { answer: 'C' } }); f.display();
+    f.send('submit', { answer: { message_notice: 'partially_read', answer: 'C' } }); f.display();
     assert.throws(() => f.send('submit', { answer: { timing: '4' } }), /完整填写/);
     // 新会话将任务状态置入SH05，仅用于隔离F定义的测试，不是公开跳转接口。
     f.store.tx(() => { const s = f.engine.session(f.created.session_id); s.state.stage = 4; s.state.unit = 0; f.engine.transition(s, 'UNIT'); f.store.save(s); });
@@ -176,9 +176,10 @@ test('暂停时拒绝作答，休息暂停不计时；停止会话留下人工�
     f.display(); f.engine.adminAction(f.created.session_id, 'pause', '现场检查');
     assert.equal(f.engine.view(f.created.session_id).phase, 'PAUSED'); assert.throws(() => f.send('continue'), /已暂停/);
     f.engine.adminAction(f.created.session_id, 'resume', '继续');
-    f.store.tx(() => { const s = f.engine.session(f.created.session_id); f.engine.transition(s, 'BREAK'); s.state.break_until_ms = f.engine.elapsed(s) + 180000; f.store.save(s); });
+    f.store.tx(() => { const s = f.engine.session(f.created.session_id); f.engine.transition(s, 'BREAK'); s.state.break_until_ms = null; f.store.save(s); });
+    f.display();
     f.advance(10000); f.engine.adminAction(f.created.session_id, 'pause', '暂停休息'); f.advance(20000); f.engine.adminAction(f.created.session_id, 'resume', '恢复休息');
-    assert.equal(f.engine.view(f.created.session_id).remaining_ms, 170000);
+    assert.equal(f.engine.view(f.created.session_id).remaining_ms, 20000);
     f.engine.adminAction(f.created.session_id, 'stop', '测试结束'); assert.equal(f.engine.view(f.created.session_id).phase, 'ABORTED');
     assert.ok(f.store.events(f.created.session_id).some(e => e.event_type === 'admin_intervention' && e.payload.action === 'stop'));
   } finally { await f.engine.settle(); f.store.close(); }

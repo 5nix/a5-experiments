@@ -40,7 +40,7 @@ export class Engine {
       : m.confirmation_status !== 'accepted'));
   }
   private requirePreviousMessageFinished(s: Session) {
-    if (this.store.interventions(s.id).some(m => m.data_kind === 'manual' && m.display_mode !== 'confirm_until_ack' && m.status !== 'failed' && (m.source === 'device' ? !m.device_events?.some(e => e.kind === 'hidden') : !!m.t_send && this.wallNow()-Date.parse(m.t_send)<8500))) throw new HttpError(409, '手动通知仍在显示，请等待后再触发下一条。');
+    if (this.store.interventions(s.id).some(m => m.data_kind === 'manual' && m.display_mode !== 'confirm_until_ack' && m.status !== 'failed' && (m.source === 'device' ? !m.device_events?.some(e => e.kind === 'hidden') : !!m.t_send && this.wallNow()-Date.parse(m.t_send)<m.duration_ms))) throw new HttpError(409, '手动通知仍在显示，请等待后再触发下一条。');
     if (this.pendingConfirmation(s)) throw new HttpError(409, '请先确认上一条眼镜消息，并等待眼镜消失回执，再触发下一条消息。');
   }
   private guardTrigger(s: Session, timing: 'T0' | 'T1') {
@@ -240,8 +240,13 @@ export class Engine {
   fields(s: Session): Field[] {
     if (s.state.phase === 'UNIT') return this.unit(s).fields;
     if (s.state.phase === 'TUTORIAL_CHECK') return [{id:'answer',label:'练习会议安排在哪个会议室？',type:'single',required:true,options:[{value:'A',label:'一号会议室'},{value:'B',label:'二号会议室'},{value:'C',label:'三号会议室'}]}];
-    if (s.state.phase === 'COMPREHENSION') return [{ id: 'answer', label: this.stimulus(s).question, type: 'single', required: true, options: this.stimulus(s).options.map(o => ({ value: o.id, label: `${o.id} ${o.text}` })) }];
-    if (s.state.phase === 'RATINGS') return s.snapshot.content.ratings.map(r => ({ id: r.id, label: r.label, type: 'single', required: true, options: Array.from({ length: r.max - r.min + 1 }, (_, i) => ({ value: String(i + r.min), label: String(i + r.min) })) }));
+    if (s.state.phase === 'COMPREHENSION') {
+      const page = s.snapshot.content.survey_pages?.comprehension;
+      return [...(page ? [page.notice_field] : []), { id: 'answer', label: `${page ? '第2题：' : ''}${this.stimulus(s).question}`, type: 'single' as const, required: true, options: this.stimulus(s).options.map(o => ({ value: o.id, label: `${o.id} ${o.text}` })) }];
+    }
+    if (s.state.phase === 'RATINGS') return s.snapshot.content.ratings.map((r, index) => ({ id: r.id,
+      label: r.min_label && r.max_label ? `${index + 1}. ${r.label} ${r.min}分（${r.min_label}） ${r.max}分（${r.max_label}）` : r.label,
+      type: 'single', required: true, options: Array.from({ length: r.max - r.min + 1 }, (_, i) => ({ value: String(i + r.min), label: String(i + r.min) })) }));
     return [];
   }
   draftKey(s: Session) { return `${s.state.stage}:${s.state.phase}:${s.state.unit}`; }
@@ -256,8 +261,8 @@ export class Engine {
       targets.push({ id: `${stage.stage_id}_CARD`, label: `${stage.stage_id} 说明卡`, phase: 'CARD', stage: index, unit: 0 });
       stage.units.forEach((unit, n) => targets.push({ id: unit.unit_id, label: `${stage.stage_id} ${unit.title}`, phase: 'UNIT', stage: index, unit: n }));
       if (s.snapshot.participant.stages.find(a => a.stage_id === stage.stage_id)?.condition !== 'NONE') {
-        targets.push({ id: `${stage.stage_id}_COMPREHENSION`, label: `${stage.stage_id} 眼镜中的关键信息获取题`, phase: 'COMPREHENSION', stage: index, unit: 1 });
-        targets.push({ id: `${stage.stage_id}_RATINGS`, label: `${stage.stage_id} 眼镜消息体验评价`, phase: 'RATINGS', stage: index, unit: 1 });
+        targets.push({ id: `${stage.stage_id}_COMPREHENSION`, label: `${stage.stage_id} ${s.snapshot.content.survey_pages?.comprehension.title ?? '眼镜中的关键信息获取题'}`, phase: 'COMPREHENSION', stage: index, unit: 1 });
+        targets.push({ id: `${stage.stage_id}_RATINGS`, label: `${stage.stage_id} ${s.snapshot.content.survey_pages?.ratings.title ?? '眼镜消息体验评价'}`, phase: 'RATINGS', stage: index, unit: 1 });
       }
       if (index < s.snapshot.content.stages.length - 1) targets.push({ id: `${stage.stage_id}_BREAK`, label: `${stage.stage_id} 休息`, phase: 'BREAK', stage: index, unit: 1 });
     }
@@ -274,18 +279,42 @@ export class Engine {
     s.state.ended_at = target.phase === 'COMPLETED' ? this.iso() : null;
     s.state.ended_elapsed_ms = target.phase === 'COMPLETED' ? this.elapsed(s) : null;
     s.state.break_until_ms = null; s.state.break_completed = false;
+    s.state.break_displayed_at = null; s.state.break_displayed_elapsed_ms = null;
     this.transition(s, target.phase);
     if (target.phase === 'BREAK') {
-      s.state.break_until_ms = this.elapsed(s) + s.snapshot.content.break_ms;
-      this.log(s, 'break_started', { duration_ms: s.snapshot.content.break_ms, until_elapsed_ms: s.state.break_until_ms, source_debug_jump: true });
+      this.prepareBreak(s, true);
     }
   }
-  private nextAfterBreak(s: Session) { s.state.stage++; s.state.unit = 0; s.state.break_until_ms = null; this.transition(s, 'CARD'); }
+  private prepareBreak(s: Session, sourceDebugJump = false) {
+    s.state.break_until_ms = null; s.state.break_completed = false;
+    s.state.break_displayed_at = null; s.state.break_displayed_elapsed_ms = null;
+    // 旧快照沿用原计时起点；新配置等待休息页可见回执。
+    if (!s.snapshot.content.break_start_on_display) {
+      s.state.break_until_ms = this.elapsed(s) + s.snapshot.content.break_ms;
+      this.log(s, 'break_started', { duration_ms: s.snapshot.content.break_ms, until_elapsed_ms: s.state.break_until_ms, break_id: s.state.page_token, source_debug_jump: sourceDebugJump });
+    }
+  }
+  private completeBreak(s: Session) {
+    if (s.state.break_completed || s.state.break_until_ms === null || this.elapsed(s) < s.state.break_until_ms) return;
+    s.state.break_completed = true;
+    const endedAt = s.state.break_displayed_at && s.state.break_displayed_elapsed_ms != null
+      ? new Date(Date.parse(s.state.break_displayed_at) + s.state.break_until_ms - s.state.break_displayed_elapsed_ms).toISOString() : null;
+    this.log(s, 'break_completed', { break_id: s.state.page_token, countdown_ended_at: endedAt, countdown_ended_elapsed_ms: s.state.break_until_ms });
+  }
+  private actualRest(s: Session, at = this.elapsed(s)) {
+    return s.state.break_displayed_elapsed_ms == null ? null : Math.max(0, at - s.state.break_displayed_elapsed_ms);
+  }
+  private nextAfterBreak(s: Session) {
+    s.state.stage++; s.state.unit = 0; s.state.break_until_ms = null;
+    s.state.break_displayed_at = null; s.state.break_displayed_elapsed_ms = null;
+    this.transition(s, 'CARD');
+  }
   private skipBreak(s: Session, actor: 'admin' | 'participant', reason: string) {
     if (s.state.phase !== 'BREAK' || s.state.paused_at_ms !== null || s.state.status !== 'active') throw new HttpError(409, '当前不是可跳过的休息状态。');
     if (s.snapshot.content.allow_break_skip === false) throw new HttpError(409, '此会话协议未开放跳过休息。');
-    const remaining = Math.max(0, s.state.break_until_ms! - this.elapsed(s));
-    this.log(s, 'break_skipped', { actor, reason, remaining_ms: remaining, actual_rest_ms: Math.max(0, s.snapshot.content.break_ms - remaining), planned_rest_ms: s.snapshot.content.break_ms });
+    this.completeBreak(s);
+    const remaining = s.state.break_until_ms === null ? s.snapshot.content.break_ms : Math.max(0, s.state.break_until_ms - this.elapsed(s));
+    this.log(s, 'break_skipped', { break_id: s.state.page_token, actor, reason, remaining_ms: remaining, actual_rest_ms: this.actualRest(s), planned_rest_ms: s.snapshot.content.break_ms });
     this.nextAfterBreak(s);
   }
   stageEnd(s: Session) {
@@ -294,14 +323,13 @@ export class Engine {
       this.transition(s, 'COMPLETED'); s.state.status = 'completed'; s.state.ended_at = this.iso(); s.state.ended_elapsed_ms = this.elapsed(s);
       this.log(s, 'session_completed', { ...this.presentation(s.id), attention_count: s.state.attention.length });
     } else {
-      this.transition(s, 'BREAK'); s.state.break_until_ms = this.elapsed(s) + s.snapshot.content.break_ms; s.state.break_completed = false;
-      this.log(s, 'break_started', { duration_ms: s.snapshot.content.break_ms, until_elapsed_ms: s.state.break_until_ms });
+      this.transition(s, 'BREAK'); this.prepareBreak(s);
     }
   }
   tick(id: string) {
     const s = this.session(id);
-    if (s.state.phase !== 'BREAK' || s.state.paused_at_ms !== null || s.state.break_completed || this.elapsed(s) < s.state.break_until_ms!) return;
-    this.store.tx(() => { s.state.break_completed = true; this.log(s, 'break_completed'); this.store.save(s); });
+    if (s.state.phase !== 'BREAK' || s.state.paused_at_ms !== null || s.state.break_completed || s.state.break_until_ms === null || this.elapsed(s) < s.state.break_until_ms) return;
+    this.store.tx(() => { this.completeBreak(s); this.store.save(s); });
   }
   view(id: string) {
     this.tick(id);
@@ -318,7 +346,7 @@ export class Engine {
         status: waiting.status === 'failed' ? 'failed' : waiting.confirmation_status ?? 'waiting',
         confirmed: waiting.confirmation_status === 'accepted' || !!waiting.device_events?.some(e => e.kind === 'confirmed'),
       } : null,
-      remaining_ms: 0, can_continue: true, can_skip_break: false,
+      remaining_ms: 0, break_countdown_started: false, can_continue: true, can_skip_break: false,
       // 当前任务组说明卡中的情景时间，被试端在任务栏固定显示；旧快照无此字段时为null。
       tutorial: state.phase.startsWith('TUTORIAL'), scene_time: content.stages[state.stage]?.scene_time ?? null };
     if (state.paused_at_ms !== null) return { ...base, phase: 'PAUSED', title: '实验已暂停，请等待实验员。', can_continue: false };
@@ -334,9 +362,19 @@ export class Engine {
       const reveal = state.reveals[unit.unit_id];
       if (unit.reveal) base.reveal = { button_label: unit.reveal.button_label, open: reveal?.open ?? false, observed: reveal?.displayed ?? false,
         paragraphs: reveal?.open ? unit.reveal.paragraphs : [], assets: reveal?.open ? (unit.reveal.assets ?? []).map(a => ({ id: a.id, label: a.label })) : [], tables: reveal?.open ? unit.reveal.tables ?? [] : [] };
-    } else if (state.phase === 'COMPREHENSION') base.title = '眼镜中的关键信息获取题';
-    else if (state.phase === 'RATINGS') base.title = '眼镜消息体验评价';
-    else if (state.phase === 'BREAK') { base.title = '休息'; base.remaining_ms = Math.max(0, state.break_until_ms! - this.elapsed(s)); base.can_continue = base.remaining_ms === 0; base.can_skip_break = s.snapshot.content.allow_break_skip !== false; }
+    } else if (state.phase === 'COMPREHENSION') {
+      base.title = content.survey_pages?.comprehension.title ?? '眼镜中的关键信息获取题';
+      base.paragraphs = content.survey_pages?.comprehension.paragraphs ?? [];
+    } else if (state.phase === 'RATINGS') {
+      base.title = content.survey_pages?.ratings.title ?? '眼镜消息体验评价';
+      base.paragraphs = content.survey_pages?.ratings.paragraphs ?? [];
+    }
+    else if (state.phase === 'BREAK') {
+      base.title = '休息'; base.break_countdown_started = state.break_until_ms !== null;
+      base.remaining_ms = state.break_until_ms === null ? content.break_ms : Math.max(0, state.break_until_ms - this.elapsed(s));
+      base.can_continue = base.break_countdown_started && base.remaining_ms === 0;
+      base.can_skip_break = s.snapshot.content.allow_break_skip !== false;
+    }
     else if (state.phase === 'COMPLETED') { base.title = '实验完成'; base.paragraphs = [content.completion_text]; }
     else base.title = '实验已结束，请联系实验员。';
     base.fields = this.fields(s); base.answer = state.drafts[this.draftKey(s)] ?? {};
@@ -347,7 +385,7 @@ export class Engine {
     if (a.condition === 'NONE' || !a.condition.endsWith(timing) || this.store.interventions(s.id).some(m => m.stage_id === a.stage_id)) return;
     this.requirePreviousMessageFinished(s);
     const message: Intervention = { session_id: s.id, participant_id: s.snapshot.participant.participant_id, stage_id: a.stage_id, message_id: a.message_id!, condition: a.condition,
-      device_id: s.state.device_id, device_events: [], request_id: randomUUID(), status: 'scheduled', source: this.deliverySource(s), duration_ms: s.snapshot.content.message_duration_ms,
+      device_id: s.state.device_id, device_events: [], request_id: randomUUID(), status: 'scheduled', source: this.deliverySource(s), duration_ms: this.mode(s) === 'confirm_until_ack' ? 8500 : s.snapshot.content.message_duration_ms,
       display_mode: this.mode(s),
       t_event: event.timestamp_iso, event_elapsed_ms: event.elapsed_ms, t_send: null, t_ack: null, t_display: null, t_hide: null,
       display_time_source: 'unavailable', receipt: null, error: null };
@@ -355,7 +393,7 @@ export class Engine {
     this.log(s, 'message_scheduled', { request_id: message.request_id, trigger_event_id: event.event_id, timing, duration_ms: message.duration_ms });
   }
   private scheduleAuxiliary(s: Session, stage: string, text: string, mode: DisplayMode, kind: 'tutorial' | 'manual', requestId: string) {
-    const m: Intervention = {session_id:s.id,participant_id:s.snapshot.participant.participant_id,stage_id:stage,message_id:stage,condition:kind.toUpperCase(),data_kind:kind,text,display_mode:mode,request_id:requestId,status:'scheduled',source:this.deliverySource(s),duration_ms:8500,device_id:s.state.device_id,device_events:[],t_event:this.iso(),event_elapsed_ms:this.elapsed(s),t_send:null,t_ack:null,t_display:null,t_hide:null,display_time_source:'unavailable',receipt:null,error:null};
+    const m: Intervention = {session_id:s.id,participant_id:s.snapshot.participant.participant_id,stage_id:stage,message_id:stage,condition:kind.toUpperCase(),data_kind:kind,text,display_mode:mode,request_id:requestId,status:'scheduled',source:this.deliverySource(s),duration_ms:mode === 'confirm_until_ack' ? 8500 : s.snapshot.content.message_duration_ms,device_id:s.state.device_id,device_events:[],t_event:this.iso(),event_elapsed_ms:this.elapsed(s),t_send:null,t_ack:null,t_display:null,t_hide:null,display_time_source:'unavailable',receipt:null,error:null};
     this.store.intervention(m); this.log(s,kind+'_notification_scheduled',{request_id:requestId,text,display_mode:mode},{stage_id:stage,unit_id:null,condition:kind.toUpperCase()});
     return m;
   }
@@ -386,7 +424,7 @@ export class Engine {
         const target = this.adapter.getStatus();
         if (target.source !== message.source || (message.source === 'device' && target.device_id !== message.device_id)) throw new Error('adapter_mode_or_device_mismatch');
         return this.adapter.send({ session_id: id, participant_id: message.participant_id, stage_id: stimulus.stage_id, message_id: stimulus.message_id,
-        request_id: message.request_id, text: stimulus.text, device_id: message.device_id, duration_ms: message.duration_ms as 8500, ...(message.display_mode && message.display_mode !== 'legacy_8500' ? { display_mode: message.display_mode } : {}) });
+        request_id: message.request_id, text: stimulus.text, device_id: message.device_id, duration_ms: message.duration_ms as 8500 | 11000, ...(message.display_mode && message.display_mode !== 'legacy_8500' ? { display_mode: message.display_mode } : {}) });
       });
       const deadline = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('adapter_send_timeout_delivery_unknown')), 5000); });
       const task = Promise.race([sending, deadline]).then(receipt => {
@@ -495,8 +533,15 @@ export class Engine {
         if (!state.displayed[state.page_token]) {
           state.displayed[state.page_token] = true;
           const eventName = { TUTORIAL_INTRO:'tutorial_intro_displayed', TUTORIAL_NOTICE:'tutorial_notice_displayed', TUTORIAL_CHECK:'tutorial_check_displayed', INTRO: 'intro_displayed', CARD: 'card_displayed', UNIT: 'unit_displayed', COMPREHENSION: 'comprehension_displayed', RATINGS: 'ratings_displayed', BREAK: 'break_displayed', COMPLETED: 'completion_displayed', ABORTED: 'termination_displayed' }[state.phase];
-          this.log(s, eventName, { client, page_token: state.page_token });
-          if (state.phase === 'TUTORIAL_NOTICE' && !this.store.interventions(id).some(m=>m.stage_id==='TUTORIAL')) {this.requirePreviousMessageFinished(s); this.scheduleAuxiliary(s, 'TUTORIAL', '练习会议安排在二号会议室。', 'confirm_until_ack', 'tutorial', randomUUID());}
+          const displayed = this.log(s, eventName, { client, page_token: state.page_token });
+          if (state.phase === 'BREAK') {
+            state.break_displayed_at = displayed.timestamp_iso; state.break_displayed_elapsed_ms = displayed.elapsed_ms;
+            if (state.break_until_ms === null) {
+              state.break_until_ms = displayed.elapsed_ms + s.snapshot.content.break_ms;
+              this.log(s, 'break_started', { break_id: state.page_token, duration_ms: s.snapshot.content.break_ms, until_elapsed_ms: state.break_until_ms, displayed_event_id: displayed.event_id });
+            }
+          }
+          if (state.phase === 'TUTORIAL_NOTICE' && !this.store.interventions(id).some(m=>m.stage_id==='TUTORIAL')) {this.requirePreviousMessageFinished(s); this.scheduleAuxiliary(s, 'TUTORIAL', '练习会议安排在二号会议室。', this.mode(s), 'tutorial', randomUUID());}
           if (state.phase === 'UNIT' && state.unit === 1) this.schedule(s, this.log(s, 'u2_displayed', { client }), 'T1');
         }
       } else {
@@ -513,7 +558,7 @@ export class Engine {
             if (state.phase === 'TUTORIAL_INTRO') { this.log(s,'tutorial_intro_continue'); if(!this.sessionModes(s).includes('confirm_until_ack'))this.log(s,'tutorial_completed',{tools_only:true}); this.transition(s,this.sessionModes(s).includes('confirm_until_ack') ? 'TUTORIAL_NOTICE' : 'INTRO'); }
             else {
               const m=this.store.interventions(id).find(m=>m.stage_id==='TUTORIAL');
-              if (!m?.confirmation_requested_at || (m.source==='device' ? !m.device_events?.some(e=>e.kind==='hidden') : m.confirmation_status!=='accepted')) throw new HttpError(409,'请先阅读并确认练习通知，等待眼镜收起后再继续。');
+              if (!m || (this.messageMode(s,m)==='confirm_until_ack' && !m.confirmation_requested_at) || (m.source==='device' ? !m.device_events?.some(e=>e.kind==='hidden') : this.messageMode(s,m)==='confirm_until_ack' ? m.confirmation_status!=='accepted' : !m.t_send || this.wallNow()-Date.parse(m.t_send)<m.duration_ms)) throw new HttpError(409,'请先阅读并确认练习通知，等待眼镜收起后再继续。');
               this.log(s,'tutorial_notice_continue'); this.transition(s,'TUTORIAL_CHECK');
             }
           }
@@ -560,11 +605,18 @@ export class Engine {
                 this.log(s, 'unit_scored', { score: value });
                 if (unit.unit_id === 'SH05_U1' && !this.store.events(id).some(e => e.event_type === 'F_candidate')) this.log(s, 'F_candidate', { semantics: 'first_submission', criterion_version: 'user-2026-10-18', score: value, complete: true });
                 if (state.unit === 0) { this.log(s, 'unit_transition_started', { from: unit.unit_id, to: unit.unit_id.replace('U1', 'U2') }); state.unit = 1; this.transition(s, 'UNIT'); }
-                else if (this.assignment(s).condition === 'NONE') this.stageEnd(s);
+                else if (this.assignment(s).condition === 'NONE') {
+                  this.log(s, 'comprehension_skipped', { reason: 'no_message', message_id: null });
+                  this.log(s, 'ratings_skipped', { reason: 'no_message', message_id: null });
+                  this.stageEnd(s);
+                }
                 else this.transition(s, 'COMPREHENSION');
               } else if (state.phase === 'COMPREHENSION') {
-                this.log(s, 'comprehension_submitted', { answer: normalized.answer, correct: normalized.answer === this.stimulus(s).correct_option, message_id: this.stimulus(s).message_id });
-                this.transition(s, 'RATINGS');
+                this.log(s, 'comprehension_submitted', { ...(normalized.message_notice === undefined ? {} : { message_notice: normalized.message_notice }), answer: normalized.answer, correct: normalized.answer === this.stimulus(s).correct_option, message_id: this.stimulus(s).message_id });
+                if (s.snapshot.content.survey_pages?.ratings.skip_if_not_noticed && normalized.message_notice === 'not_noticed') {
+                  this.log(s, 'ratings_skipped', { reason: 'not_noticed', message_notice: normalized.message_notice, message_id: this.stimulus(s).message_id });
+                  this.stageEnd(s);
+                } else this.transition(s, 'RATINGS');
               } else {
                 this.log(s, 'ratings_submitted', { ratings: Object.fromEntries(Object.entries(normalized).map(([k, v]) => [k, Number(v)])), message_id: this.stimulus(s).message_id }); this.stageEnd(s);
               }
@@ -577,9 +629,10 @@ export class Engine {
           if (state.phase === 'INTRO') { this.log(s, 'intro_continue'); this.transition(s, 'CARD'); }
           else if (state.phase === 'CARD') { this.log(s, 'card_continue'); state.unit = 0; this.transition(s, 'UNIT'); }
           else if (state.phase === 'BREAK') {
-            if (this.elapsed(s) < state.break_until_ms!) throw new HttpError(422, '休息尚未满180秒。');
-            if (!state.break_completed) { state.break_completed = true; this.log(s, 'break_completed'); }
-            this.log(s, 'continue_clicked'); this.nextAfterBreak(s);
+            if (state.break_until_ms === null || this.elapsed(s) < state.break_until_ms) throw new HttpError(422, `休息尚未满${s.snapshot.content.break_ms / 1000}秒。`);
+            this.completeBreak(s);
+            this.log(s, 'continue_clicked', { break_id: state.page_token, client, actual_rest_ms: this.actualRest(s) });
+            this.nextAfterBreak(s);
           } else throw new HttpError(409, '当前页面没有继续操作。');
         } else throw new HttpError(400, '未知操作。');
       }
@@ -652,7 +705,7 @@ export class Engine {
       answered_fields: answered, total_fields: fields.length, reveal_observed: s.state.phase === 'UNIT' ? s.state.reveals[this.unit(s).unit_id]?.displayed ?? false : null,
       available_actions: actions, last_event_type: lastEvent?.event_type ?? null, last_event_at: lastEvent?.timestamp_iso ?? null, message_status: message?.status ?? (this.assignment(s).condition === 'NONE' ? 'NONE' : 'not_triggered'),
       phase: s.state.phase, stage_id: s.snapshot.content.stages[s.state.stage].stage_id, unit: s.state.unit + 1, status: s.state.status, paused: s.state.paused_at_ms !== null,
-      started_at: s.state.started_at, ended_at: s.state.ended_at, elapsed_ms: s.state.ended_elapsed_ms ?? this.elapsed(s), remaining_ms: s.state.phase === 'BREAK' ? Math.max(0, s.state.break_until_ms! - (s.state.paused_at_ms ?? this.elapsed(s))) : null,
+      started_at: s.state.started_at, ended_at: s.state.ended_at, elapsed_ms: s.state.ended_elapsed_ms ?? this.elapsed(s), remaining_ms: s.state.phase === 'BREAK' ? (s.state.break_until_ms === null ? s.snapshot.content.break_ms : Math.max(0, s.state.break_until_ms - (s.state.paused_at_ms ?? this.elapsed(s)))) : null,
       content_version: s.snapshot.content.content_version, config_hash: s.snapshot.config_hash, attention: s.state.attention,
       device_id: s.state.device_id ?? null, adapter: this.adapter.getStatus(),
       message_evidence: message?.device_events?.some(e => e.kind === 'failed') ? 'failed' : message?.device_events?.some(e => e.kind === 'hidden') ? 'hidden' : message?.device_events?.some(e => e.kind === 'drawn') ? 'drawn' : null,

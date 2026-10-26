@@ -33,6 +33,7 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
         final JSONObject request;
         int drawnEyes, hiddenEyes;
         boolean drawn, failed, hiding, confirmed, cueFailed;
+        String hideReason;
         Display(JSONObject request) { this.request = request; }
     }
     @Override public void onCreate(Bundle state) {
@@ -64,7 +65,7 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
                 .put("firmware", android.os.Build.DISPLAY).put("android_api", Integer.toString(android.os.Build.VERSION.SDK_INT))
                 .put("mercury_sdk", "0.2.6-20260310143142_94a01a90").put("app_package", getPackageName())
                 .put("display_modes", "legacy_8500,tone_8500,confirm_until_ack")
-                .put("app_version", "1.1.3").put("frame_evidence", "android_dual_eye_onDraw")
+                .put("app_version", "1.1.4").put("fixed_duration_ms", "8500,11000").put("frame_evidence", "android_dual_eye_onDraw")
                 .put("interactive", Boolean.toString(((PowerManager)getSystemService(POWER_SERVICE)).isInteractive())));
         if (command.equals("events")) return new JSONObject().put("ledger_id", ledger.id).put("events", ledger.events(payload.getLong("after")));
         if (command.equals("confirm") || command.equals("cancel")) {
@@ -74,12 +75,12 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
             Display display = active;
             if (display == null || !display.request.getString("request_id").equals(requestId) || !display.request.getString("device_id").equals(deviceId)) throw new IllegalStateException("device_confirmation_request_mismatch");
             if (!mode(display).equals("confirm_until_ack")) throw new IllegalStateException("device_confirmation_not_required");
-            if (command.equals("cancel")) { fail(display, "experiment_stopped"); hide(display); }
+            if (command.equals("cancel")) { fail(display, "experiment_stopped"); hide(display, "experiment_stopped"); }
             else {
                 if (!display.drawn || display.failed || display.hiding) throw new IllegalStateException("device_not_confirmable");
                 if (!display.confirmed) {
                     display.confirmed = true; event(display, "confirmed", null);
-                    hide(display);
+                    hide(display, "user_confirmed");
                 }
             }
             return new JSONObject().put("request_id", requestId);
@@ -96,7 +97,7 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
         Display display = new Display(payload); active = display;
         left().show(() -> eyeDrawn(display)); right().show(() -> eyeDrawn(display));
         main.postDelayed(() -> {
-            if (active == display && !display.drawn) { fail(display, "device_draw_timeout"); hide(display); }
+            if (active == display && !display.drawn) { fail(display, "device_draw_timeout"); hide(display, "draw_timeout"); }
         }, 2000);
         return new JSONObject().put("request_id", payload.getString("request_id")).put("deduplicated", false).put("text_sha256", Ledger.textHash(payload.getString("text")))
             .put("layout", new JSONObject().put("left", left().metrics()).put("right", right().metrics()));
@@ -107,14 +108,15 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
             if (value.isEmpty() || value.length() > 160) throw new IllegalArgumentException("invalid_" + key);
         }
         String text = request.getString("text");
-        if (text.trim().isEmpty() || text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 16000 || request.getInt("duration_ms") != 8500)
+        int duration = request.getInt("duration_ms");
+        if (text.trim().isEmpty() || text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 16000 || (duration != 8500 && duration != 11000))
             throw new IllegalArgumentException("invalid_stimulus");
         String mode = request.optString("display_mode", "legacy_8500");
         if (!mode.equals("legacy_8500") && !mode.equals("tone_8500") && !mode.equals("confirm_until_ack")) throw new IllegalArgumentException("invalid_display_mode");
     }
-    private void event(Display display, String kind, String error) {
-        try { ledger.event(display.request, kind, error); }
-        catch (Exception failure) { fault = true; android.util.Log.e("A5", "设备证据落盘失败", failure); }
+    private long event(Display display, String kind, String error) {
+        try { return ledger.event(display.request, kind, error, kind.equals("hidden") ? display.hideReason : null); }
+        catch (Exception failure) { fault = true; android.util.Log.e("A5", "设备证据落盘失败", failure); return -1; }
     }
     private void fail(Display display, String error) {
         if (!display.failed) { display.failed = true; event(display, "failed", error); }
@@ -124,9 +126,12 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
         if (active != display || display.hiding || ++display.drawnEyes != 2) return;
         display.drawn = true;
         // 从双眼应用绘制回调起独立计时；网络、电脑实验页面和回执轮询不参与。
-        long hideAt = SystemClock.uptimeMillis() + 8500;
-        if (!mode(display).equals("confirm_until_ack")) main.postAtTime(() -> hide(display), hideAt);
-        event(display, "drawn", null);
+        long drawnAt = event(display, "drawn", null);
+        if (drawnAt < 0) { fail(display, "device_draw_evidence_failed"); hide(display, "evidence_failure"); return; }
+        if (!mode(display).equals("confirm_until_ack")) {
+            long hideAt = drawnAt + display.request.optInt("duration_ms", 11000);
+            main.postAtTime(() -> hide(display, "auto_timeout"), hideAt);
+        }
         if (!isDisplayReady()) fail(display, "device_display_not_ready");
         if (mode(display).equals("tone_8500")) playCue(display);
     }
@@ -153,9 +158,10 @@ public final class MainActivity extends BaseMirrorActivity<ActivityMainBinding> 
         } catch (RuntimeException error) { cueFailed(display, "device_audio_start_failed"); }
     }
 
-    private void hide(Display display) {
+    private void hide(Display display, String reason) {
         if (active != display || display.hiding) return;
         display.hiding = true;
+        display.hideReason = reason;
         left().hide(() -> eyeHidden(display)); right().hide(() -> eyeHidden(display));
         main.postDelayed(() -> {
             if (active == display) {

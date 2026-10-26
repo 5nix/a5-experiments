@@ -24,8 +24,13 @@ export interface TaskContent {
   schema_version: string; content_version: string;
   intro: { title: string; paragraphs: string[] };
   stages: { stage_id: StageId; title: string; card: string; scene_time?: { date: string; time: string }; units: Unit[] }[];
-  ratings: { id: string; label: string; min: number; max: number }[];
-  interview_prompts: string[]; break_ms: number; allow_break_skip?: boolean; message_duration_ms: number; completion_text: string;
+  survey_revision_id?: string;
+  survey_pages?: {
+    comprehension: { title: string; paragraphs: string[]; notice_field: Field; uncertain_option_text: string };
+    ratings: { title: string; paragraphs: string[]; skip_if_not_noticed?: boolean };
+  };
+  ratings: { id: string; label: string; min: number; max: number; min_label?: string; max_label?: string }[];
+  interview_prompts: string[]; break_ms: number; break_start_on_display?: boolean; allow_break_skip?: boolean; message_duration_ms: number; completion_text: string;
 }
 export interface Snapshot {
   display_mode?: import('./contracts.ts').DisplayMode;
@@ -46,7 +51,10 @@ export async function loadMaterial() {
       assets[asset.id] = { base64: bytes.toString('base64'), sha256: createHash('sha256').update(bytes).digest('hex') };
     }
   }
-  return { content, stimuli: material.stimuli, stimulus_version: material.content_version, assets };
+  // 原始刺激重新提取后也应用当前问卷措辞，随新会话快照固定；不改动历史快照。
+  const uncertain = content.survey_pages?.comprehension.uncertain_option_text;
+  const stimuli = material.stimuli.map(s => ({ ...s, options: s.options.map(o => o.id === 'C' && uncertain ? { ...o, text: uncertain } : o) }));
+  return { content, stimuli, stimulus_version: material.content_version, assets };
 }
 
 export class InputError extends Error {

@@ -32,7 +32,7 @@ async function fixture(mode: DisplayMode = 'confirm_until_ack') {
   return { store, engine, adapter, material, config, created, id, send, trigger, requests, emit, advance: (ms: number) => { clock += ms; }, confirms: () => confirms, cancels: () => cancels, reject: (value: boolean) => { rejectConfirm = value; } };
 }
 
-test('策略固定于快照；未绘制不能确认，超8.5秒仍待确认，重复确认幂等且继续当前任务', async () => {
+test('策略固定于快照；未绘制不能确认，超11秒仍待确认，重复确认幂等且继续当前任务', async () => {
   const f = await fixture();
   try {
     await f.trigger(); assert.equal(f.requests[0].display_mode, 'confirm_until_ack');
@@ -103,12 +103,15 @@ test('导出包含策略、用户/设备确认、实际总时长与确认后时�
   const f = await fixture(), out = await mkdtemp(join(tmpdir(), 'a5-modes-'));
   try {
     await f.trigger(); f.advance(1000); f.emit('drawn'); f.advance(20000);
-    await f.engine.confirmMessage(f.id, f.requests[0].request_id); f.advance(16); f.emit('hidden');
+    await f.engine.confirmMessage(f.id, f.requests[0].request_id); f.advance(16); f.emit('hidden', f.requests[0], { hide_reason: 'user_confirmed' });
     const files = unzipSync((await exportData(f.engine, [f.id], out)).bytes);
     const csv = strFromU8(files['interventions.csv']).split('\r\n');
     const cells = (line: string) => [...line.replace(/^\uFEFF/, '').matchAll(/(?:^|,)(?:"((?:[^"]|"")*)"|([^,]*))/g)].map(m => (m[1] ?? m[2]).replaceAll('""', '"'));
     const headers = cells(csv[0]), values = cells(csv[1]), row = Object.fromEntries(headers.map((key, i) => [key, values[i]]));
     assert.equal(row.display_mode, 'confirm_until_ack'); assert.equal(row.confirmation_recorded, 'true');
+    assert.equal(row.auto_hide_after_ms, ''); assert.equal(row.hide_reason, 'user_confirmed');
+    assert.equal(Number(row.device_hidden_monotonic_ms) - Number(row.device_confirmed_monotonic_ms), 16);
+    assert.ok(row.device_drawn_wall_ms); assert.ok(row.device_hidden_wall_ms); assert.ok(row.device_confirmed_wall_ms);
     assert.equal(row.device_confirmation_delay_ms, '20000'); assert.equal(row.actual_display_duration_ms, '20016'); assert.equal(row.post_confirmation_duration_ms, '16');
     assert.match(strFromU8(files['sessions.csv']), /display_mode/);
     const snapshots = JSON.parse(strFromU8(files['snapshots.json'])); assert.equal(snapshots[0].snapshot.display_mode, 'confirm_until_ack');
@@ -118,6 +121,55 @@ test('导出包含策略、用户/设备确认、实际总时长与确认后时�
     assert.equal(otherValues[headers.indexOf('actual_display_duration_ms')], '');
     assert.equal(otherValues[headers.indexOf('post_confirmation_duration_ms')], '');
   } finally { await f.engine.settle(); f.store.close(); await rm(out, { recursive: true, force: true }); }
+});
+
+test('两种固定策略对通知和主动服务均请求11000ms，按设备事件导出实际时长和自动隐藏原因', async () => {
+  for (const mode of ['legacy_8500', 'tone_8500'] as const) {
+    const f = await fixture(mode), out = await mkdtemp(join(tmpdir(), 'a5-fixed-11s-'));
+    try {
+      for (const stage of ['SH01', 'SH03']) {
+        f.engine.adminAction(f.id, 'debug_jump', '固定时长校验', `${stage}_U1`);
+        f.send('displayed'); f.send('reveal', { open: true }); f.send('reveal_displayed'); await f.engine.settle();
+        const request = f.requests.at(-1)!;
+        assert.equal(request.duration_ms, 11000);
+        assert.equal(request.display_mode ?? 'legacy_8500', mode);
+        assert.ok(request.message_id.startsWith(stage === 'SH01' ? 'N' : 'A'));
+        // 故意延迟绘制，验证导出以设备drawn而不是发送时刻计算实际显示时长。
+        f.advance(5000); f.emit('drawn', request); f.advance(11016);
+        f.emit('hidden', request, { hide_reason: 'auto_timeout', display_mode: mode, duration_ms: 11000 });
+      }
+      const files = unzipSync((await exportData(f.engine, [f.id], out)).bytes);
+      const lines = strFromU8(files['interventions.csv']).trim().split('\r\n');
+      const cells = (line: string) => [...line.replace(/^\uFEFF/, '').matchAll(/(?:^|,)(?:"((?:[^"]|"")*)"|([^,]*))/g)].map(m => (m[1] ?? m[2]).replaceAll('""', '"'));
+      const headers = cells(lines[0]);
+      assert.equal(lines.length, 3);
+      for (const line of lines.slice(1)) {
+        const values = cells(line), row = Object.fromEntries(headers.map((key, i) => [key, values[i]]));
+        assert.equal(row.duration_ms, '11000'); assert.equal(row.auto_hide_after_ms, '11000');
+        assert.equal(row.hide_reason, 'auto_timeout'); assert.equal(row.actual_display_duration_ms, '11016');
+        assert.equal(Number(row.device_hidden_monotonic_ms) - Number(row.device_drawn_monotonic_ms), 11016);
+        assert.equal(row.device_confirmed_wall_ms, ''); assert.equal(row.device_confirmed_monotonic_ms, '');
+      }
+    } finally { await f.engine.settle(); f.store.close(); await rm(out, { recursive: true, force: true }); }
+  }
+});
+
+test('现有练习通知入口采用对应固定策略和11000ms，等待实际隐藏后才继续', async () => {
+  for (const mode of ['legacy_8500', 'tone_8500'] as const) {
+    const f = await fixture(mode);
+    try {
+      // 直接准备练习通知页夹具，不新增正常流程中的教程页或触发入口。
+      f.store.tx(() => { const s = f.engine.session(f.id); s.state.phase = 'TUTORIAL_NOTICE'; s.state.page_token = randomUUID(); f.store.save(s); });
+      f.send('displayed'); await f.engine.settle();
+      assert.equal(f.requests[0].duration_ms, 11000);
+      assert.equal(f.requests[0].display_mode ?? 'legacy_8500', mode);
+      assert.equal(f.store.interventions(f.id)[0].data_kind, 'tutorial');
+      f.emit('drawn'); f.advance(11000);
+      assert.throws(() => f.send('continue'), /等待眼镜收起/);
+      f.emit('hidden', f.requests[0], { hide_reason: 'auto_timeout' });
+      assert.equal(f.send('continue').phase, 'TUTORIAL_CHECK');
+    } finally { await f.engine.settle(); f.store.close(); }
+  }
 });
 
 test('确认 HTTP 接口绑定被试 token，不允许跨会话或伪造确认', async () => {
