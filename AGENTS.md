@@ -1,1 +1,67 @@
-## 0. 在输出为用户展示的内容时，始终使用简体中文
+# AGENTS.md
+
+本文件是本仓库唯一的 AI 编码助手指引（Codex 直接读取，Claude Code 经 CLAUDE.md 的 `@AGENTS.md` 导入）。只在这里修改，不要在 CLAUDE.md 另写一份。
+
+## 语言
+
+在输出为用户展示的内容时，始终使用简体中文。仓库文档、注释和错误信息也以中文为主，修改时保持一致。
+
+## 仓库结构
+
+npm 工作区单仓，每套实验是根目录下的 `f5-<sh|sl|mh|ml>-<版本>` 目录（当前只有 `f5-sh-pilot`），代码、内容、配置、测试和数据都在各自目录内。根目录只放共用启动器 `scripts/`、`tsconfig.base.json` 和工作区配置。`reffers/` 是外部参考项目，不属于工作区。
+
+## 常用命令
+
+需要 Node.js 24+（直接运行 `.ts`，无构建步骤；`tsconfig` 为 `noEmit` + `erasableSyntaxOnly`，只能用可擦除的 TS 语法，导入需带 `.ts` 扩展名）。
+
+```sh
+npm ci                                              # 仓库根目录安装
+npm run check                                       # 全部工作区 typecheck + test + doctor，外加启动器测试
+npm run start --workspace=f5-sh-pilot               # 启动服务，后台 http://127.0.0.1:5173/admin
+npm run dev --workspace=f5-sh-pilot                 # node --watch
+npm run test:launcher                               # 仅启动器测试
+npm run launcher                                    # 交互式启动器（同 .command/.bat）
+```
+
+在 `f5-sh-pilot/` 内：
+
+```sh
+npm run typecheck
+npm test                                            # node --test tests/*.test.ts
+node --test tests/core.test.ts                      # 单个文件
+node --test --test-name-pattern="关键字" tests/core.test.ts   # 单个用例
+npm run doctor                                      # 材料与启动自检
+python scripts/build_task_content.py                # 编辑 content/revisions.json 后重建 tasks.json/stimuli.json
+```
+
+手动启动测试服务必须隔离数据：`PORT=5174 A5_RUNTIME_DIR=... A5_EXPORT_DIR=...`，不要复用 `runtime/` 中的正式被试数据库。`qa/browser/` 的 Playwright 脚本不在 check 内，部分已过时（无教程流程、旧选择器），不能视为当前验收通过的依据。
+
+Android 显示端（`f5-sh-pilot/rayneo-display/`，JDK 21）：
+
+```sh
+./gradlew :app:assembleDebug :app:lintDebug --console=plain
+node scripts/verify-apk-runtime.mjs app/build/outputs/apk/debug/app-debug.apk
+```
+
+## 架构要点（f5-sh-pilot）
+
+电脑端是 Node 服务 + 原生 ES module 浏览器页面（`public/experiment.*` 被试端、`public/admin.*` 主试后台，样式隔离）；眼镜端是雷鸟 X3 Pro Android 应用，经 USB/ADB 与服务通信。
+
+- `src/server.ts` 组装 Store → Engine → App，并每秒 tick：回收设备事件、执行设备控制任务、推进各会话。`A5_GLASSES_MODE=mock|rayneo` 选择适配器（`src/adapters/`），默认 mock；真机模式由启动器在检测到 `.a5-local/device.json` 时设置，失败不回退 mock。
+- `src/engine.ts` 是服务端权威状态机（教程 → INTRO → CARD → UNIT → COMPREHENSION → RATINGS → BREAK → 终态；暂停只在 view 上呈现 PAUSED）。每页有 `page_token` 防旧页提交，`command_id` + 请求指纹去重。评分与答案只在服务端，公开 view 不含答案。
+- `src/store.ts` 使用 Node 内置 SQLite（WAL、synchronous=FULL）。事件表与设备原始事件只追加，禁止更新/删除；会话删除只是 `state.deleted` 软标记。
+- 会话创建时固定题目、刺激和配置快照；修改 `content/` 或 `config/` 不影响已有会话。配置文件在 `config/notifications/*.json`，`display_mode` 逐通知配置（`legacy_8500` / `tone_8500` / `confirm_until_ack`）。
+- 消息流程：先在事务中保存 `request_id` 与发送意图，再异步调用适配器；回执和设备事件按 `request_id` 合并。重启时未完成发送标为 unknown，绝不重放。`interventions.data_kind` 区分 formal / tutorial / manual。
+- 眼镜 APK 必须保持最新：服务端用 `Engine.requireFixedDuration()` 核对显示端声明的 `fixed_duration_ms`，不支持当前固定时长就拒绝建会话和发通知，后台提示更新 APK。改动通知时长时需同步 `content/tasks.json`、`preflight.ts`、`admin.js` 的 `FIXED_DURATION_MS` 和 `rayneo-glasses.ts` 的发送前校验；显示端 1.1.5 起已接受 1000—60000 毫秒任意时长（`fixed_duration_range_ms`），一般无需再改 APK。
+- 时间：`elapsed_ms` 用服务器单调时钟；浏览器可见证据、服务器接收时间、设备原始时间分开存储，不直接相减。
+
+## 必须遵守的约束
+
+- 实验规则以 `f5-sh-pilot/DECISIONS.md` 为准；`docs/` 下是原始需求，与 DECISIONS 冲突时以 DECISIONS 为准。不得为让测试或脚本通过而改动正式预分配（P01—P20）或绕过确认规则。
+- 不伪造证据：Mock 不生成真机证据，未知时间留空，drawn 不等于光学出光，cue_started 不等于听到，`pilot_ready`/`real_presentation_verified` 不自动置真。
+- `f5-sh-pilot/docs/PRD.md` 必须保持 LF 换行（启动时做 SHA-256 完整性校验）；`.bat` 使用 CRLF，其余 LF。
+- 新实验接入启动器需在其 `package.json` 声明 `a5.launcher`（entry/port/health_path/admin_path），健康接口返回 `ok:true` 与 `experiment_id`，并支持 IPC `{ "type": "a5:shutdown" }` 正常关闭；详见 `scripts/README.md`。
+
+## 文档索引
+
+`f5-sh-pilot/` 下：ARCHITECTURE（状态机/事务/消息/时钟）、DECISIONS（实验规则）、CONFIG（配置 JSON 格式）、API（鉴权、view、导出结构）、FRONTEND、RAYNEO（设备协议与守护）、TESTING（验证范围与待现场验收项）、`rayneo-display/BUILDING.md`。
