@@ -170,4 +170,4 @@ CSV使用UTF-8 BOM，公式前缀文本转义，未知时间为空。设备drawn
 
 ### U2自主休息与T2（内容版本v11起）
 
-`tasks.json` 的 `in_unit_rest` 由 `revisions.json` 的 `rest_settings` 生成：duration_ms=30000、window_min_ms（占位60000，可按组 window_min_ms_by_stage 覆盖）、t2_delay_ms=5000、提示与提醒文案、show_countdown、reminder_display_ms、tutorial_duration_ms。窗口按U2首次实际呈现计算；T2计划时刻=rest_started的elapsed_ms+t2_delay_ms，暂停时与休息截止一起顺延。rest_* 事件以rest_id关联，主试提醒以reminder_id关联；教程休息记为data_kind=tutorial。
+`tasks.json` 的 `in_unit_rest` 由 `revisions.json` 的 `rest_settings` 生成：duration_ms=30000、window_min_ms=30000（所有组统一，window_min_ms_by_stage为空）、t2_delay_ms=5000、提示与提醒文案、show_countdown、reminder_display_ms、tutorial_duration_ms。窗口按U2首次实际呈现计算，未满30秒只记录点击并提示，满30秒可发起休息；T2计划时刻=rest_started的elapsed_ms+t2_delay_ms，暂停时与休息截止一起顺延。rest_* 事件以rest_id关联，主试提醒以reminder_id关联；教程休息记为data_kind=tutorial。此设置随新会话快照固定，旧快照沿用原阈值。

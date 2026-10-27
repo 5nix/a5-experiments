@@ -208,7 +208,7 @@ test('无消息条件七组均跳过两页并记录原因，不伪造问卷回�
       send(engine, id, 'reveal', { open: true }); send(engine, id, 'reveal_displayed');
       for (const unit of stage.units) {
         const answer = unit.scoring.type === 'exact' ? structuredClone(unit.scoring.expected) :
-          { checkin: '许宁', guide: '林晨', equipment: unit.unit_id.endsWith('U1') ? '赵禾' : '梁欣' };
+          { checkin: '林晨', guide: '陈珂', equipment: unit.unit_id.endsWith('U1') ? '赵禾' : '梁欣' };
         send(engine, id, 'submit', { answer });
         if (unit.unit_id.endsWith('U1')) send(engine, id, 'displayed');
       }

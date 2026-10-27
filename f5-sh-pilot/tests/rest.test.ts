@@ -48,6 +48,26 @@ test('V2材料：七组、休息参数完整，组间休息取消，000覆盖全
   assert.ok(f.engine.debugTargets(f.engine.session(f.id)).some(t => t.id === 'TUTORIAL_REST'));
 });
 
+test('七组U2统一30秒禁用窗口：29999毫秒不开始，30000毫秒允许，点击记录保留实际阈值', async () => {
+  const f = fixture();
+  try {
+    for (const stage of material.content.stages) {
+      openU2(f, stage.stage_id, 29999);
+      assert.equal(f.engine.summary(f.id).rest!.window_min_ms, 30000);
+      f.send('rest_click');
+      assert.equal(f.engine.view(f.id).rest!.state, 'idle');
+      assert.equal(f.events('rest_clicked').at(-1)!.payload.disposition, 'too_early');
+      assert.equal(f.events('rest_clicked').at(-1)!.payload.window_min_ms, 30000);
+      assert.equal(f.events('rest_clicked').at(-1)!.payload.u2_elapsed_ms, 29999);
+      f.advance(1);
+      f.send('rest_click');
+      assert.equal(f.engine.view(f.id).rest!.state, 'requested');
+      assert.equal(f.events('rest_clicked').at(-1)!.payload.disposition, 'rest_requested');
+      assert.equal(f.events('rest_clicked').at(-1)!.payload.u2_elapsed_ms, 30000);
+    }
+  } finally { await f.engine.settle(); f.store.close(); }
+});
+
 test('教程休息：必须先练习一次短休息才能继续，数据标记tutorial', async () => {
   const f = fixture(':memory:', new MockGlassesAdapter(), { tutorial_enabled: true });
   try {
