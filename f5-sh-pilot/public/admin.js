@@ -34,7 +34,7 @@ function renderOnce(node, signatureValue, build) {
 const narrow = window.matchMedia('(max-width: 899px)');
 
 /* ───────── 中文文案 ───────── */
-const PHASES = { TUTORIAL_INTRO:'教程：工作台',TUTORIAL_NOTICE:'教程：阅读通知',TUTORIAL_CHECK:'教程：理解题',TUTORIAL_REST:'教程：休息练习', INTRO:'情景导入', CARD:'说明卡', UNIT:'主任务', COMPREHENSION:'信息识读理解题', RATINGS:'信息体验评价量表', BREAK:'组间休息', COMPLETED:'完成页', ABORTED:'结束页' };
+const PHASES = { TUTORIAL_INTRO:'教程：工作台',TUTORIAL_NOTICE:'教程：阅读消息',TUTORIAL_CHECK:'教程：理解题',TUTORIAL_REST:'教程：休息练习', INTRO:'情景导入', CARD:'说明卡', UNIT:'主任务', COMPREHENSION:'信息识读理解题', RATINGS:'信息体验评价量表', BREAK:'组间休息', COMPLETED:'完成页', ABORTED:'结束页' };
 const MESSAGE_STATUS = { NONE:'本组无消息', not_triggered:'尚未触发', awaiting_rest:'等待被试休息', t2_not_triggered:'T2未触发（未休息即提交）', scheduled:'等待发送', send_requested:'已发出，等待回执', accepted:'请求已接受', failed:'发送失败', unacknowledged:'未收到回执', unknown:'发送结果待核查' };
 const MESSAGE_TONE = { NONE:'neutral', not_triggered:'neutral', awaiting_rest:'pending', t2_not_triggered:'neutral', scheduled:'pending', send_requested:'pending', accepted:'ok', failed:'bad', unacknowledged:'bad', unknown:'bad' };
 const CATEGORIES = { interview:'访谈记录', observation:'任务观察', anomaly:'异常备注' };

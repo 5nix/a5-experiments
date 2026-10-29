@@ -32,6 +32,7 @@ node --test tests/core.test.ts                      # 单个文件
 node --test --test-name-pattern="关键字" tests/core.test.ts   # 单个用例
 npm run doctor                                      # 材料与启动自检
 python scripts/build_task_content.py                # 编辑 content/revisions.json 后重建 tasks.json/stimuli.json
+python scripts/extract_materials.py                 # 仅从 docs/ 重新提取原始材料（content/source、participants.source.json），不动 tasks/stimuli
 ```
 
 手动启动测试服务必须隔离数据：`PORT=5174 A5_RUNTIME_DIR=... A5_EXPORT_DIR=...`，不要复用 `runtime/` 中的正式被试数据库。`qa/browser/` 的 Playwright 脚本不在 check 内，部分已过时（无教程流程、旧选择器），不能视为当前验收通过的依据。

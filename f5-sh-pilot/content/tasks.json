@@ -2350,11 +2350,11 @@
         "options": [
           {
             "value": "not_noticed",
-            "label": "没有注意到任何消息提示"
+            "label": "没有注意到任何消息"
           },
           {
             "value": "partially_read",
-            "label": "注意到了提示，但没有完整读到消息内容"
+            "label": "注意到了消息，但没有完整读到消息内容"
           },
           {
             "value": "fully_read",

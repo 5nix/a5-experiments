@@ -241,7 +241,7 @@ export async function exportData(engine: Engine, ids: string[], outputRoot: stri
     'snapshots.json': JSON.stringify(captures.map(c => ({ session_id: c.session.id, snapshot: c.session.snapshot })), null, 2),
     'manifest.json': JSON.stringify({ schema_version: '2.0', created_at: new Date().toISOString(), session_ids: ids,
       break_semantics: 'V2（快照含content.in_unit_rest）取消组间休息，由第二单元内自主休息替代，记录见rests.csv/rest_clicks.csv/rest_reminders.csv；breaks.csv仅在存在旧组间休息记录时输出（旧快照兼容），以下为旧规则说明：v9起默认30000毫秒，休息页实际可见回执后起算。breaks.csv记录显示、倒计时结束、继续点击和实际休息毫秒数；actual_rest_ms为显示到继续/跳过的会话单调时间差，包含到零后停留及人工暂停时间，不封顶为计划时长。人工暂停冻结倒计时。countdown_ended_at为倒计时逻辑到零时刻，completion_observed_at为服务端检测时刻；客户端显示与点击证据另存。未继续/未跳过或历史缺字段时留空，不伪造实际时长。',
-      survey_fields: { message_notice: { not_noticed: '没有注意到任何消息提示', partially_read: '注意到了提示，但没有完整读到消息内容', fully_read: '完整读到了消息内容' },
+      survey_fields: { message_notice: { not_noticed: '没有注意到任何消息', partially_read: '注意到了消息，但没有完整读到消息内容', fully_read: '完整读到了消息内容' },
         ratings: { timing: '消息出现的时机', attention_distraction: '分散注意力', thought_disruption: '扰乱思路', task_interference: '妨碍继续完成任务', perceived_disturbance: '感到被打扰' },
         legacy_ratings: ['disruption', 'effort', 'helpfulness'],
         ratings_status: { submitted: '已提交', skipped: '按规则跳过', pending: '尚未提交' },
@@ -263,7 +263,7 @@ export async function exportData(engine: Engine, ids: string[], outputRoot: stri
         unknown: '未知或未发生的值留空，不伪造。' },
       derived_semantics: {
         clock: 'elapsed_ms为服务器会话单调时钟（含暂停与停机）；设备事件的“接收elapsed”是服务端收到设备回执的时刻，不是设备原始时间；不跨设备换算时钟。',
-        notice_click_after_drawn_ms: '首个disposition=confirmation_requested的“已阅读通知”点击服务端elapsed − 该消息message_device_drawn的服务端接收elapsed；为服务端接收时间近似，包含传输延迟。Mock无drawn时留空。',
+        notice_click_after_drawn_ms: '首个disposition=confirmation_requested的“已阅读消息”点击服务端elapsed − 该消息message_device_drawn的服务端接收elapsed；为服务端接收时间近似，包含传输延迟。Mock无drawn时留空。',
         device_confirmation_delay_ms: '同一设备clock_id内drawn→confirmed的设备单调时间差。',
         message_trigger_to_comprehension_ms: 'intervention.event_elapsed_ms（触发事件）→ 本组comprehension_displayed elapsed。',
         message_drawn_to_comprehension_ms: 'drawn服务端接收elapsed → comprehension_displayed elapsed；无drawn留空。',

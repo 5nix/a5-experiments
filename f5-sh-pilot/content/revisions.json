@@ -2662,7 +2662,15 @@
         "不记得或不确定消息内容时，选“不记得或不确定”。"
       ],
       "notice_label_before": "第1题：刚才做任务时，你注意到眼镜的信息提示了吗？",
-      "notice_label": "第1题：刚才这组任务中（包括休息时），你注意到眼镜上的消息了吗？"
+      "notice_label": "第1题：刚才这组任务中（包括休息时），你注意到眼镜上的消息了吗？",
+      "notice_options_before": {
+        "not_noticed": "没有注意到任何消息提示",
+        "partially_read": "注意到了提示，但没有完整读到消息内容"
+      },
+      "notice_options": {
+        "not_noticed": "没有注意到任何消息",
+        "partially_read": "注意到了消息，但没有完整读到消息内容"
+      }
     },
     "stimuli": {
       "A01": {

@@ -45,6 +45,7 @@ test('v14被试页文案：理解题第1题与说明按执行单三段，眼镜�
   assert.deepEqual(comprehension.paragraphs, ['请根据刚才这组任务中的实际情况作答。', '第1题问你是否注意到眼镜上的消息，第2题问消息的内容。', '不记得或不确定消息内容时，选“不记得或不确定”。']);
   assert.equal(comprehension.notice_field.label, '第1题：刚才这组任务中（包括休息时），你注意到眼镜上的消息了吗？');
   assert.deepEqual(comprehension.notice_field.options!.map(o => o.value), ['not_noticed', 'partially_read', 'fully_read']);
+  assert.deepEqual(comprehension.notice_field.options!.map(o => o.label), ['没有注意到任何消息', '注意到了消息，但没有完整读到消息内容', '完整读到了消息内容']);
   assert.equal(material.content.completion_text, '7个任务已经全部完成。请等待实验员进行访谈。');
   assert.equal(material.content.intro.paragraphs.length, 2);
 });

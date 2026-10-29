@@ -239,6 +239,10 @@ def apply_plain_language(data, plain):
     assert comprehension['paragraphs'] == survey['paragraphs_before'] and comprehension['notice_field']['label'] == survey['notice_label_before']
     comprehension['paragraphs'] = survey['paragraphs']
     comprehension['notice_field']['label'] = survey['notice_label']
+    options = {o['value']: o for o in comprehension['notice_field']['options']}
+    assert {value: options[value]['label'] for value in survey['notice_options_before']} == survey['notice_options_before']
+    for value, label in survey['notice_options'].items():
+        options[value]['label'] = label
     data['content_version'] = plain['content_version']
     data['plain_language_revision_id'] = plain['revision_id']
 

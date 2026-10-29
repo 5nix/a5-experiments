@@ -20,8 +20,6 @@ NS = {
     "s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
 }
 VERSION = 'sh-source-2026-10-19-v2'
-# V2新增的N06、A06、N07、A07不在原刺激工作簿中，来自revisions.json的v2_stimuli（《A5 SH实验V2变更决策文档》第9节）。
-V2_STIMULI = json.loads((EXPERIMENT / 'content' / 'revisions.json').read_text(encoding='utf-8'))['v2_stimuli']
 
 
 def read_workbook(data):
@@ -129,22 +127,8 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     document = extract_docx(DOCS / "A5 SH任务pilot.docx")
     workbook = extract_xlsx(DOCS / "刺激材料的属性判断.xlsx")
-    cells = workbook["文案呈现与问答表"]
-    stimuli = []
-    stage = None
-    for row in range(2, 12):
-        def cell(col):
-            return cells.get(f"{col}{row}", {}).get("value")
-        stage = cell("A") or stage
-        options = [{"id": line[0], "text": line[1:].strip()}
-                   for line in cell("H").splitlines() if line.strip()]
-        stimuli.append({"stage_id": stage, "message_id": cell("B"), "text": cell("C"),
-                        "duration_ms": 11000, "question": cell("G"), "options": options,
-                        "correct_option": cell("I")[0], "source_answer": cell("I"),
-                        "source_ref": {"file": "刺激材料的属性判断.xlsx", "sheet": "文案呈现与问答表", "range": f"A{row}:I{row}"}})
-    # 原工作簿提取逻辑不变，只在其后追加V2刺激，并写入V2刺激版本号。
-    stimuli += [dict(s) for s in V2_STIMULI["stimuli"]]
-    save(EXPERIMENT / "content" / "stimuli.json", {"content_version": V2_STIMULI["content_version"], "stimuli": stimuli})
+    # 眼镜消息stimuli.json不在此生成：它含批准修订（V2新增消息、不确定项统一文案、2026-10-29文字修订），
+    # 由 build_task_content.py 依据 stimulus-workbook.json 与 revisions.json 生成，避免重跑本脚本覆盖。
     matrix = workbook["每个场景中的试次顺序安排"]
     participants = []
     for version, col in enumerate("CDEFG", 1):
@@ -159,8 +143,11 @@ def main():
             else:
                 message_id, timing = raw.split("-")
                 condition = f"{message_id[0]}-{timing}"
-            stages.append({"stage_id": stage_id, "condition": condition, "message_id": message_id,
-                           "source_value": raw, "source_cell": f"{col}{row}"})
+            entry = {"stage_id": stage_id, "condition": condition, "message_id": message_id,
+                     "source_value": raw, "source_cell": f"{col}{row}"}
+            if message_id:
+                entry["display_mode"] = "legacy_8500"  # 原工作簿对应旧的固定8.5秒呈现；NONE组无消息，不写。
+            stages.append(entry)
         for participant_id in range(first, last + 1):
             participants.append({"participant_id": f"{participant_id:03}", "version_label": f"V{version}", "stages": stages})
     config = {"experiment_id": "f5-sh-pilot", "schema_version": "1.0",
@@ -177,7 +164,7 @@ def main():
          "image_count": len(document["assets"]), "sheet_names": list(workbook),
          'embedded_workbook_count': document['embedded_workbook_count'],
          "task_data_status": "embedded_workbooks_extracted"})
-    print(f"已提取 {document['embedded_workbook_count']} 份内嵌原始Excel、{len(workbook)} 张刺激工作表、{len(stimuli)} 条 SH 刺激和{len(participants)}名预分配被试。")
+    print(f"已提取 {document['embedded_workbook_count']} 份内嵌原始Excel、{len(workbook)} 张刺激工作表和{len(participants)}名预分配被试（stimuli.json 由 build_task_content.py 生成）。")
 
 
 if __name__ == "__main__":

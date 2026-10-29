@@ -12,6 +12,7 @@ interface UnitPatch {
 const plain = (await readJson<{ plain_language_revision: {
   units: Record<string, UnitPatch>;
   stimuli: Record<string, { text?: string; question?: string; options?: Record<string, string> }>;
+  survey_comprehension: { notice_options: Record<string, string> };
 } }>('content/revisions.json')).plain_language_revision;
 
 /** 抹掉修订清单明确允许改动的纯文字位置；其余字段（答案、字段ID、选项取值、评分、表格数值）必须与基线逐项相同。 */
@@ -38,6 +39,7 @@ export function maskContent(content: TaskContent): TaskContent {
   for (const stage of value.stages) { stage.card = ''; stage.units = stage.units.map(maskUnit); }
   const comprehension = value.survey_pages!.comprehension;
   comprehension.paragraphs = []; comprehension.notice_field.label = '';
+  for (const value of Object.keys(plain.survey_comprehension.notice_options)) comprehension.notice_field.options!.find(o => o.value === value)!.label = '';
   return value;
 }
 

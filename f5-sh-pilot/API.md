@@ -142,7 +142,7 @@ CSV使用UTF-8 BOM，公式前缀文本转义，未知时间为空。设备drawn
 
 ### 任务包后的问卷数据（内容版本v7起）
 
-信息识读理解题的提交为 `{ message_notice, answer }`，两项独立必答。`message_notice` 的值为 `not_noticed`（没有注意到任何消息提示）、`partially_read`（注意到了提示，但没有完整读到消息内容）或 `fully_read`（完整读到了消息内容）；`answer` 仍为当前消息内容题的 A/B/C 选项。第1题题干为“刚才这组任务中（包括休息时），你注意到眼镜上的消息了吗？”（2026-10-29起），三个选项取值与标签不变；第1题不联动第2题，也不参与内容题判分。`comprehension_submitted` 事件同时保存两项答案，`correct` 只依据内容题原正确选项计算。
+信息识读理解题的提交为 `{ message_notice, answer }`，两项独立必答。`message_notice` 的值为 `not_noticed`（没有注意到任何消息）、`partially_read`（注意到了消息，但没有完整读到消息内容）或 `fully_read`（完整读到了消息内容）；`answer` 仍为当前消息内容题的 A/B/C 选项。第1题题干为“刚才这组任务中（包括休息时），你注意到眼镜上的消息了吗？”（2026-10-29起），三个选项取值不变，前两项标签的“提示”于2026-10-29改为“消息”；第1题不联动第2题，也不参与内容题判分。`comprehension_submitted` 事件同时保存两项答案，`correct` 只依据内容题原正确选项计算。
 
 量表提交保存五个1—7分整数：`timing`（时机）、`attention_distraction`（分散注意力）、`thought_disruption`（扰乱思路）、`task_interference`（妨碍继续完成任务）、`perceived_disturbance`（感到被打扰）。题目、端点和说明随内容快照固定；草稿沿用原有页面草稿机制。
 
