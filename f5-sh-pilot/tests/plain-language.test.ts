@@ -23,7 +23,7 @@ test('v14大白话修订：除修订清单列出的文字位置外，tasks.json�
   }
 });
 
-test('v14眼镜消息：只改7条消息的文字，correct_option、选项编号和“不记得或不确定”不变，source_answer与正确选项一致', () => {
+test('v14眼镜消息：14条消息终稿，只改文字，correct_option、选项编号和“不记得或不确定”不变，source_answer与正确选项一致', () => {
   assert.equal(baseline.stimuli.content_version, 'sh-v2-presentation-2026-10-26-v5');
   assert.equal(stimuli.content_version, 'sh-v2-presentation-2026-10-29-v6');
   assert.equal(material.stimulus_version, stimuli.content_version);
@@ -34,10 +34,24 @@ test('v14眼镜消息：只改7条消息的文字，correct_option、选项编�
     assert.equal(s.options[2].text, '不记得或不确定', s.message_id);
     assert.equal(s.source_answer, `${s.correct_option} ${s.options.find(o => o.id === s.correct_option)!.text}`, s.message_id);
   }
-  const text = (id: string) => stimuli.stimuli.find(s => s.message_id === id)!;
-  assert.equal(text('A04').options.find(o => o.id === 'A')!.text, '周五');
-  assert.equal(text('N01').options.find(o => o.id === 'A')!.text, '14:00');
-  assert.equal(text('N01').text, '线上方案评审会，调整为13:30开始。');
+  // 执行单第四节的14条消息终稿：编号、正文、理解题、A项、B项、正确选项。
+  const final: [string, string, string, string, string, string][] = [
+    ['N01', '线上方案评审会，调整为13:30开始。', '线上方案评审调整到几点开始？', '13:00', '13:30', 'B'],
+    ['A01', '四个方案的筛选结果，可以帮你做成对比表。', '眼镜提出可以帮你做什么？', '做成方案对比表', '写好评审发言稿', 'A'],
+    ['N02', '请前往二楼服务台领取工作清单的配套材料。', '在哪里领取清单的配套材料？', '二楼服务台', '一楼服务台', 'A'],
+    ['A02', '清单可以帮你发到三楼的自助打印机。', '眼镜提出可以帮你做什么？', '改成电子版提交', '发到自助打印机', 'B'],
+    ['N03', '项目沟通会，调整到B201会议室举行。', '项目沟通会调整到哪个会议室？', 'B201会议室', 'A302会议室', 'A'],
+    ['A03', '会议资料可以帮你设置会前定时发送。', '眼镜提出可以帮你做什么？', '到时提醒发送', '设定定时发送', 'B'],
+    ['N04', '今天的展板确认时间推迟到16:30。', '展板确认的时间推迟到几点？', '17:20', '16:30', 'B'],
+    ['A04', '物料报销的发票，可以帮你汇总成报销单。', '眼镜提出可以帮你做什么？', '汇总成报销单', '发给财务审核', 'A'],
+    ['N05', '工作人员入口调整到创新中心东门。', '工作人员入口调整为创新中心哪个门？', '南门', '东门', 'B'],
+    ['A05', '明天的接驳车，可以帮你提前预约好座位。', '眼镜提出可以帮你做什么？', '预约接驳车座位', '设置出发前提醒', 'A'],
+    ['N06', '明日的体验流程介绍要提前到10:30开始。', '明日的体验流程介绍调整到几点开始？', '10:30', '10:00', 'A'],
+    ['A06', '明天要介绍体验流程，可以帮你整理讲解提纲。', '眼镜提出可以帮你做什么？', '做演示幻灯片', '整理讲解提纲', 'B'],
+    ['N07', '明日活动的签到地点要改到一楼的大厅服务台。', '明日活动的签到地点调整到哪里？', '体验厅侧门', '一楼大厅服务台', 'B'],
+    ['A07', '各组的到场通知，可以帮你按分组发出去。', '眼镜提出可以帮你做什么？', '按分组发通知', '起草通知内容', 'A'],
+  ];
+  assert.deepEqual(stimuli.stimuli.map(s => [s.message_id, s.text, s.question, s.options[0].text, s.options[1].text, s.correct_option]), final);
 });
 
 test('v14被试页文案：理解题第1题与说明按执行单三段，眼镜文案统一为“消息”', () => {

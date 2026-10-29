@@ -10,7 +10,7 @@
       "options": [
         {
           "id": "A",
-          "text": "14:00"
+          "text": "13:00"
         },
         {
           "id": "B",
@@ -32,17 +32,17 @@
     {
       "stage_id": "SH01",
       "message_id": "A01",
-      "text": "评审改到13:30，建议调整交接时间。",
+      "text": "四个方案的筛选结果，可以帮你做成对比表。",
       "duration_ms": 11000,
-      "question": "眼镜建议你调整什么？",
+      "question": "眼镜提出可以帮你做什么？",
       "options": [
         {
           "id": "A",
-          "text": "交接时间"
+          "text": "做成方案对比表"
         },
         {
           "id": "B",
-          "text": "评审时间"
+          "text": "写好评审发言稿"
         },
         {
           "id": "C",
@@ -50,7 +50,7 @@
         }
       ],
       "correct_option": "A",
-      "source_answer": "A 交接时间",
+      "source_answer": "A 做成方案对比表",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
@@ -88,17 +88,17 @@
     {
       "stage_id": "SH02",
       "message_id": "A02",
-      "text": "建议前往三楼自助打印区打印清单。",
+      "text": "清单可以帮你发到三楼的自助打印机。",
       "duration_ms": 11000,
-      "question": "眼镜建议前往哪里打印清单？",
+      "question": "眼镜提出可以帮你做什么？",
       "options": [
         {
           "id": "A",
-          "text": "办公室"
+          "text": "改成电子版提交"
         },
         {
           "id": "B",
-          "text": "三楼自助打印区"
+          "text": "发到自助打印机"
         },
         {
           "id": "C",
@@ -106,7 +106,7 @@
         }
       ],
       "correct_option": "B",
-      "source_answer": "B 三楼自助打印区",
+      "source_answer": "B 发到自助打印机",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
@@ -144,17 +144,17 @@
     {
       "stage_id": "SH03",
       "message_id": "A03",
-      "text": "建议将会议资料转为PDF后发至项目群。",
+      "text": "会议资料可以帮你设置会前定时发送。",
       "duration_ms": 11000,
-      "question": "眼镜建议把会议资料转成什么格式？",
+      "question": "眼镜提出可以帮你做什么？",
       "options": [
         {
           "id": "A",
-          "text": "图片"
+          "text": "到时提醒发送"
         },
         {
           "id": "B",
-          "text": "PDF"
+          "text": "设定定时发送"
         },
         {
           "id": "C",
@@ -162,7 +162,7 @@
         }
       ],
       "correct_option": "B",
-      "source_answer": "B PDF",
+      "source_answer": "B 设定定时发送",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
@@ -178,7 +178,7 @@
       "options": [
         {
           "id": "A",
-          "text": "16:00"
+          "text": "17:20"
         },
         {
           "id": "B",
@@ -200,17 +200,17 @@
     {
       "stage_id": "SH04",
       "message_id": "A04",
-      "text": "报销材料周五前要交，可为你提前整理好。",
+      "text": "物料报销的发票，可以帮你汇总成报销单。",
       "duration_ms": 11000,
-      "question": "报销材料要在什么时候前提交？",
+      "question": "眼镜提出可以帮你做什么？",
       "options": [
         {
           "id": "A",
-          "text": "周五"
+          "text": "汇总成报销单"
         },
         {
           "id": "B",
-          "text": "下周一"
+          "text": "发给财务审核"
         },
         {
           "id": "C",
@@ -218,7 +218,7 @@
         }
       ],
       "correct_option": "A",
-      "source_answer": "A 周五",
+      "source_answer": "A 汇总成报销单",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
@@ -234,7 +234,7 @@
       "options": [
         {
           "id": "A",
-          "text": "北门"
+          "text": "南门"
         },
         {
           "id": "B",
@@ -256,17 +256,17 @@
     {
       "stage_id": "SH05",
       "message_id": "A05",
-      "text": "建议预约明天12:10发车的接驳车。",
+      "text": "明天的接驳车，可以帮你提前预约好座位。",
       "duration_ms": 11000,
-      "question": "眼镜建议预约几点发车的接驳车？",
+      "question": "眼镜提出可以帮你做什么？",
       "options": [
         {
           "id": "A",
-          "text": "12:10"
+          "text": "预约接驳车座位"
         },
         {
           "id": "B",
-          "text": "12:30"
+          "text": "设置出发前提醒"
         },
         {
           "id": "C",
@@ -274,7 +274,7 @@
         }
       ],
       "correct_option": "A",
-      "source_answer": "A 12:10",
+      "source_answer": "A 预约接驳车座位",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
@@ -294,7 +294,7 @@
         },
         {
           "id": "B",
-          "text": "11:00"
+          "text": "10:00"
         },
         {
           "id": "C",
@@ -314,17 +314,17 @@
     {
       "stage_id": "SH06",
       "message_id": "A06",
-      "text": "明日需介绍体验流程，可以帮你整理一份讲解提纲。",
+      "text": "明天要介绍体验流程，可以帮你整理讲解提纲。",
       "duration_ms": 11000,
-      "question": "眼镜提出可以帮你准备什么？",
+      "question": "眼镜提出可以帮你做什么？",
       "options": [
         {
           "id": "A",
-          "text": "资料打印清单"
+          "text": "做演示幻灯片"
         },
         {
           "id": "B",
-          "text": "体验流程讲解提纲"
+          "text": "整理讲解提纲"
         },
         {
           "id": "C",
@@ -332,7 +332,7 @@
         }
       ],
       "correct_option": "B",
-      "source_answer": "B 体验流程讲解提纲",
+      "source_answer": "B 整理讲解提纲",
       "source_ref": {
         "file": "A5 SH实验V2变更决策文档",
         "date": "2026-10-26",
@@ -350,7 +350,7 @@
       "options": [
         {
           "id": "A",
-          "text": "体验厅门口"
+          "text": "体验厅侧门"
         },
         {
           "id": "B",
@@ -374,17 +374,17 @@
     {
       "stage_id": "SH07",
       "message_id": "A07",
-      "text": "可为你提前制作明日的各组人员签到表。",
+      "text": "各组的到场通知，可以帮你按分组发出去。",
       "duration_ms": 11000,
-      "question": "眼镜提出可以帮你制作什么？",
+      "question": "眼镜提出可以帮你做什么？",
       "options": [
         {
           "id": "A",
-          "text": "各组人员签到表"
+          "text": "按分组发通知"
         },
         {
           "id": "B",
-          "text": "各组人员到场通知"
+          "text": "起草通知内容"
         },
         {
           "id": "C",
@@ -392,7 +392,7 @@
         }
       ],
       "correct_option": "A",
-      "source_answer": "A 各组人员签到表",
+      "source_answer": "A 按分组发通知",
       "source_ref": {
         "file": "A5 SH实验V2变更决策文档",
         "date": "2026-10-26",

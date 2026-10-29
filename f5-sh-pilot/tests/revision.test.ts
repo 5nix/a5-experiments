@@ -57,7 +57,7 @@ test('22张文本表格保留来源：未改部分沿用原文/V2，8个修改�
   assert.ok(material.content.stages[0].units[1].paragraphs.some(p => p.includes('计算A、B、D的总费用：总费用 = 基本报价 + 其他费用。')));
   assert.ok(material.content.stages[2].units[1].paragraphs.some(p => p.includes('吴桐已退出；陈晨的资料已齐全；周宁已确认')));
   const ai = material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'A02')!;
-  assert.equal(ai.question, '眼镜建议前往哪里打印清单？'); assert.equal(ai.options.find(o => o.id === ai.correct_option)?.text, '三楼自助打印区');
+  assert.equal(ai.question, '眼镜提出可以帮你做什么？'); assert.equal(ai.options.find(o => o.id === ai.correct_option)?.text, '发到自助打印机');
   assert.equal(material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'N02')?.question, '在哪里领取清单的配套材料？');
   for (const stage of material.content.stages) for (const unit of stage.units) {
     assert.equal(unit.scratchpad?.label, '草稿本');
