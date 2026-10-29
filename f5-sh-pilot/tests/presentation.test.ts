@@ -169,20 +169,24 @@ test('两种固定策略对通知和主动服务均请求11000ms，按设备事�
   }
 });
 
-test('现有练习通知入口采用对应固定策略和11000ms，等待实际隐藏后才继续', async () => {
+test('现有练习消息入口采用对应固定策略和11000ms，等待实际隐藏后才继续', async () => {
   for (const mode of ['legacy_8500', 'tone_8500'] as const) {
     const f = await fixture(mode);
     try {
-      // 直接准备练习通知页夹具，不新增正常流程中的教程页或触发入口。
+      // 直接准备练习消息页夹具，不新增正常流程中的教程页或触发入口。
       f.store.tx(() => { const s = f.engine.session(f.id); s.state.phase = 'TUTORIAL_NOTICE'; s.state.page_token = randomUUID(); f.store.save(s); });
       f.send('displayed'); await f.engine.settle();
+      const notice = f.engine.view(f.id);
+      assert.equal(notice.title, '操作练习：阅读消息');
+      assert.deepEqual(notice.paragraphs, ['请阅读眼镜上的练习消息。读完后点击右上角“已阅读消息”，再点击下一步。']);
       assert.equal(f.requests[0].duration_ms, 11000);
       assert.equal(f.requests[0].display_mode ?? 'legacy_8500', mode);
       assert.equal(f.store.interventions(f.id)[0].data_kind, 'tutorial');
       f.emit('drawn'); f.advance(11000);
-      assert.throws(() => f.send('continue'), /等待眼镜收起/);
+      assert.throws(() => f.send('continue'), /请先阅读并确认练习消息，等眼镜上的消息消失后再继续/);
       f.emit('hidden', f.requests[0], { hide_reason: 'auto_timeout' });
       assert.equal(f.send('continue').phase, 'TUTORIAL_CHECK');
+      assert.deepEqual(f.engine.view(f.id).paragraphs, ['请根据刚才的眼镜消息回答问题。答对后进入实验说明。']);
     } finally { await f.engine.settle(); f.store.close(); }
   }
 });

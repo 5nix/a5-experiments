@@ -37,7 +37,7 @@ test('七组任务按注意情况跳转：两题独立必答，内容题A/B/C及
         assert.deepEqual(view.fields.map(f => f.id), ['message_notice', 'answer']);
         assert.ok(view.fields.every(f => f.required));
         assert.deepEqual(view.answer, {});
-        assert.equal(view.paragraphs.length, 1);
+        assert.equal(view.paragraphs.length, 3);
         assert.match(view.fields[1].label, /^第2题：/);
         assert.deepEqual(view.fields[1].options, stimulus.options.map(o => ({ value: o.id, label: `${o.id} ${o.text}` })));
         assert.equal(view.fields[1].options!.find(o => o.value === 'C')!.label, 'C 不记得或不确定');

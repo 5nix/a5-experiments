@@ -363,7 +363,7 @@ function pageHeader(view, { progress = true, tools = [] } = {}) {
   const right = h('div', { class: 'page-tools' }, tools);
   if (view.confirmation_enabled && !['COMPLETED', 'ABORTED'].includes(view.phase)) {
     const check = svg('svg', {class:'icon', width:16, height:16, viewBox:'0 0 24 24', fill:'none', 'aria-hidden':'true'}, svg('path', {d:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4', stroke:'currentColor', 'stroke-width':2, 'stroke-linecap':'round', 'stroke-linejoin':'round'}));
-    right.prepend(h('button', {id:'confirm-message', type:'button', class:'btn subtle read-notice', onclick:confirmMessage}, check, h('span', {text:'已阅读通知'})));
+    right.prepend(h('button', {id:'confirm-message', type:'button', class:'btn subtle read-notice', onclick:confirmMessage}, check, h('span', {text:'已阅读消息'})));
   }
   if (progress) {
     const segments = h('span', { class: 'progress-track', 'aria-hidden': 'true' },

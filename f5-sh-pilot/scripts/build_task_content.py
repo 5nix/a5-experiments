@@ -1,4 +1,4 @@
-"""从Word原文与内嵌Excel生成文本表格，应用经用户批准的独立文案修订；追加V2新增的SH06、SH07与U2内休息配置。"""
+"""从Word原文与内嵌Excel生成文本表格，应用经用户批准的独立文案修订；追加V2新增的SH06、SH07与U2内休息配置；生成眼镜消息stimuli.json。"""
 import json
 import re
 from pathlib import Path
@@ -197,5 +197,90 @@ if pilot:
         stage['units'] = [replacements.get(u['unit_id'], u) for u in stage['units']]
     data['content_version'] = pilot['content_version']
     data['pilot_unit_revision_id'] = pilot['revision_id']
+
+
+def find_table(unit, table_id):
+    tables = {t['id']: t for t in (unit.get('tables') or []) + ((unit.get('reveal') or {}).get('tables') or [])}
+    return tables[table_id]
+
+
+def apply_plain_language(data, plain):
+    """大白话修订：只替换被试可见文字。字段ID、选项取值、评分、表格数值只能经由断言过的旧值→新值单元格改动。"""
+    assert data['content_version'] == plain['base_content_version'], data['content_version']
+    all_units = {u['unit_id']: u for s in data['stages'] for u in s['units']}
+    assert set(plain['units']) == set(all_units) and len(all_units) == 14
+    assert set(plain['stage_cards']) == {s['stage_id'] for s in data['stages']}
+    data['intro']['paragraphs'] = plain['intro_paragraphs']
+    data['completion_text'] = plain['completion_text']
+    for stage in data['stages']:
+        stage['card'] = plain['stage_cards'][stage['stage_id']]
+    for unit_id, patch in plain['units'].items():
+        unit = all_units[unit_id]
+        unit['title'] = patch['title']
+        unit['paragraphs'] = patch['paragraphs']
+        if 'reveal_paragraphs' in patch:
+            unit['reveal']['paragraphs'] = patch['reveal_paragraphs']
+        fields = {f['id']: f for f in unit['fields']}
+        assert set(patch.get('field_labels', {})) <= set(fields), unit_id
+        for field_id, label in patch.get('field_labels', {}).items():
+            fields[field_id]['label'] = label
+        for table_id, change in patch.get('tables', {}).items():
+            table = find_table(unit, table_id)
+            if 'caption' in change:
+                table['caption'] = change['caption']
+            if 'columns' in change:
+                assert len(change['columns']) == len(table['columns']), table_id
+                table['columns'] = change['columns']
+            for row, column, before, after in change.get('cells', []):
+                assert table['rows'][row][column] == before, (table_id, row, column, table['rows'][row][column])
+                table['rows'][row][column] = after
+    comprehension = data['survey_pages']['comprehension']
+    survey = plain['survey_comprehension']
+    assert comprehension['paragraphs'] == survey['paragraphs_before'] and comprehension['notice_field']['label'] == survey['notice_label_before']
+    comprehension['paragraphs'] = survey['paragraphs']
+    comprehension['notice_field']['label'] = survey['notice_label']
+    data['content_version'] = plain['content_version']
+    data['plain_language_revision_id'] = plain['revision_id']
+
+
+plain = revisions.get('plain_language_revision')
+if plain:
+    apply_plain_language(data, plain)
 (ROOT / 'content/tasks.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
-print('已生成7组14单元、22张文本表格；最后应用8个单元的定稿完整替换，其余单元及实验配置保留。')
+
+
+def build_stimuli(uncertain_text):
+    """眼镜消息与理解题：原工作簿前10条＋V2新增4条，再应用大白话修订；不确定项统一为程序文案，correct_option不变。"""
+    workbook = json.loads((ROOT / 'content/source/stimulus-workbook.json').read_text(encoding='utf-8'))
+    cells = next(s for s in workbook['sheets'] if s['name'] == '文案呈现与问答表')['cells']
+    stimuli, stage = [], None
+    for row in range(2, 12):
+        def cell(col):
+            return cells.get(f'{col}{row}', {}).get('value')
+        stage = cell('A') or stage
+        options = [{'id': line[0], 'text': uncertain_text if line[0] == 'C' else line[1:].strip()} for line in cell('H').splitlines() if line.strip()]
+        stimuli.append({'stage_id': stage, 'message_id': cell('B'), 'text': cell('C'), 'duration_ms': 11000, 'question': cell('G'), 'options': options,
+                        'correct_option': cell('I')[0], 'source_answer': cell('I'),
+                        'source_ref': {'file': '刺激材料的属性判断.xlsx', 'sheet': '文案呈现与问答表', 'range': f'A{row}:I{row}'}})
+    stimuli += [json.loads(json.dumps(s)) for s in revisions['v2_stimuli']['stimuli']]
+    version = revisions['v2_stimuli']['content_version']
+    if plain:
+        assert version == plain['base_stimulus_content_version'], version
+        by_id = {s['message_id']: s for s in stimuli}
+        assert set(plain['stimuli']) <= set(by_id)
+        for message_id, patch in plain['stimuli'].items():
+            stimulus = by_id[message_id]
+            stimulus.update({k: patch[k] for k in ('text', 'question') if k in patch})
+            for option_id, text in patch.get('options', {}).items():
+                option = next(o for o in stimulus['options'] if o['id'] == option_id)
+                assert option_id in 'AB' and option['text'] != uncertain_text
+                option['text'] = text
+            correct = next(o for o in stimulus['options'] if o['id'] == stimulus['correct_option'])
+            stimulus['source_answer'] = f"{stimulus['correct_option']} {correct['text']}"
+        version = plain['stimulus_content_version']
+    return {'content_version': version, 'stimuli': stimuli}
+
+
+stimuli = build_stimuli(data['survey_pages']['comprehension']['uncertain_option_text'])
+(ROOT / 'content/stimuli.json').write_text(json.dumps(stimuli, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
+print('已生成7组14单元、22张文本表格；最后应用8个单元的定稿完整替换和大白话文字修订，其余单元及实验配置保留；已生成14条眼镜消息。')

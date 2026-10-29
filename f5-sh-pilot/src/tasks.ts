@@ -23,6 +23,7 @@ export interface Unit {
 export interface TaskContent {
   schema_version: string; content_version: string;
   pilot_unit_revision_id?: string;
+  plain_language_revision_id?: string;
   intro: { title: string; paragraphs: string[] };
   stages: { stage_id: StageId; title: string; card: string; scene_time?: { date: string; time: string }; units: Unit[] }[];
   survey_revision_id?: string;

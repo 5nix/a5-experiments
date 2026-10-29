@@ -13,6 +13,7 @@ import type { TaskContent, Unit } from '../src/tasks.ts';
 import { readJson, experimentRoot } from '../src/preflight.ts';
 import { exportData } from '../src/export.ts';
 import { testConfig } from './fixtures.ts';
+import { maskContent, maskUnit } from './text-mask.ts';
 
 const material = await loadMaterial(), config = await testConfig();
 const baseline = await readJson<{
@@ -55,7 +56,8 @@ function fixture(mat = material, path = ':memory:') {
 }
 
 test('定稿完整替换8个Unit：独立交付数据哈希一致，7组14单元22表41字段，删除字段与旧expected不残留', () => {
-  assert.equal(material.content.content_version, 'sh-v2-2026-10-27-v13');
+  // 2026-10-29大白话修订只改文字：v13定稿的结构、字段、评分逐项不变，文字差异由 plain-language.test.ts 约束。
+  assert.equal(material.content.content_version, 'sh-v2-2026-10-29-v14');
   assert.equal(material.content.pilot_unit_revision_id, 'user-approved-pilot-unit-materials-2026-10-27-v1');
   assert.equal(revision.source_json_sha256, baseline.source_json_sha256);
   assert.equal(revision.source_document_sha256, baseline.source_document_sha256);
@@ -66,8 +68,9 @@ test('定稿完整替换8个Unit：独立交付数据哈希一致，7组14单元
   assert.equal(all.reduce((n, u) => n + u.fields.length, 0), 41);
   assert.equal(all.reduce((n, u) => n + (u.tables?.length ?? 0) + (u.reveal?.tables?.length ?? 0), 0), 22);
   for (const unit of units) {
-    assert.equal(digest(unit), baseline.replacement_unit_hashes[unit.unit_id], unit.unit_id);
-    assert.deepEqual(unit, revision.units.find(u => u.unit_id === unit.unit_id));
+    const delivered = revision.units.find(u => u.unit_id === unit.unit_id)!;
+    assert.equal(digest(delivered), baseline.replacement_unit_hashes[unit.unit_id], unit.unit_id);
+    assert.deepEqual(maskUnit(unit), maskUnit(delivered), unit.unit_id);
     assert.ok(unit.fields.every(f => f.required && !('default' in f) && !('value' in f)));
     assert.equal(!!unit.reveal, unit.unit_id.endsWith('U1'));
     for (const deleted of revision.removed_fields_by_unit[unit.unit_id]) {
@@ -85,16 +88,17 @@ test('定稿完整替换8个Unit：独立交付数据哈希一致，7组14单元
 
 test('其余6个Unit深比较不变；任务组元数据、流程参数、刺激、预分配与PRD保持基线', async () => {
   assert.equal(revision.unchanged_unit_ids.length, 6);
-  for (const id of revision.unchanged_unit_ids) assert.deepEqual(byId(material.content, id), byId(baseline.content, id), id);
-  const headers = (content: TaskContent) => content.stages.map(({ units: _units, ...header }) => header);
+  for (const id of revision.unchanged_unit_ids) assert.deepEqual(maskUnit(byId(material.content, id)), maskUnit(byId(baseline.content, id)), id);
+  const headers = (content: TaskContent) => maskContent(content).stages.map(({ units: _units, ...header }) => header);
   assert.deepEqual(headers(material.content), headers(baseline.content));
-  const { stages: _newStages, content_version: _newVersion, pilot_unit_revision_id: _newRevision, ...current } = material.content;
-  const { stages: _oldStages, content_version: _oldVersion, ...old } = baseline.content;
+  const { stages: _newStages, content_version: _newVersion, pilot_unit_revision_id: _newRevision, ...current } = maskContent(material.content);
+  const { stages: _oldStages, content_version: _oldVersion, ...old } = maskContent(baseline.content);
   assert.deepEqual(current, old);
   assert.equal(material.content.in_unit_rest!.window_min_ms, 30000);
   assert.equal(material.content.in_unit_rest!.duration_ms, 30000);
   assert.equal(material.content.in_unit_rest!.t2_delay_ms, 5000);
-  for (const [path, expected] of Object.entries(baseline.protected_json_hashes)) assert.equal(digest(await readJson(path)), expected, path);
+  // content/stimuli.json 的文字在v14改动，其余字段由 plain-language.test.ts 与v13基线逐项比对。
+  for (const [path, expected] of Object.entries(baseline.protected_json_hashes)) if (path !== 'content/stimuli.json') assert.equal(digest(await readJson(path)), expected, path);
   assert.equal(createHash('sha256').update(await readFile(join(experimentRoot, 'docs/PRD.md'))).digest('hex'), baseline.prd_sha256);
   const second = byId(material.content, 'SH02_U2');
   assert.equal(second.scoring.type, 'exact');
@@ -203,7 +207,7 @@ test('休息进度从新快照字段读取：SH05_U2只有2项，已答1项和�
   } finally { await f.close(); }
 });
 
-test('v12历史快照与旧字段评分、答案、分配和导出在加载v13后保持原状，新会话使用v13', async () => {
+test('v12历史快照与旧字段评分、答案、分配和导出在加载v14后保持原状，新会话使用v14', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'a5-unit-history-'));
   const oldMaterial = { ...material, content: structuredClone(baseline.content) };
   const f = fixture(oldMaterial, join(directory, 'history.sqlite'));
@@ -232,7 +236,7 @@ test('v12历史快照与旧字段评分、答案、分配和导出在加载v13�
     assert.deepEqual(trial.payload.raw_answer, oldUnit.scoring.expected);
     assert.deepEqual(trial.payload.normalized_answer, normalize(oldUnit.fields, oldUnit.scoring.expected));
     const created = engine.create('001');
-    assert.equal(engine.session(created.session_id).snapshot.content.content_version, 'sh-v2-2026-10-27-v13');
+    assert.equal(engine.session(created.session_id).snapshot.content.content_version, 'sh-v2-2026-10-29-v14');
     assert.equal(byId(engine.session(created.session_id).snapshot.content, 'SH05_U1').fields.length, 3);
     assert.deepEqual(engine.session(f.id).snapshot.participant, snapshot.participant);
     await engine.settle();
@@ -261,7 +265,7 @@ test('新会话8个Unit的trials.csv按快照导出raw_answer、normalized_answe
     const records = rows.slice(1).map(values => Object.fromEntries(rows[0].map((key, i) => [key, values[i]])));
     for (const unit of units) {
       const record = records.find(r => r.unit_id === unit.unit_id)!;
-      assert.equal(record.content_version, 'sh-v2-2026-10-27-v13');
+      assert.equal(record.content_version, 'sh-v2-2026-10-29-v14');
       assert.deepEqual(JSON.parse(record.raw_answer), answerFor(unit));
       assert.deepEqual(JSON.parse(record.normalized_answer), normalize(unit.fields, answerFor(unit)));
       assert.equal(record.score, '1');

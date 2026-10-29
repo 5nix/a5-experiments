@@ -60,7 +60,7 @@ export class Engine {
   private guardTrigger(s: Session, timing: 'T0' | 'T1') {
     if (this.assignment(s).condition.endsWith(timing) && !this.store.interventions(s.id).some(m => m.stage_id === this.assignment(s).stage_id)) {
       this.requirePreviousMessageFinished(s);
-      if (this.deviceUnavailable(s)) throw new HttpError(409,'眼镜未就绪或正在展示，当前触发操作未执行。请恢复眼镜后重试；不会补发旧通知。');
+      if (this.deviceUnavailable(s)) throw new HttpError(409,'眼镜未就绪或正在展示，当前触发操作未执行。请恢复眼镜后重试；不会补发旧消息。');
     }
   }
   private cancelOnEnd(id: string) {
@@ -270,8 +270,8 @@ export class Engine {
     const tutorial: typeof targets = [{id:'TUTORIAL_INTRO',label:'工作台、草稿本与时间',phase:'TUTORIAL_INTRO',stage:0,unit:0}];
     if(s.snapshot.content.in_unit_rest) tutorial.push({id:'TUTORIAL_REST',label:'第二单元中的休息',phase:'TUTORIAL_REST',stage:0,unit:0});
     if(this.sessionModes(s).includes('confirm_until_ack')) tutorial.push(
-      {id:'TUTORIAL_NOTICE',label:'阅读并确认练习通知',phase:'TUTORIAL_NOTICE',stage:0,unit:0},
-      {id:'TUTORIAL_CHECK',label:'通知理解题',phase:'TUTORIAL_CHECK',stage:0,unit:0});
+      {id:'TUTORIAL_NOTICE',label:'阅读并确认练习消息',phase:'TUTORIAL_NOTICE',stage:0,unit:0},
+      {id:'TUTORIAL_CHECK',label:'消息理解题',phase:'TUTORIAL_CHECK',stage:0,unit:0});
     targets.unshift(...tutorial.map((t, i) => ({ ...t, label: `教程${i + 1}：${t.label}` })));
     for (const [index, stage] of s.snapshot.content.stages.entries()) {
       targets.push({ id: `${stage.stage_id}_CARD`, label: `${stage.stage_id} 说明卡`, phase: 'CARD', stage: index, unit: 0 });
@@ -488,10 +488,10 @@ export class Engine {
     if (state.paused_at_ms !== null) return { ...base, phase: 'PAUSED', title: '实验已暂停，请等待实验员。', can_continue: false };
     if (state.phase.startsWith('TUTORIAL')) {
       const restCopy = content.in_unit_rest;
-      base.title = state.phase === 'TUTORIAL_INTRO' ? '操作练习：认识工作台' : state.phase === 'TUTORIAL_REST' ? '操作练习：休息一次' : state.phase === 'TUTORIAL_NOTICE' ? '操作练习：阅读通知' : '操作练习：回答问题';
-      base.paragraphs = state.phase === 'TUTORIAL_INTRO' ? [base.confirmation_enabled ? '右上角“已阅读通知”用于阅读眼镜消息后确认，“草稿本”可以记录思路。请试着打开草稿本。' : '右上角“草稿本”可以记录思路。请试着打开草稿本。', '右下角显示当前任务的情境时间；进入不同任务情境时，时间会更新。准备好后点击下一步。']
+      base.title = state.phase === 'TUTORIAL_INTRO' ? '操作练习：认识工作台' : state.phase === 'TUTORIAL_REST' ? '操作练习：休息一次' : state.phase === 'TUTORIAL_NOTICE' ? '操作练习：阅读消息' : '操作练习：回答问题';
+      base.paragraphs = state.phase === 'TUTORIAL_INTRO' ? [base.confirmation_enabled ? '右上角“已阅读消息”用于读完眼镜消息后确认，“草稿本”可以记录思路。请试着打开草稿本。' : '右上角“草稿本”可以记录思路。请试着打开草稿本。', '右下角显示当前任务的情境时间；进入不同任务情境时，时间会更新。准备好后点击下一步。']
         : state.phase === 'TUTORIAL_REST' && restCopy ? [`每组任务的第二单元中，右上角会有“${restCopy.button_label}”按钮。点击后进入休息页，任务内容会暂时遮住，约${restCopy.duration_ms / 1000}秒后自动回到任务，已填写的答案和草稿都会保留。`, `注意：${restCopy.instruction}每组只能休息一次。`, `现在请点击右上角“${restCopy.button_label}”试一次（练习时休息较短），回到这里后点击下一步。`]
-        : state.phase === 'TUTORIAL_NOTICE' ? ['请阅读眼镜中的练习通知，阅读完毕后点击右上角“已阅读通知”，再点击下一步。'] : ['请根据刚才的眼镜通知回答问题，答对后进入实验说明。'];
+        : state.phase === 'TUTORIAL_NOTICE' ? ['请阅读眼镜上的练习消息。读完后点击右上角“已阅读消息”，再点击下一步。'] : ['请根据刚才的眼镜消息回答问题。答对后进入实验说明。'];
       base.scratchpad = {label:'草稿本',placeholder:'在这里记录你的思考...',max_length:5000,text:state.scratchpads?.TUTORIAL ?? ''};
     } else if (state.phase === 'INTRO') Object.assign(base, content.intro);
     else if (state.phase === 'CARD') { base.title = content.stages[state.stage].title; base.paragraphs = [content.stages[state.stage].card]; }
@@ -703,7 +703,7 @@ export class Engine {
             const raw = command.answer ?? {}; state.drafts[this.draftKey(s)] = raw;
             if (command.action === 'submit') {
               const correct = raw.answer === 'B'; this.log(s,'tutorial_answer_submitted',{raw_answer:raw,correct,client});
-              if (!correct) rejected = new HttpError(422,'答案不正确，请回想练习通知后再试。');
+              if (!correct) rejected = new HttpError(422,'答案不正确，请回想练习消息后再试。');
               else { this.log(s,'tutorial_completed'); this.transition(s,'INTRO'); }
             }
           } else if (command.action !== 'draft') {
@@ -719,7 +719,7 @@ export class Engine {
             }
             else {
               const m=this.store.interventions(id).find(m=>m.stage_id==='TUTORIAL');
-              if (!m || (this.messageMode(s,m)==='confirm_until_ack' && !m.confirmation_requested_at) || (m.source==='device' ? !m.device_events?.some(e=>e.kind==='hidden') : this.messageMode(s,m)==='confirm_until_ack' ? m.confirmation_status!=='accepted' : !m.t_send || this.wallNow()-Date.parse(m.t_send)<m.duration_ms)) throw new HttpError(409,'请先阅读并确认练习通知，等待眼镜收起后再继续。');
+              if (!m || (this.messageMode(s,m)==='confirm_until_ack' && !m.confirmation_requested_at) || (m.source==='device' ? !m.device_events?.some(e=>e.kind==='hidden') : this.messageMode(s,m)==='confirm_until_ack' ? m.confirmation_status!=='accepted' : !m.t_send || this.wallNow()-Date.parse(m.t_send)<m.duration_ms)) throw new HttpError(409,'请先阅读并确认练习消息，等眼镜上的消息消失后再继续。');
               this.log(s,'tutorial_notice_continue'); this.transition(s,'TUTORIAL_CHECK');
             }
           }

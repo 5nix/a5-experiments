@@ -44,18 +44,18 @@ test('22张文本表格保留来源：未改部分沿用原文/V2，8个修改�
   assert.deepEqual(added.map(t => t.id), ['table-19', 'table-20', 'table-21', 'table-22']);
   for (const table of added) { assert.equal(table.source_ref!.embedded_file, undefined); assert.equal(table.source_ref!.revision_id, table.id === 'table-20' ? 'a5-sh-v2-decision-2026-10-26' : 'user-approved-pilot-unit-materials-2026-10-27-v1'); }
   assert.deepEqual(material.assets, {});
-  assert.equal(tables.find(t => t.id === 'table-04')?.rows[0][2], '已确定为9:45—10:30，无须重新安排');
+  assert.equal(tables.find(t => t.id === 'table-04')?.rows[0][2], '已定为9:45—10:30');
   assert.equal(tables.find(t => t.id === 'table-13')?.rows[0][1], '12:40');
   assert.equal(tables.find(t => t.id === 'table-18')?.rows[3][4], '125元');
   // 日常工作语气修订：M1仍为筛选当前基本方案且可多选；补充资料以文件附件名呈现，题干按文件名引用。
-  assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('可以选择多个方案，也可以选择无方案')));
-  assert.equal(material.content.content_version, 'sh-v2-2026-10-27-v13');
+  assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('可以多选。没有合格方案时，选“没有合格方案”。')));
+  assert.equal(material.content.content_version, 'sh-v2-2026-10-29-v14');
   for (const unit of material.content.stages.map(s => s.units[0])) {
     assert.match(unit.reveal!.button_label, /\.(xlsx|docx)$/);
     assert.ok(unit.paragraphs.some(p => p.includes(`《${unit.reveal!.button_label}》`)));
   }
-  assert.ok(material.content.stages[0].units[1].paragraphs.some(p => p.includes('请按“总费用＝基本报价＋其他费用”，计算A、B、D的总费用')));
-  assert.ok(material.content.stages[2].units[1].paragraphs.some(p => p.includes('吴桐状态为已退出；陈晨资料为齐全；周宁状态为已确认')));
+  assert.ok(material.content.stages[0].units[1].paragraphs.some(p => p.includes('计算A、B、D的总费用：总费用 = 基本报价 + 其他费用。')));
+  assert.ok(material.content.stages[2].units[1].paragraphs.some(p => p.includes('吴桐已退出；陈晨的资料已齐全；周宁已确认')));
   const ai = material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'A02')!;
   assert.equal(ai.question, '眼镜建议前往哪里打印清单？'); assert.equal(ai.options.find(o => o.id === ai.correct_option)?.text, '三楼自助打印区');
   assert.equal(material.stimuli.find(s => s.stage_id === 'SH02' && s.message_id === 'N02')?.question, '在哪里领取清单的配套材料？');

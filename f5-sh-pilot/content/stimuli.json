@@ -1,5 +1,5 @@
 {
-  "content_version": "sh-v2-presentation-2026-10-26-v5",
+  "content_version": "sh-v2-presentation-2026-10-29-v6",
   "stimuli": [
     {
       "stage_id": "SH01",
@@ -10,7 +10,7 @@
       "options": [
         {
           "id": "A",
-          "text": "13:00"
+          "text": "14:00"
         },
         {
           "id": "B",
@@ -32,17 +32,17 @@
     {
       "stage_id": "SH01",
       "message_id": "A01",
-      "text": "评审提前后与交接时间冲突，建议及时调整。",
+      "text": "评审改到13:30，建议调整交接时间。",
       "duration_ms": 11000,
-      "question": "建议你需要及时调整什么？",
+      "question": "眼镜建议你调整什么？",
       "options": [
         {
           "id": "A",
-          "text": "时间冲突"
+          "text": "交接时间"
         },
         {
           "id": "B",
-          "text": "工作材料"
+          "text": "评审时间"
         },
         {
           "id": "C",
@@ -50,7 +50,7 @@
         }
       ],
       "correct_option": "A",
-      "source_answer": "A 时间冲突",
+      "source_answer": "A 交接时间",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
@@ -94,7 +94,7 @@
       "options": [
         {
           "id": "A",
-          "text": "会议室"
+          "text": "办公室"
         },
         {
           "id": "B",
@@ -144,17 +144,17 @@
     {
       "stage_id": "SH03",
       "message_id": "A03",
-      "text": "参加沟通会前，建议将资料发至项目群。",
+      "text": "建议将会议资料转为PDF后发至项目群。",
       "duration_ms": 11000,
-      "question": "眼镜建议把什么发到项目群？",
+      "question": "眼镜建议把会议资料转成什么格式？",
       "options": [
         {
           "id": "A",
-          "text": "用户访谈"
+          "text": "图片"
         },
         {
           "id": "B",
-          "text": "会议资料"
+          "text": "PDF"
         },
         {
           "id": "C",
@@ -162,7 +162,7 @@
         }
       ],
       "correct_option": "B",
-      "source_answer": "B 会议资料",
+      "source_answer": "B PDF",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
@@ -178,7 +178,7 @@
       "options": [
         {
           "id": "A",
-          "text": "17:20"
+          "text": "16:00"
         },
         {
           "id": "B",
@@ -200,17 +200,17 @@
     {
       "stage_id": "SH04",
       "message_id": "A04",
-      "text": "活动采购的物料报销材料，可为你提前整理。",
+      "text": "报销材料周五前要交，可为你提前整理好。",
       "duration_ms": 11000,
-      "question": "可以为你整理什么材料？",
+      "question": "报销材料要在什么时候前提交？",
       "options": [
         {
           "id": "A",
-          "text": "物料报销材料"
+          "text": "周五"
         },
         {
           "id": "B",
-          "text": "展板确认材料"
+          "text": "下周一"
         },
         {
           "id": "C",
@@ -218,7 +218,7 @@
         }
       ],
       "correct_option": "A",
-      "source_answer": "A 物料报销材料",
+      "source_answer": "A 周五",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",
@@ -256,17 +256,17 @@
     {
       "stage_id": "SH05",
       "message_id": "A05",
-      "text": "建议提前预约明天前往创新中心的接驳车。",
+      "text": "建议预约明天12:10发车的接驳车。",
       "duration_ms": 11000,
-      "question": "眼镜建议提前预约什么？",
+      "question": "眼镜建议预约几点发车的接驳车？",
       "options": [
         {
           "id": "A",
-          "text": "接驳车"
+          "text": "12:10"
         },
         {
           "id": "B",
-          "text": "签到码"
+          "text": "12:30"
         },
         {
           "id": "C",
@@ -274,7 +274,7 @@
         }
       ],
       "correct_option": "A",
-      "source_answer": "A 接驳车",
+      "source_answer": "A 12:10",
       "source_ref": {
         "file": "刺激材料的属性判断.xlsx",
         "sheet": "文案呈现与问答表",

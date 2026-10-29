@@ -29,7 +29,7 @@ Windows项目已配置 `.a5-local/device.json` 时，启动器自动使用项目
 
 - 数据默认位于 `runtime/experiment.sqlite`，导出位于 `exports/`；这些目录不提交Git。备份前停止服务，复制完整runtime及所需导出。
 - 测试使用独立 `A5_RUNTIME_DIR`、`A5_EXPORT_DIR` 和端口，不能复用正式数据目录。
-- 内容由 `content/tasks.json`、`stimuli.json` 提供；SH06/SH07（`v2_stages`/`v2_stimuli`）和休息参数（`rest_settings`）也在 `revisions.json`。编辑 `revisions.json` 后，在本实验目录执行 `python scripts/build_task_content.py` 重建，并更新内容版本。保持字段ID与评分约束一致。
+- 内容由 `content/tasks.json`、`stimuli.json` 提供；SH06/SH07（`v2_stages`/`v2_stimuli`）和休息参数（`rest_settings`）也在 `revisions.json`。编辑 `revisions.json` 后，在本实验目录执行 `python scripts/build_task_content.py` 重建 `tasks.json` 和 `stimuli.json`，并更新内容版本。保持字段ID与评分约束一致。
 - 内容修改需重启并新建会话；配置切换只影响新会话。已有会话使用创建时快照，版本以快照和导出清单为准。
 
 ## 文档导航

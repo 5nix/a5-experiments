@@ -62,6 +62,6 @@ export async function preflight() {
     source_config_errors: [] as string[],
     source_config_note: `participants.source.json 为原工作簿历史来源（${source.participants.length}人、${sourceStages.size}组），V2不再用于创建会话。`,
     material_errors: materialErrors,
-    remaining: ['雷鸟显示端真机部署与实际硬件呈现验证', '统一30秒休息窗口的现场使用效果验证', 'SH06/SH07材料待设计者确认（见V2变更文档第9节）', 'Windows现场实机验证'],
+    remaining: ['雷鸟显示端真机部署与实际硬件呈现验证', '统一30秒休息窗口的现场使用效果验证', '新版任务材料的实际耗时与负荷复测', 'Windows现场实机验证'],
   };
 }
