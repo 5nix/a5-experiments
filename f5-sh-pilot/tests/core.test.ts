@@ -20,7 +20,7 @@ const material = await loadMaterial();
 const config = await testConfig();
 config.participants = config.participants.slice(0, 4); // 此流程用例保留原表的四人固定夹具。
 const visible = { visibility_state: 'visible', monotonic_ms: 10, time_origin_ms: 1000, timestamp_iso: '2026-10-19T00:00:00.000Z' };
-const correct = (unit: Unit) => unit.scoring.type === 'exact' ? structuredClone(unit.scoring.expected) : { checkin: '许宁', guide: '林晨', equipment: unit.unit_id.endsWith('U1') ? '赵禾' : '梁欣' };
+const correct = (unit: Unit) => unit.scoring.type === 'exact' ? structuredClone(unit.scoring.expected) : { checkin: '林晨', guide: '陈珂', equipment: unit.unit_id.endsWith('U1') ? '赵禾' : '梁欣' };
 /** 旧快照兼容：V2之前的会话快照没有 in_unit_rest，仍走组间30秒休息。 */
 const legacy = { ...material, content: { ...material.content, in_unit_rest: undefined, break_ms: 30000, break_start_on_display: true, allow_break_skip: true } };
 function fixture(path = ':memory:', adapter = new MockGlassesAdapter(), mat: typeof material = material) {
@@ -118,19 +118,19 @@ test('全部题型强制完整；0合法、时间与金额归一化、NONE互斥
     for (const field of unit.fields) { const incomplete = { ...answer }; delete incomplete[field.id]; assert.throws(() => normalize(unit.fields, incomplete)); }
   }
   const schedule = material.content.stages[1].units[0];
-  assert.equal(score(schedule, normalize(schedule.fields, { debug: '09:45', training: '10:45', acceptance: '11:15', on_time: '能' })), 1);
+  assert.equal(score(schedule, normalize(schedule.fields, { training: '10:45', acceptance: '11:15', on_time: '能' })), 1);
   const first = material.content.stages[0].units[0];
   assert.throws(() => normalize(first.fields, { plans: ['A', 'NONE'] }));
   const stock = material.content.stages[4].units[0]; assert.equal(normalize(stock.fields, correct(stock)).guide_gap, 0);
   const order = material.content.stages[4].units[1];
   assert.deepEqual(order.fields.find(f => f.id === 'plan')!.options!.map(o => o.value), ['A', 'B', 'C', 'D']);
-  assert.throws(() => normalize(order.fields, { plan: 'NONE', badge_surplus: '不适用', record_surplus: '不适用' }));
+  assert.throws(() => normalize(order.fields, { plan: 'NONE', record_surplus: '不适用' }));
 });
 
 test('SH04允许多个合法排班，拒绝重人、缺席和迟到；不采用错误示例', () => {
   const unit = material.content.stages[3].units[1];
-  for (const [checkin, guide] of [['林晨', '陈珂'], ['林晨', '唐可'], ['许宁', '林晨'], ['许宁', '陈珂'], ['许宁', '唐可']]) assert.equal(score(unit, normalize(unit.fields, { checkin, guide, equipment: '梁欣' })), 1);
-  for (const answer of [{ checkin: '许宁', guide: '许宁', equipment: '梁欣' }, { checkin: '周悦', guide: '林晨', equipment: '梁欣' }, { checkin: '许宁', guide: '林晨', equipment: '赵禾' }]) assert.equal(score(unit, normalize(unit.fields, answer)), 0);
+  assert.equal(score(unit, normalize(unit.fields, { checkin: '林晨', guide: '陈珂', equipment: '梁欣' })), 1);
+  for (const answer of [{ checkin: '林晨', guide: '林晨', equipment: '梁欣' }, { checkin: '周悦', guide: '林晨', equipment: '梁欣' }, { checkin: '林晨', guide: '陈珂', equipment: '赵禾' }]) assert.equal(score(unit, normalize(unit.fields, answer)), 0);
 });
 
 test('实际可见才触发E与T1；重复展开/重复提交幂等，完整错误答案照常进入U2', async () => {
@@ -197,7 +197,7 @@ test('落盘恢复：草稿、文本表格快照、时间衔接、发送不重�
       assert.equal(store.interventions(f.created.session_id)[0].status, 'unknown'); assert.equal(calls, 0);
       const changed = structuredClone(material); changed.content.intro.title = '新版本';
       assert.notEqual(engine.session(f.created.session_id).snapshot.content.intro.title, changed.content.intro.title);
-      assert.ok(engine.session(f.created.session_id).snapshot.content.stages[3].units[0].reveal?.tables?.[0].source_ref?.sha256);
+      assert.deepEqual(engine.session(f.created.session_id).snapshot.content.stages[3].units[0].reveal?.tables, material.content.stages[3].units[0].reveal?.tables);
     } finally { store.close(); }
   } finally { await rm(dir, { recursive: true, force: true }); }
 });

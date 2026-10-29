@@ -30,23 +30,26 @@ function fixture(mat: typeof material = material) {
   return { store, engine, debug, send, advance: (ms: number) => { now += ms; } };
 }
 
-test('SH01—SH05的18张表格来自内嵌Excel，V2新增SH06/SH07的4张表格来自V2决策文档；不再含图片', () => {
+test('22张文本表格保留来源：未改部分沿用原文/V2，8个修改单元使用20261027定稿', () => {
   const tableOf = (stages: typeof material.content.stages) => stages.flatMap(s => s.units.flatMap(u => [...(u.tables ?? []), ...(u.reveal?.tables ?? [])]));
   const tables = tableOf(material.content.stages);
   assert.equal(tables.length, 22); assert.equal(new Set(tables.map(t => t.id)).size, 22);
   for (const table of tables) assert.ok(table.rows.every(r => r.length === table.columns.length));
   const original = tableOf(material.content.stages.slice(0, 5)), added = tableOf(material.content.stages.slice(5));
   assert.equal(original.length, 18);
-  for (const table of original) assert.match(table.source_ref!.embedded_file, /^word\/embeddings\/.+\.xlsx$/);
+  for (const table of original) {
+    if (table.source_ref?.revision_id === 'user-approved-pilot-unit-materials-2026-10-27-v1') assert.equal(table.source_ref.file, '任务材料修改定稿_20261027.md');
+    else assert.match(table.source_ref!.embedded_file!, /^word\/embeddings\/.+\.xlsx$/);
+  }
   assert.deepEqual(added.map(t => t.id), ['table-19', 'table-20', 'table-21', 'table-22']);
-  for (const table of added) { assert.equal(table.source_ref!.embedded_file, undefined); assert.equal((table.source_ref as unknown as Record<string, unknown>).revision_id, 'a5-sh-v2-decision-2026-10-26'); }
+  for (const table of added) { assert.equal(table.source_ref!.embedded_file, undefined); assert.equal(table.source_ref!.revision_id, table.id === 'table-20' ? 'a5-sh-v2-decision-2026-10-26' : 'user-approved-pilot-unit-materials-2026-10-27-v1'); }
   assert.deepEqual(material.assets, {});
-  assert.equal(tables.find(t => t.id === 'table-05')?.rows[0][1], '9:45');
+  assert.equal(tables.find(t => t.id === 'table-04')?.rows[0][2], '已确定为9:45—10:30，无须重新安排');
   assert.equal(tables.find(t => t.id === 'table-13')?.rows[0][1], '12:40');
   assert.equal(tables.find(t => t.id === 'table-18')?.rows[3][4], '125元');
   // 日常工作语气修订：M1仍为筛选当前基本方案且可多选；补充资料以文件附件名呈现，题干按文件名引用。
   assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('可以选择多个方案，也可以选择无方案')));
-  assert.equal(material.content.content_version, 'sh-v2-2026-10-26-v11');
+  assert.equal(material.content.content_version, 'sh-v2-2026-10-27-v13');
   for (const unit of material.content.stages.map(s => s.units[0])) {
     assert.match(unit.reveal!.button_label, /\.(xlsx|docx)$/);
     assert.ok(unit.paragraphs.some(p => p.includes(`《${unit.reveal!.button_label}》`)));
@@ -72,7 +75,7 @@ test('时间接受一位小时、常见冒号、全角数字和空格，保留�
   assert.equal(minutes('23:59'), 1439);
   for (const invalid of ['24:00', '6:60', '6:9', '6::09', '6.09', '6:09:00', '-6:09', '']) assert.throws(() => minutes(invalid));
   const unit = material.content.stages[1].units[0];
-  assert.equal(score(unit, normalize(unit.fields, { debug: '９：４５', training: '10∶45', acceptance: '11﹕15', on_time: '能' })), 1);
+  assert.equal(score(unit, normalize(unit.fields, { training: '１０∶４５', acceptance: '11﹕15', on_time: '能' })), 1);
 });
 
 test('多个被试会话的进度、草稿、暂停和计时独立，同一编号不能重复开始', async () => {

@@ -168,7 +168,7 @@ def scene_time(card):
 
 
 data = {
-    'schema_version': '1.3', 'content_version': 'sh-v2-2026-10-26-v11', 'revision_id': revisions['revision_id'], 'wording_revision_id': work['revision_id'], 'v2_revision_id': v2['revision_id'],
+    'schema_version': '1.3', 'content_version': 'sh-v2-2026-10-26-v12', 'revision_id': revisions['revision_id'], 'wording_revision_id': work['revision_id'], 'v2_revision_id': v2['revision_id'],
     'intro': {'title': '情景导入', 'paragraphs': paragraphs(6, 7), 'source_ref': source(6, 7)},
     'stages': [{'stage_id': f'SH{i+1:02}', 'title': blocks[t]['text'], 'card': work.get('stage_cards', {}).get(f'SH{i+1:02}', blocks[c]['text']), 'scene_time': scene_time(blocks[c]['text']), 'source_ref': {**source(t, c), 'wording_revision_id': work['revision_id']}, 'units': pair}
                for i, (t, c, pair) in enumerate(zip([11, 40, 66, 93, 116], [13, 42, 68, 95, 118], units))] + [v2_stage(spec) for spec in v2['stages']],
@@ -183,5 +183,19 @@ data = {
     'completion_text': v2['completion_text'],
 }
 assert [s['stage_id'] for s in data['stages']] == [f'SH{i:02}' for i in range(1, 8)] and all(len(s['units']) == 2 for s in data['stages'])
-(ROOT / 'content/tasks.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
-print('已生成7组14单元（SH01—SH05沿用原文与M1—M6修订，SH06、SH07来自V2变更决策文档）、22张文本表格、日常工作语气措辞、文件式附件、U2内自主休息配置（取消组间休息）和全任务草稿本配置。')
+# 定稿修订最后应用：完整替换Unit，删除的字段、expected和附件不会从旧版本残留。
+pilot = revisions.get('pilot_unit_revision')
+if pilot:
+    replacements = {u['unit_id']: u for u in pilot['units']}
+    assert len(replacements) == len(pilot['units']) == 8
+    assert set(replacements) == set(pilot['replace_unit_ids']) == {
+        'SH02_U1', 'SH04_U1', 'SH04_U2', 'SH05_U1', 'SH05_U2', 'SH06_U1', 'SH07_U1', 'SH07_U2'}
+    existing_ids = {u['unit_id'] for s in data['stages'] for u in s['units']}
+    assert set(replacements).isdisjoint(pilot['unchanged_unit_ids'])
+    assert set(replacements) | set(pilot['unchanged_unit_ids']) == existing_ids
+    for stage in data['stages']:
+        stage['units'] = [replacements.get(u['unit_id'], u) for u in stage['units']]
+    data['content_version'] = pilot['content_version']
+    data['pilot_unit_revision_id'] = pilot['revision_id']
+(ROOT / 'content/tasks.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
+print('已生成7组14单元、22张文本表格；最后应用8个单元的定稿完整替换，其余单元及实验配置保留。')

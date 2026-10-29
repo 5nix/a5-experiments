@@ -11,7 +11,7 @@ export interface Field {
 export interface Asset { id: string; label: string; source_ref: string }
 export interface DataTable {
   id: string; caption: string; columns: string[]; rows: string[][];
-  source_ref?: { file: string; embedded_file: string; sheet: string; range: string; sha256: string };
+  source_ref?: { file: string; embedded_file?: string; sheet?: string; range?: string; sha256?: string; date?: string; revision_id?: string; unit_id?: string };
 }
 export interface Unit {
   unit_id: string; title: string; paragraphs: string[]; assets: Asset[]; fields: Field[];
@@ -22,6 +22,7 @@ export interface Unit {
 }
 export interface TaskContent {
   schema_version: string; content_version: string;
+  pilot_unit_revision_id?: string;
   intro: { title: string; paragraphs: string[] };
   stages: { stage_id: StageId; title: string; card: string; scene_time?: { date: string; time: string }; units: Unit[] }[];
   survey_revision_id?: string;

@@ -80,7 +80,7 @@ N为通知型消息，A为AI主动服务型消息；T0在补充资料首次实�
 
 ## 休息参数
 
-休息参数不在预分配JSON中，而在 `content/revisions.json` 的 `rest_settings`：duration_ms（30000）、window_min_ms（窗口下限，当前60000为占位，待pilot数据替换）、window_min_ms_by_stage（按组覆盖，如 `{"SH04":90000}`）、t2_delay_ms（5000）、show_countdown、reminder_text、tutorial_duration_ms等。修改后执行 `python scripts/build_task_content.py` 重建tasks.json，重启并新建会话生效；自检只要求休息时长为正、T2延迟小于休息时长、窗口下限不为负。
+休息参数不在预分配JSON中，而在 `content/revisions.json` 的 `rest_settings`：duration_ms（30000，实际休息时长）、window_min_ms（30000，所有组U2首次实际显示后的禁止触发窗口）、window_min_ms_by_stage（当前为空，所有组统一30秒）、t2_delay_ms（5000）、show_countdown、reminder_text、tutorial_duration_ms等。修改后执行 `python scripts/build_task_content.py` 重建tasks.json，重启并新建会话生效，已有会话保留原快照；自检只要求休息时长为正、T2延迟小于休息时长、窗口下限不为负。
 
 ## 已阅读按钮与点击导出
 
