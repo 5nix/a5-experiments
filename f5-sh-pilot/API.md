@@ -54,9 +54,9 @@ control返回enabled、working、package_name、最近错误、voice_guard、deb
 
 `GET /api/participant/sessions/:id` 返回公开view，本身不触发消息。常用字段为phase、page_token、title、paragraphs、fields、answer、tables、reveal、scratchpad、scene_time、message_confirmation、confirmation_enabled、is_debug、debug_targets、旧快照组间休息状态及rest。
 
-view.rest仅在V2快照的U2和TUTORIAL_REST出现，其余为null：key（组号或TUTORIAL）、button_label、state（idle/requested/resting/returning/done）、title、paragraphs、show_countdown、duration_ms、remaining_ms、countdown_started、feedback（窗口前或重复点击的提示 `{id,text}`）、reminder（`{id,text,display_ms,displayed}`）。view不暴露窗口下限和T2计划。
+view.rest仅在V2快照的U2、练习单元02（key=PRACTICE）和旧快照的TUTORIAL_REST出现，其余为null：key（组号、PRACTICE或TUTORIAL）、button_label、state（idle/requested/resting/returning/done）、title、paragraphs、show_countdown、duration_ms、remaining_ms、countdown_started、feedback（窗口前或重复点击的提示 `{id,text}`）、reminder（`{id,text,display_ms,displayed}`）。view不暴露窗口下限和T2计划。
 
-phase包括TUTORIAL_INTRO、TUTORIAL_REST、TUTORIAL_NOTICE、TUTORIAL_CHECK、INTRO、CARD、UNIT、COMPREHENSION、RATINGS、BREAK（仅旧快照）、COMPLETED、ABORTED；暂停时view为PAUSED。教程分支和跳转目标见CONFIG。
+phase包括TUTORIAL_INTRO、TUTORIAL_UNIT1、TUTORIAL_UNIT2（新快照的练习单元）、TUTORIAL_REST、TUTORIAL_NOTICE、TUTORIAL_CHECK（旧快照）、INTRO、CARD、UNIT、COMPREHENSION、RATINGS、BREAK（仅旧快照）、COMPLETED、ABORTED；暂停时view为PAUSED。教程分支和跳转目标见CONFIG。
 
 字段类型为integer、money、time、single、multi、integer_or_na；multi提交字符串数组，其他类型提交字符串。字段必答且无预选，0合法；金额最多两位小数；时间支持一位/两位小时、全角数字及常见冒号，归一化后小时0—23、分钟00—59。实际选项和约束以本页fields为准，旧会话保留旧快照。
 
@@ -67,9 +67,9 @@ phase包括TUTORIAL_INTRO、TUTORIAL_REST、TUTORIAL_NOTICE、TUTORIAL_CHECK、I
 | displayed | client.visibility_state=visible | 报告实际可见；正式T1及练习消息只在对应页面实际呈现后触发 |
 | resume / blur | — | 记录页面恢复或失焦 |
 | reveal / reveal_displayed | open:boolean / 可见证据 | 打开收起附件 / 报告E；点击不等于E |
-| draft / submit | answer | 保存草稿 / 校验提交并推进；教程理解题必须答对 |
+| draft / submit | answer | 保存草稿 / 校验提交并推进；练习单元须先打开附件，练习单元02须先完成一次练习休息，答案对错只记录；旧快照教程理解题必须答对 |
 | scratchpad | text | 保存当前单元或教程的独立草稿本 |
-| continue | — | 按当前阶段继续；旧快照休息未结束、或TUTORIAL_REST未完成练习时拒绝 |
+| continue | — | 按当前阶段继续；旧快照休息未结束、或TUTORIAL_REST未完成练习时拒绝；练习单元用submit推进 |
 | skip_break | — | 仅旧快照：允许时提前结束组间休息，保留实际时长 |
 | rest_click | — | 点击休息按钮，每次都记录；窗口前/已休息只返回feedback，否则进入requested |
 | rest_displayed | client.visibility_state=visible | 报告休息页实际可见，休息与T2计划由此起算；重复回报不重置 |
@@ -130,7 +130,7 @@ CSV使用UTF-8 BOM，公式前缀文本转义，未知时间为空。设备drawn
 | 消息派发 | message_scheduled、message_send_requested、message_send_accepted、message_failed、message_transport_error |
 | 设备事件 | message_device_accepted、message_device_drawn、message_device_cue_started、message_device_cue_failed、message_device_confirmed、message_device_hidden、message_device_failed；保留设备墙钟/单调时间/clock_id |
 | 兼容回执事件 | message_display_confirmed、message_hidden，仅适配器实际提供显示/消失时间时记录，不补造时间 |
-| 教程 | tutorial_intro_displayed、tutorial_rest_displayed、tutorial_rest_continue、tutorial_notice_displayed、tutorial_check_displayed、tutorial_intro_continue、tutorial_notice_continue、tutorial_answer_submitted（每次答案/正误）、tutorial_completed、tutorial_notification_scheduled |
+| 教程 | tutorial_intro_displayed、tutorial_rest_displayed、tutorial_rest_continue、tutorial_notice_displayed、tutorial_check_displayed、tutorial_intro_continue、tutorial_notice_continue、tutorial_unit_displayed（练习单元显示，unit_id=PRACTICE_U1/U2）、tutorial_answer_submitted（练习答案/对错，练习单元含normalized_answer与score；旧快照为理解题尝试）、tutorial_completed、tutorial_notification_scheduled |
 | 手动通知 | manual_notification_scheduled及上述消息/设备事件；无会话时保留device_debug_requests与设备审计 |
 | U2休息与T2 | rest_clicked（disposition：too_early/rest_requested/already_resting/already_rested）、rest_started（作答进度、答案快照、是否提醒后）、rest_t2_planned、rest_t2_due、rest_countdown_ended、rest_ended（实际/计划时长、暂停）、rest_interrupted（跳转等）、rest_not_taken、t2_not_triggered；T2发送失败仍为message_failed（timing=T2及原因） |
 | 主试提醒 | rest_reminder_sent（提醒语、U2已进行时间、序号）、rest_reminder_displayed |

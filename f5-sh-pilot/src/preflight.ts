@@ -25,6 +25,18 @@ export async function preflight() {
   const rest = tasks.in_unit_rest;
   if (tasks.message_duration_ms !== 11000) materialErrors.push('消息目标时长与当前协议不一致。');
   if (!rest || !(rest.duration_ms > 0) || !(rest.tutorial_duration_ms > 0) || !(rest.t2_delay_ms >= 0 && rest.t2_delay_ms < rest.duration_ms) || !(rest.window_min_ms >= 0) || Object.values(rest.window_min_ms_by_stage ?? {}).some(v => !(v >= 0)) || !rest.reminder_text || !rest.early_click_text) materialErrors.push('第二单元休息配置缺失或无效：需正的休息时长，T2延迟须小于休息时长，窗口下限不能为负。');
+  if (tasks.practice) {
+    const units = tasks.practice.units;
+    if (units.map(u => u.unit_id).join() !== 'PRACTICE_U1,PRACTICE_U2' || !units[0].reveal || units[1].reveal) materialErrors.push('练习任务必须为PRACTICE_U1（含附件）和PRACTICE_U2（无附件）。');
+    if (!(rest?.practice_window_min_ms! >= 0) || !(rest?.practice_duration_ms! > 0)) materialErrors.push('练习休息的窗口下限或时长无效。');
+    for (const unit of units) {
+      if (!unit.fields.length || unit.fields.some(f => !f.required) || unit.scoring.type !== 'exact') materialErrors.push(`${unit.unit_id}必须配置完整必答字段和参考答案。`);
+      if (unit.reveal && !unit.paragraphs.some(p => p.includes(`《${unit.reveal!.button_label}》`))) materialErrors.push(`${unit.unit_id}题干必须按文件名引用附件。`);
+      for (const table of [...(unit.tables ?? []), ...(unit.reveal?.tables ?? [])]) {
+        if (!table.caption || !table.columns.length || !table.rows.length || table.rows.some(row => row.length !== table.columns.length)) materialErrors.push(`${unit.unit_id}文本表格结构无效。`);
+      }
+    }
+  }
   for (const stage of tasks.stages) for (const unit of stage.units) {
     if (!unit.fields.length || unit.fields.some(f => !f.required)) materialErrors.push(`${unit.unit_id}必须配置完整必答字段。`);
     for (const table of [...(unit.tables ?? []), ...(unit.reveal?.tables ?? [])]) {

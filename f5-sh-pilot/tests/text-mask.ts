@@ -35,6 +35,9 @@ export function maskUnit(unit: Unit): Unit {
 export function maskContent(content: TaskContent): TaskContent {
   const value = structuredClone(content);
   value.content_version = ''; delete value.plain_language_revision_id;
+  // 练习单元（v15）是新增内容，不在v13基线内；其休息参数同理。
+  delete value.practice; delete value.practice_revision_id;
+  if (value.in_unit_rest) { delete value.in_unit_rest.practice_window_min_ms; delete value.in_unit_rest.practice_duration_ms; }
   value.intro.paragraphs = []; value.completion_text = '';
   for (const stage of value.stages) { stage.card = ''; stage.units = stage.units.map(maskUnit); }
   const comprehension = value.survey_pages!.comprehension;

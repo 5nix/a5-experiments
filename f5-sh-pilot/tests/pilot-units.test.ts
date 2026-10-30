@@ -57,7 +57,7 @@ function fixture(mat = material, path = ':memory:') {
 
 test('定稿完整替换8个Unit：独立交付数据哈希一致，7组14单元22表41字段，删除字段与旧expected不残留', () => {
   // 2026-10-29大白话修订只改文字：v13定稿的结构、字段、评分逐项不变，文字差异由 plain-language.test.ts 约束。
-  assert.equal(material.content.content_version, 'sh-v2-2026-10-29-v14');
+  assert.equal(material.content.content_version, 'sh-v2-2026-10-30-v15');
   assert.equal(material.content.pilot_unit_revision_id, 'user-approved-pilot-unit-materials-2026-10-27-v1');
   assert.equal(revision.source_json_sha256, baseline.source_json_sha256);
   assert.equal(revision.source_document_sha256, baseline.source_document_sha256);
@@ -207,7 +207,7 @@ test('休息进度从新快照字段读取：SH05_U2只有2项，已答1项和�
   } finally { await f.close(); }
 });
 
-test('v12历史快照与旧字段评分、答案、分配和导出在加载v14后保持原状，新会话使用v14', async () => {
+test('v12历史快照与旧字段评分、答案、分配和导出在加载v15后保持原状，新会话使用v15', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'a5-unit-history-'));
   const oldMaterial = { ...material, content: structuredClone(baseline.content) };
   const f = fixture(oldMaterial, join(directory, 'history.sqlite'));
@@ -236,7 +236,7 @@ test('v12历史快照与旧字段评分、答案、分配和导出在加载v14�
     assert.deepEqual(trial.payload.raw_answer, oldUnit.scoring.expected);
     assert.deepEqual(trial.payload.normalized_answer, normalize(oldUnit.fields, oldUnit.scoring.expected));
     const created = engine.create('001');
-    assert.equal(engine.session(created.session_id).snapshot.content.content_version, 'sh-v2-2026-10-29-v14');
+    assert.equal(engine.session(created.session_id).snapshot.content.content_version, 'sh-v2-2026-10-30-v15');
     assert.equal(byId(engine.session(created.session_id).snapshot.content, 'SH05_U1').fields.length, 3);
     assert.deepEqual(engine.session(f.id).snapshot.participant, snapshot.participant);
     await engine.settle();
@@ -265,7 +265,7 @@ test('新会话8个Unit的trials.csv按快照导出raw_answer、normalized_answe
     const records = rows.slice(1).map(values => Object.fromEntries(rows[0].map((key, i) => [key, values[i]])));
     for (const unit of units) {
       const record = records.find(r => r.unit_id === unit.unit_id)!;
-      assert.equal(record.content_version, 'sh-v2-2026-10-29-v14');
+      assert.equal(record.content_version, 'sh-v2-2026-10-30-v15');
       assert.deepEqual(JSON.parse(record.raw_answer), answerFor(unit));
       assert.deepEqual(JSON.parse(record.normalized_answer), normalize(unit.fields, answerFor(unit)));
       assert.equal(record.score, '1');

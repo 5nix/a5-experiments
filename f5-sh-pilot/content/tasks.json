@@ -1,6 +1,6 @@
 {
   "schema_version": "1.3",
-  "content_version": "sh-v2-2026-10-29-v14",
+  "content_version": "sh-v2-2026-10-30-v15",
   "revision_id": "user-approved-M1-M6-2026-10-19",
   "wording_revision_id": "user-requested-task-copy-2026-10-25",
   "v2_revision_id": "a5-sh-v2-decision-2026-10-26",
@@ -2435,11 +2435,198 @@
     "reminder_text": "别忘了在本单元中休息一次。",
     "reminder_display_ms": 5000,
     "tutorial_duration_ms": 5000,
-    "instruction": "第二单元做题过程中，在你觉得需要的时候休息一次，不要刚开始就休息，也不要在准备提交时休息。"
+    "instruction": "第二单元做题过程中，在你觉得需要的时候休息一次，不要刚开始就休息，也不要在准备提交时休息。",
+    "practice_window_min_ms": 5000,
+    "practice_duration_ms": 10000
   },
   "rest_revision_id": "user-approved-u2-rest-window-30s-2026-10-26",
   "message_duration_ms": 11000,
   "completion_text": "7个任务已经全部完成。请等待实验员进行访谈。",
   "pilot_unit_revision_id": "user-approved-pilot-unit-materials-2026-10-27-v1",
-  "plain_language_revision_id": "user-approved-plain-language-2026-10-29"
+  "plain_language_revision_id": "user-approved-plain-language-2026-10-29",
+  "practice": {
+    "revision_id": "user-approved-practice-units-2026-10-30",
+    "units": [
+      {
+        "unit_id": "PRACTICE_U1",
+        "title": "练习单元01：计算区域面积",
+        "paragraphs": [
+          "你正在布置新品体验的活动区域，需要计算接待区和展示区的占地面积。面积 = 长度 × 宽度。",
+          "1. 查看下表中各区域的长度。",
+          "2. 打开《区域宽度.xlsx》，查看各区域的宽度。",
+          "3. 在右侧填写接待区和展示区的面积。",
+          "完成后，点击“下一步”进入练习单元02。"
+        ],
+        "tables": [
+          {
+            "id": "practice-table-01",
+            "caption": "区域的长度",
+            "columns": [
+              "区域",
+              "长度"
+            ],
+            "rows": [
+              [
+                "接待区",
+                "6米"
+              ],
+              [
+                "展示区",
+                "8米"
+              ]
+            ],
+            "source_ref": {
+              "file": "用户2026-10-30练习单元设计",
+              "revision_id": "user-approved-practice-units-2026-10-30"
+            }
+          }
+        ],
+        "assets": [],
+        "fields": [
+          {
+            "id": "reception",
+            "label": "接待区面积（平方米）",
+            "type": "integer",
+            "required": true
+          },
+          {
+            "id": "exhibit",
+            "label": "展示区面积（平方米）",
+            "type": "integer",
+            "required": true
+          }
+        ],
+        "scoring": {
+          "type": "exact",
+          "expected": {
+            "reception": 24,
+            "exhibit": 40
+          },
+          "source_ref": {
+            "file": "用户2026-10-30练习单元设计",
+            "revision_id": "user-approved-practice-units-2026-10-30"
+          }
+        },
+        "source_ref": {
+          "file": "用户2026-10-30练习单元设计",
+          "revision_id": "user-approved-practice-units-2026-10-30"
+        },
+        "scratchpad": {
+          "label": "草稿本",
+          "placeholder": "在这里记录你的思考...",
+          "max_length": 20000
+        },
+        "reveal": {
+          "button_label": "区域宽度.xlsx",
+          "paragraphs": [
+            "下表是各区域的宽度。"
+          ],
+          "assets": [],
+          "tables": [
+            {
+              "id": "practice-table-02",
+              "caption": "区域的对应宽度",
+              "columns": [
+                "区域",
+                "宽度"
+              ],
+              "rows": [
+                [
+                  "接待区",
+                  "4米"
+                ],
+                [
+                  "展示区",
+                  "5米"
+                ]
+              ],
+              "source_ref": {
+                "file": "用户2026-10-30练习单元设计",
+                "revision_id": "user-approved-practice-units-2026-10-30"
+              }
+            }
+          ],
+          "source_ref": {
+            "file": "用户2026-10-30练习单元设计",
+            "revision_id": "user-approved-practice-units-2026-10-30"
+          }
+        }
+      },
+      {
+        "unit_id": "PRACTICE_U2",
+        "title": "练习单元02：调整尺寸后重新计算",
+        "paragraphs": [
+          "现场调整了两个区域的尺寸。最新尺寸见下表，请以下表为准重新计算面积。面积 = 长度 × 宽度。",
+          "1. 先计算并填写接待区面积。",
+          "2. 点击右上角的“休息”按钮，练习休息一次（练习时休息较短，约10秒）。",
+          "3. 休息结束后，计算并填写展示区面积，再点击“下一步”。",
+          "正式任务的每个任务组也有第二单元，右上角同样有“休息”按钮。点击后进入休息页，任务内容会暂时遮住，约30秒后自动回到任务，已填写的答案和草稿都会保留。",
+          "注意：第二单元做题过程中，在你觉得需要的时候休息一次，不要刚开始就休息，也不要在准备提交时休息。每个任务组只能休息一次。"
+        ],
+        "tables": [
+          {
+            "id": "practice-table-03",
+            "caption": "最新的区域尺寸",
+            "columns": [
+              "区域",
+              "长度",
+              "宽度"
+            ],
+            "rows": [
+              [
+                "接待区",
+                "7米",
+                "4米"
+              ],
+              [
+                "展示区",
+                "8米",
+                "6米"
+              ]
+            ],
+            "source_ref": {
+              "file": "用户2026-10-30练习单元设计",
+              "revision_id": "user-approved-practice-units-2026-10-30"
+            }
+          }
+        ],
+        "assets": [],
+        "fields": [
+          {
+            "id": "reception",
+            "label": "接待区面积（平方米）",
+            "type": "integer",
+            "required": true
+          },
+          {
+            "id": "exhibit",
+            "label": "展示区面积（平方米）",
+            "type": "integer",
+            "required": true
+          }
+        ],
+        "scoring": {
+          "type": "exact",
+          "expected": {
+            "reception": 28,
+            "exhibit": 48
+          },
+          "source_ref": {
+            "file": "用户2026-10-30练习单元设计",
+            "revision_id": "user-approved-practice-units-2026-10-30"
+          }
+        },
+        "source_ref": {
+          "file": "用户2026-10-30练习单元设计",
+          "revision_id": "user-approved-practice-units-2026-10-30"
+        },
+        "scratchpad": {
+          "label": "草稿本",
+          "placeholder": "在这里记录你的思考...",
+          "max_length": 20000
+        }
+      }
+    ]
+  },
+  "practice_revision_id": "user-approved-practice-units-2026-10-30"
 }

@@ -21,7 +21,7 @@ Node.js 24+使用内置SQLite；其他运行依赖见package.json。公共启动
 
 ## 状态与服务端权威
 
-新建HTTP会话先进入教程（TUTORIAL_INTRO、TUTORIAL_REST，确认模式另有TUTORIAL_NOTICE/CHECK），再进入INTRO、CARD、UNIT、COMPREHENSION、RATINGS及终态；本组结束直接进入下一组CARD。内容快照含 `in_unit_rest` 才启用V2休息；没有它的旧快照仍走BREAK组间休息。完整分支见 [DECISIONS.md](DECISIONS.md)。暂停保留底层阶段，通过view呈现PAUSED。直接使用Engine的内部调用可保留无教程的兼容路径。
+新建HTTP会话先进入教程（新快照：TUTORIAL_INTRO、TUTORIAL_UNIT1、TUTORIAL_UNIT2；内容快照没有 `practice` 的旧快照：TUTORIAL_INTRO、TUTORIAL_REST，确认模式另有TUTORIAL_NOTICE/CHECK），再进入INTRO、CARD、UNIT、COMPREHENSION、RATINGS及终态；本组结束直接进入下一组CARD。内容快照含 `in_unit_rest` 才启用V2休息；没有它的旧快照仍走BREAK组间休息。完整分支见 [DECISIONS.md](DECISIONS.md)。暂停保留底层阶段，通过view呈现PAUSED。直接使用Engine的内部调用可保留无教程的兼容路径。
 
 每页具有page_token，旧页面不能提交；command_id与完整请求指纹用于操作去重。评分和正确答案只在服务端，公开view不包含答案。配置文件在创建请求中重新读取，防止多个主试页面切换配置时使用错误预分配；已有会话继续使用其快照。
 
@@ -33,7 +33,7 @@ elapsed_ms由服务器单调时钟计算，暂停期间仍累计，休息截止�
 
 ## U2休息状态
 
-休息状态按组保存在 `state.rests`（教程键为TUTORIAL），依次为 requested（已点击、待休息页可见）→ resting（rest_displayed后起算）→ returning（倒计时到零）→ done（回到U2可见）。休息中服务端拒绝草稿、提交、附件和草稿本操作（409）；跳转会中断进行中的休息并记rest_interrupted。窗口下限按U2首次实际呈现时刻计算。主试提醒保存在 `state.rest_reminders`，被试端显示后回报rest_reminder_displayed。
+休息状态按组保存在 `state.rests`（旧教程键为TUTORIAL，练习单元02键为PRACTICE，窗口与时长取 `in_unit_rest.practice_*`），依次为 requested（已点击、待休息页可见）→ resting（rest_displayed后起算）→ returning（倒计时到零）→ done（回到U2可见）。休息中服务端拒绝草稿、提交、附件和草稿本操作（409）；跳转会中断进行中的休息并记rest_interrupted。窗口下限按U2首次实际呈现时刻计算。主试提醒保存在 `state.rest_reminders`，被试端显示后回报rest_reminder_displayed。
 
 ## 消息生命周期
 

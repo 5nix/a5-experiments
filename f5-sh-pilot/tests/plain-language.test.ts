@@ -12,7 +12,7 @@ const stimuli = await readJson<{ content_version: string; stimuli: StimulusRow[]
 
 test('v14大白话修订：除修订清单列出的文字位置外，tasks.json与v13逐项相同', () => {
   assert.equal(baseline.content.content_version, 'sh-v2-2026-10-27-v13');
-  assert.equal(material.content.content_version, 'sh-v2-2026-10-29-v14');
+  assert.equal(material.content.content_version, 'sh-v2-2026-10-30-v15');
   assert.equal(material.content.plain_language_revision_id, 'user-approved-plain-language-2026-10-29');
   assert.deepEqual(maskContent(material.content), maskContent(baseline.content));
   const units = material.content.stages.flatMap(s => s.units), old = baseline.content.stages.flatMap(s => s.units);

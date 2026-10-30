@@ -16,14 +16,18 @@ const config = await testConfig();
 const rest = material.content.in_unit_rest!;
 const visible = { visibility_state: 'visible' };
 
-function fixture(path = ':memory:', adapter: GlassesAdapter = new MockGlassesAdapter(), metadata: Record<string, unknown> = {}) {
+// 旧快照（无练习单元）：教程仍为“休息练习页”。
+const { practice: _practice, ...legacyContent } = material.content;
+const legacyMaterial = { ...material, content: legacyContent };
+
+function fixture(path = ':memory:', adapter: GlassesAdapter = new MockGlassesAdapter(), metadata: Record<string, unknown> = {}, mat: typeof material = material) {
   let now = Date.parse('2026-10-26T08:00:00Z');
   const clock = { wall: () => now, mono: () => now };
   const f = { store: new Store(path), engine: null! as Engine, id: '', advance: (ms: number) => { now += ms; },
     send(action: string, extra = {}) { return this.engine.command(this.id, { command_id: randomUUID(), page_token: this.engine.view(this.id).page_token, action, client: visible, ...extra }); },
     events(type: string) { return this.store.events(this.id).filter(e => e.event_type === type); },
     async reopen() { await this.engine.settle(); this.store.close(); this.store = new Store(path); this.engine = new Engine(this.store, adapter, material, config, clock); } };
-  f.engine = new Engine(f.store, adapter, material, config, clock);
+  f.engine = new Engine(f.store, adapter, mat, config, clock);
   f.id = f.engine.create('000', metadata).session_id;
   return f;
 }
@@ -45,7 +49,10 @@ test('V2材料：七组、休息参数完整，组间休息取消，000覆盖全
   const conditions = f.engine.session(f.id).snapshot.participant.stages.map(s => s.condition).sort();
   assert.deepEqual(conditions, ['A-T0', 'A-T1', 'A-T2', 'N-T0', 'N-T1', 'N-T2', 'NONE']);
   assert.ok(!f.engine.debugTargets(f.engine.session(f.id)).some(t => t.phase === 'BREAK'));
-  assert.ok(f.engine.debugTargets(f.engine.session(f.id)).some(t => t.id === 'TUTORIAL_REST'));
+  // 新快照的教程为工作台页＋两个练习单元，不再有休息练习页。
+  const targets = f.engine.debugTargets(f.engine.session(f.id)).map(t => t.id);
+  assert.deepEqual(targets.slice(0, 3), ['TUTORIAL_INTRO', 'TUTORIAL_UNIT1', 'TUTORIAL_UNIT2']);
+  assert.ok(!targets.includes('TUTORIAL_REST'));
 });
 
 test('七组U2统一30秒禁用窗口：29999毫秒不开始，30000毫秒允许，点击记录保留实际阈值', async () => {
@@ -68,8 +75,8 @@ test('七组U2统一30秒禁用窗口：29999毫秒不开始，30000毫秒允许
   } finally { await f.engine.settle(); f.store.close(); }
 });
 
-test('教程休息：必须先练习一次短休息才能继续，数据标记tutorial', async () => {
-  const f = fixture(':memory:', new MockGlassesAdapter(), { tutorial_enabled: true });
+test('旧快照教程休息：必须先练习一次短休息才能继续，数据标记tutorial', async () => {
+  const f = fixture(':memory:', new MockGlassesAdapter(), { tutorial_enabled: true }, legacyMaterial);
   try {
     f.send('displayed'); f.send('continue');
     assert.equal(f.engine.view(f.id).phase, 'TUTORIAL_REST');

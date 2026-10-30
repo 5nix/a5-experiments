@@ -2745,5 +2745,142 @@
         }
       }
     }
+  },
+  "practice_revision": {
+    "revision_id": "user-approved-practice-units-2026-10-30",
+    "content_version": "sh-v2-2026-10-30-v15",
+    "base_content_version": "sh-v2-2026-10-29-v14",
+    "approval": "用户2026-10-30要求在正式任务前增加两个练习单元（计算活动区域面积），让被试提前熟悉任务操作：练习单元01含需打开的文件卡片附件，练习单元02含一次必须完成的练习休息（禁止触发窗口5秒、休息10秒）。练习不呈现眼镜消息，消息练习由主试在后台“手动发送通知”完成；练习不判分、不拦截，数据标为教程数据。新建会话使用，已有会话保留原快照和原教程流程。",
+    "rest": {
+      "practice_window_min_ms": 5000,
+      "practice_duration_ms": 10000
+    },
+    "text_tokens": "段落中的 {button}、{seconds}、{practice_seconds}、{instruction} 由生成脚本按 rest_settings 与 rest 参数替换。",
+    "units": [
+      {
+        "unit_id": "PRACTICE_U1",
+        "title": "练习单元01：计算区域面积",
+        "paragraphs": [
+          "你正在布置新品体验的活动区域，需要计算接待区和展示区的占地面积。面积 = 长度 × 宽度。",
+          "1. 查看下表中各区域的长度。",
+          "2. 打开《区域宽度.xlsx》，查看各区域的宽度。",
+          "3. 在右侧填写接待区和展示区的面积。",
+          "完成后，点击“下一步”进入练习单元02。"
+        ],
+        "tables": [
+          {
+            "id": "practice-table-01",
+            "caption": "区域的长度",
+            "columns": [
+              "区域",
+              "长度"
+            ],
+            "rows": [
+              [
+                "接待区",
+                "6米"
+              ],
+              [
+                "展示区",
+                "8米"
+              ]
+            ]
+          }
+        ],
+        "reveal": {
+          "button_label": "区域宽度.xlsx",
+          "paragraphs": [
+            "下表是各区域的宽度。"
+          ],
+          "tables": [
+            {
+              "id": "practice-table-02",
+              "caption": "区域的对应宽度",
+              "columns": [
+                "区域",
+                "宽度"
+              ],
+              "rows": [
+                [
+                  "接待区",
+                  "4米"
+                ],
+                [
+                  "展示区",
+                  "5米"
+                ]
+              ]
+            }
+          ]
+        },
+        "fields": [
+          {
+            "id": "reception",
+            "label": "接待区面积（平方米）",
+            "type": "integer"
+          },
+          {
+            "id": "exhibit",
+            "label": "展示区面积（平方米）",
+            "type": "integer"
+          }
+        ],
+        "expected": {
+          "reception": 24,
+          "exhibit": 40
+        }
+      },
+      {
+        "unit_id": "PRACTICE_U2",
+        "title": "练习单元02：调整尺寸后重新计算",
+        "paragraphs": [
+          "现场调整了两个区域的尺寸。最新尺寸见下表，请以下表为准重新计算面积。面积 = 长度 × 宽度。",
+          "1. 先计算并填写接待区面积。",
+          "2. 点击右上角的“{button}”按钮，练习休息一次（练习时休息较短，约{practice_seconds}秒）。",
+          "3. 休息结束后，计算并填写展示区面积，再点击“下一步”。",
+          "正式任务的每个任务组也有第二单元，右上角同样有“{button}”按钮。点击后进入休息页，任务内容会暂时遮住，约{seconds}秒后自动回到任务，已填写的答案和草稿都会保留。",
+          "注意：{instruction}每个任务组只能休息一次。"
+        ],
+        "tables": [
+          {
+            "id": "practice-table-03",
+            "caption": "最新的区域尺寸",
+            "columns": [
+              "区域",
+              "长度",
+              "宽度"
+            ],
+            "rows": [
+              [
+                "接待区",
+                "7米",
+                "4米"
+              ],
+              [
+                "展示区",
+                "8米",
+                "6米"
+              ]
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "reception",
+            "label": "接待区面积（平方米）",
+            "type": "integer"
+          },
+          {
+            "id": "exhibit",
+            "label": "展示区面积（平方米）",
+            "type": "integer"
+          }
+        ],
+        "expected": {
+          "reception": 28,
+          "exhibit": 48
+        }
+      }
+    ]
   }
 }

@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { Snapshot } from './tasks.ts';
 
-export type Phase = 'TUTORIAL_INTRO' | 'TUTORIAL_REST' | 'TUTORIAL_NOTICE' | 'TUTORIAL_CHECK' | 'INTRO' | 'CARD' | 'UNIT' | 'COMPREHENSION' | 'RATINGS' | 'BREAK' | 'COMPLETED' | 'ABORTED';
+export type Phase = 'TUTORIAL_INTRO' | 'TUTORIAL_UNIT1' | 'TUTORIAL_UNIT2' | 'TUTORIAL_REST' | 'TUTORIAL_NOTICE' | 'TUTORIAL_CHECK' | 'INTRO' | 'CARD' | 'UNIT' | 'COMPREHENSION' | 'RATINGS' | 'BREAK' | 'COMPLETED' | 'ABORTED';
 export interface State {
   phase: Phase; stage: number; unit: number; page_token: string;
   displayed: Record<string, boolean>; drafts: Record<string, Record<string, unknown>>;

@@ -24,6 +24,9 @@ export interface TaskContent {
   schema_version: string; content_version: string;
   pilot_unit_revision_id?: string;
   plain_language_revision_id?: string;
+  /** 正式任务前的两个练习单元（2026-10-30起）；旧快照没有此字段，沿用旧教程流程。 */
+  practice?: { revision_id: string; units: Unit[] };
+  practice_revision_id?: string;
   intro: { title: string; paragraphs: string[] };
   stages: { stage_id: StageId; title: string; card: string; scene_time?: { date: string; time: string }; units: Unit[] }[];
   survey_revision_id?: string;
@@ -43,6 +46,8 @@ export interface InUnitRest {
   button_label: string; early_click_text: string; already_rested_text: string;
   rest_title: string; rest_paragraphs: string[]; show_countdown: boolean;
   reminder_text: string; reminder_display_ms: number; tutorial_duration_ms: number; instruction: string;
+  /** 练习单元02：禁止触发窗口与休息时长（仅有 practice 的快照使用）。 */
+  practice_window_min_ms?: number; practice_duration_ms?: number;
 }
 export interface Snapshot {
   display_mode?: import('./contracts.ts').DisplayMode;

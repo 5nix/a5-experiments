@@ -194,12 +194,13 @@ export class Engine {
   log(s: Session, type: string, payload: Record<string, unknown> = {}, context?: { stage_id?: string; unit_id?: string | null; condition?: string }) {
     const stage = s.snapshot.content.stages[s.state.stage];
     const assignment = s.snapshot.participant.stages.find(a => a.stage_id === stage?.stage_id);
+    const practice = this.practiceUnit(s);
     const elapsed = this.elapsed(s); s.state.last_elapsed_ms = elapsed;
     const event: EventRecord = {
       event_id: randomUUID(), session_id: s.id, participant_id: s.snapshot.participant.participant_id,
-      stage_id: context?.stage_id ?? (s.state.phase === 'INTRO' ? null : stage?.stage_id ?? null),
-      unit_id: context?.unit_id === undefined ? (s.state.phase === 'UNIT' ? stage.units[s.state.unit].unit_id : null) : context.unit_id,
-      condition: context?.condition ?? (s.state.phase === 'INTRO' ? null : assignment?.condition ?? null),
+      stage_id: context?.stage_id ?? (practice ? 'TUTORIAL' : s.state.phase === 'INTRO' ? null : stage?.stage_id ?? null),
+      unit_id: context?.unit_id === undefined ? (practice ? practice.unit_id : s.state.phase === 'UNIT' ? stage.units[s.state.unit].unit_id : null) : context.unit_id,
+      condition: context?.condition ?? (practice ? 'TUTORIAL' : s.state.phase === 'INTRO' ? null : assignment?.condition ?? null),
       data_kind: context?.stage_id?.startsWith('MANUAL_') ? 'manual' : context?.stage_id === 'TUTORIAL' || s.state.phase.startsWith('TUTORIAL') ? 'tutorial' : 'formal',
       event_type: type, timestamp_iso: this.iso(), elapsed_ms: elapsed, payload, content_version: s.snapshot.content.content_version, is_debug: this.isDebug(s),
     };
@@ -246,6 +247,13 @@ export class Engine {
     return token;
   }
   unit(s: Session): Unit { return s.snapshot.content.stages[s.state.stage].units[s.state.unit]; }
+  /** 练习单元（2026-10-30起的快照）：TUTORIAL_UNIT1/2 对应 content.practice.units[0/1]；旧快照没有。 */
+  practiceUnit(s: Session): Unit | undefined {
+    const index = s.state.phase === 'TUTORIAL_UNIT1' ? 0 : s.state.phase === 'TUTORIAL_UNIT2' ? 1 : -1;
+    return index < 0 ? undefined : s.snapshot.content.practice?.units[index];
+  }
+  /** 当前页面所属的任务单元：正式任务页或练习单元页。 */
+  private pageUnit(s: Session): Unit | undefined { return this.practiceUnit(s) ?? (s.state.phase === 'UNIT' ? this.unit(s) : undefined); }
   assignment(s: Session) { return s.snapshot.participant.stages.find(a => a.stage_id === s.snapshot.content.stages[s.state.stage].stage_id)!; }
   stimulus(s: Session) {
     const a = this.assignment(s); const stimulus = s.snapshot.stimuli.find(m => m.stage_id === a.stage_id && m.message_id === a.message_id);
@@ -253,6 +261,8 @@ export class Engine {
   }
   fields(s: Session): Field[] {
     if (s.state.phase === 'UNIT') return this.unit(s).fields;
+    const practice = this.practiceUnit(s);
+    if (practice) return practice.fields;
     if (s.state.phase === 'TUTORIAL_CHECK') return [{id:'answer',label:'练习会议安排在哪个会议室？',type:'single',required:true,options:[{value:'A',label:'一号会议室'},{value:'B',label:'二号会议室'},{value:'C',label:'三号会议室'}]}];
     if (s.state.phase === 'COMPREHENSION') {
       const page = s.snapshot.content.survey_pages?.comprehension;
@@ -268,10 +278,14 @@ export class Engine {
   debugTargets(s: Session) {
     const targets: { id: string; label: string; phase: Phase; stage: number; unit: number }[] = [{ id: 'INTRO', label: '情景导入', phase: 'INTRO', stage: 0, unit: 0 }];
     const tutorial: typeof targets = [{id:'TUTORIAL_INTRO',label:'工作台、草稿本与时间',phase:'TUTORIAL_INTRO',stage:0,unit:0}];
-    if(s.snapshot.content.in_unit_rest) tutorial.push({id:'TUTORIAL_REST',label:'第二单元中的休息',phase:'TUTORIAL_REST',stage:0,unit:0});
-    if(this.sessionModes(s).includes('confirm_until_ack')) tutorial.push(
-      {id:'TUTORIAL_NOTICE',label:'阅读并确认练习消息',phase:'TUTORIAL_NOTICE',stage:0,unit:0},
-      {id:'TUTORIAL_CHECK',label:'消息理解题',phase:'TUTORIAL_CHECK',stage:0,unit:0});
+    if (s.snapshot.content.practice) s.snapshot.content.practice.units.forEach((unit, i) => tutorial.push({ id: `TUTORIAL_UNIT${i + 1}`, label: unit.title, phase: i === 0 ? 'TUTORIAL_UNIT1' : 'TUTORIAL_UNIT2', stage: 0, unit: 0 }));
+    else {
+      // 旧快照：休息练习页与消息练习仍按原流程。
+      if(s.snapshot.content.in_unit_rest) tutorial.push({id:'TUTORIAL_REST',label:'第二单元中的休息',phase:'TUTORIAL_REST',stage:0,unit:0});
+      if(this.sessionModes(s).includes('confirm_until_ack')) tutorial.push(
+        {id:'TUTORIAL_NOTICE',label:'阅读并确认练习消息',phase:'TUTORIAL_NOTICE',stage:0,unit:0},
+        {id:'TUTORIAL_CHECK',label:'消息理解题',phase:'TUTORIAL_CHECK',stage:0,unit:0});
+    }
     targets.unshift(...tutorial.map((t, i) => ({ ...t, label: `教程${i + 1}：${t.label}` })));
     for (const [index, stage] of s.snapshot.content.stages.entries()) {
       targets.push({ id: `${stage.stage_id}_CARD`, label: `${stage.stage_id} 说明卡`, phase: 'CARD', stage: index, unit: 0 });
@@ -370,10 +384,11 @@ export class Engine {
   private restKey(s: Session): string | null {
     if (!s.snapshot.content.in_unit_rest || s.state.status !== 'active') return null;
     if (s.state.phase === 'TUTORIAL_REST') return 'TUTORIAL';
+    if (s.state.phase === 'TUTORIAL_UNIT2' && s.snapshot.content.practice) return 'PRACTICE';
     return s.state.phase === 'UNIT' && s.state.unit === 1 ? s.snapshot.content.stages[s.state.stage].stage_id : null;
   }
-  private restDuration(s: Session, key: string) { const c = s.snapshot.content.in_unit_rest!; return key === 'TUTORIAL' ? c.tutorial_duration_ms : c.duration_ms; }
-  private restWindow(s: Session, key: string) { const c = s.snapshot.content.in_unit_rest!; return key === 'TUTORIAL' ? 0 : c.window_min_ms_by_stage?.[key] ?? c.window_min_ms; }
+  private restDuration(s: Session, key: string) { const c = s.snapshot.content.in_unit_rest!; return key === 'TUTORIAL' ? c.tutorial_duration_ms : key === 'PRACTICE' ? c.practice_duration_ms! : c.duration_ms; }
+  private restWindow(s: Session, key: string) { const c = s.snapshot.content.in_unit_rest!; return key === 'TUTORIAL' ? 0 : key === 'PRACTICE' ? c.practice_window_min_ms! : c.window_min_ms_by_stage?.[key] ?? c.window_min_ms; }
   private u2Elapsed(s: Session, key: string, at = this.elapsed(s)) { const shown = s.state.u2_displayed_elapsed?.[key]; return shown === undefined ? null : Math.max(0, at - shown); }
   private activeRest(s: Session) { const key = this.restKey(s); const r = key ? s.state.rests?.[key] : undefined; return r && ACTIVE_REST.includes(r.status) ? r : undefined; }
   private requireNotResting(s: Session) { if (this.activeRest(s)) throw new HttpError(409, '正在休息，休息结束后会自动回到任务。'); }
@@ -486,17 +501,17 @@ export class Engine {
       // 当前任务组说明卡中的情景时间，被试端在任务栏固定显示；旧快照无此字段时为null。
       tutorial: state.phase.startsWith('TUTORIAL'), scene_time: content.stages[state.stage]?.scene_time ?? null, rest: this.restView(s) };
     if (state.paused_at_ms !== null) return { ...base, phase: 'PAUSED', title: '实验已暂停，请等待实验员。', can_continue: false };
-    if (state.phase.startsWith('TUTORIAL')) {
+    if (state.phase.startsWith('TUTORIAL') && !this.practiceUnit(s)) {
       const restCopy = content.in_unit_rest;
       base.title = state.phase === 'TUTORIAL_INTRO' ? '操作练习：认识工作台' : state.phase === 'TUTORIAL_REST' ? '操作练习：休息一次' : state.phase === 'TUTORIAL_NOTICE' ? '操作练习：阅读消息' : '操作练习：回答问题';
-      base.paragraphs = state.phase === 'TUTORIAL_INTRO' ? [base.confirmation_enabled ? '右上角“已阅读消息”用于读完眼镜消息后确认，“草稿本”可以记录思路。请试着打开草稿本。' : '右上角“草稿本”可以记录思路。请试着打开草稿本。', '右下角显示当前任务的情境时间；进入不同任务情境时，时间会更新。准备好后点击下一步。']
+      base.paragraphs = state.phase === 'TUTORIAL_INTRO' ? [base.confirmation_enabled ? '右上角“已阅读消息”用于读完眼镜消息后确认，“草稿本”可以记录思路。请试着打开草稿本。' : '右上角“草稿本”可以记录思路。请试着打开草稿本。', content.practice ? '右下角显示当前任务的情境时间；进入不同任务情境时，时间会更新。接下来有两个练习单元，帮你熟悉任务的操作。准备好后点击下一步。' : '右下角显示当前任务的情境时间；进入不同任务情境时，时间会更新。准备好后点击下一步。']
         : state.phase === 'TUTORIAL_REST' && restCopy ? [`每组任务的第二单元中，右上角会有“${restCopy.button_label}”按钮。点击后进入休息页，任务内容会暂时遮住，约${restCopy.duration_ms / 1000}秒后自动回到任务，已填写的答案和草稿都会保留。`, `注意：${restCopy.instruction}每组只能休息一次。`, `现在请点击右上角“${restCopy.button_label}”试一次（练习时休息较短），回到这里后点击下一步。`]
         : state.phase === 'TUTORIAL_NOTICE' ? ['请阅读眼镜上的练习消息。读完后点击右上角“已阅读消息”，再点击下一步。'] : ['请根据刚才的眼镜消息回答问题。答对后进入实验说明。'];
       base.scratchpad = {label:'草稿本',placeholder:'在这里记录你的思考...',max_length:5000,text:state.scratchpads?.TUTORIAL ?? ''};
     } else if (state.phase === 'INTRO') Object.assign(base, content.intro);
     else if (state.phase === 'CARD') { base.title = content.stages[state.stage].title; base.paragraphs = [content.stages[state.stage].card]; }
-    else if (state.phase === 'UNIT') {
-      const unit = this.unit(s); base.title = unit.title; base.paragraphs = unit.paragraphs; base.assets = (unit.assets ?? []).map(a => ({ id: a.id, label: a.label })); base.tables = unit.tables ?? [];
+    else if (state.phase === 'UNIT' || this.practiceUnit(s)) {
+      const unit = this.pageUnit(s)!; base.title = unit.title; base.paragraphs = unit.paragraphs; base.assets = (unit.assets ?? []).map(a => ({ id: a.id, label: a.label })); base.tables = unit.tables ?? [];
       if (unit.scratchpad) base.scratchpad = { ...unit.scratchpad, text: state.scratchpads?.[unit.unit_id] ?? '' };
       const reveal = state.reveals[unit.unit_id];
       if (unit.reveal) base.reveal = { button_label: unit.reveal.button_label, open: reveal?.open ?? false, observed: reveal?.displayed ?? false,
@@ -652,6 +667,37 @@ export class Engine {
       application_presentation_complete: messages.length === expected && drawn === expected && messages.every(m => m.status === 'accepted' && m.device_events?.some(e => e.kind === 'hidden') && (m.display_mode !== 'tone_8500' || m.device_events.some(e => e.kind === 'cue_started')) && (m.display_mode !== 'confirm_until_ack' || !!m.confirmation_requested_at && m.device_events.some(e => e.kind === 'confirmed'))) };
   }
 
+  /** 练习单元的作答与提交：记录答案与对错，不设对错门槛、不判分入正式数据、不触发消息；练习单元02须先完成一次练习休息。 */
+  private practiceSubmit(s: Session, command: Command, client: unknown): Error | undefined {
+    const state = s.state, unit = this.practiceUnit(s)!;
+    this.requireNotResting(s);
+    const raw = command.answer;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || JSON.stringify(raw).length > 20000) throw new HttpError(422, '答案格式无效。');
+    const fields = this.fields(s);
+    if (Object.keys(raw).some(k => !fields.some(f => f.id === k))) throw new HttpError(422, '答案包含不属于本题的字段。');
+    const key = this.draftKey(s);
+    if (JSON.stringify(state.drafts[key]) !== JSON.stringify(raw)) { state.drafts[key] = raw; this.log(s, 'answer_changed', { raw_answer: raw, client }); }
+    if (command.action !== 'submit') return undefined;
+    this.log(s, 'submit_clicked', { raw_answer: raw, client });
+    try {
+      const normalized = normalize(fields, raw);
+      if (unit.reveal && !state.reveals[unit.unit_id]?.displayed) throw new InputError('请按题目要求先查看补充资料，再提交答案。');
+      if (state.phase === 'TUTORIAL_UNIT2' && !['returning', 'done'].includes(state.rests?.PRACTICE?.status ?? '')) {
+        throw new InputError(`请先点击右上角的“${s.snapshot.content.in_unit_rest!.button_label}”按钮练习一次休息，回到任务后再提交。`);
+      }
+      this.log(s, 'tutorial_answer_submitted', { unit_id: unit.unit_id, raw_answer: raw, normalized_answer: normalized, score: score(unit, normalized), client });
+      if (state.phase === 'TUTORIAL_UNIT1') this.transition(s, 'TUTORIAL_UNIT2');
+      else {
+        if (state.rests?.PRACTICE?.status === 'returning') this.restReturned(s, { source: 'practice_submitted_before_return_report' });
+        this.log(s, 'tutorial_completed', { practice: true }); this.transition(s, 'INTRO');
+      }
+      return undefined;
+    } catch (error) {
+      if (!(error instanceof InputError)) throw error;
+      this.log(s, 'submission_rejected', { reason: error.message });
+      return error;
+    }
+  }
   command(id: string, command: Command) {
     if (!command || typeof command.command_id !== 'string' || command.command_id.length > 100 || !command.command_id || typeof command.action !== 'string') throw new HttpError(400, '操作必须包含有效command_id和action。');
     this.requireAvailable(this.session(id));
@@ -672,7 +718,7 @@ export class Engine {
         if (client.visibility_state !== 'visible') throw new HttpError(422, '只有实际可见页面才能报告显示事件。');
         if (!state.displayed[state.page_token]) {
           state.displayed[state.page_token] = true;
-          const eventName = { TUTORIAL_INTRO:'tutorial_intro_displayed', TUTORIAL_REST:'tutorial_rest_displayed', TUTORIAL_NOTICE:'tutorial_notice_displayed', TUTORIAL_CHECK:'tutorial_check_displayed', INTRO: 'intro_displayed', CARD: 'card_displayed', UNIT: 'unit_displayed', COMPREHENSION: 'comprehension_displayed', RATINGS: 'ratings_displayed', BREAK: 'break_displayed', COMPLETED: 'completion_displayed', ABORTED: 'termination_displayed' }[state.phase];
+          const eventName = { TUTORIAL_INTRO:'tutorial_intro_displayed', TUTORIAL_UNIT1:'tutorial_unit_displayed', TUTORIAL_UNIT2:'tutorial_unit_displayed', TUTORIAL_REST:'tutorial_rest_displayed', TUTORIAL_NOTICE:'tutorial_notice_displayed', TUTORIAL_CHECK:'tutorial_check_displayed', INTRO: 'intro_displayed', CARD: 'card_displayed', UNIT: 'unit_displayed', COMPREHENSION: 'comprehension_displayed', RATINGS: 'ratings_displayed', BREAK: 'break_displayed', COMPLETED: 'completion_displayed', ABORTED: 'termination_displayed' }[state.phase];
           const displayed = this.log(s, eventName, { client, page_token: state.page_token });
           if (state.phase === 'BREAK') {
             state.break_displayed_at = displayed.timestamp_iso; state.break_displayed_elapsed_ms = displayed.elapsed_ms;
@@ -682,6 +728,7 @@ export class Engine {
             }
           }
           if (state.phase === 'TUTORIAL_NOTICE' && !this.store.interventions(id).some(m=>m.stage_id==='TUTORIAL')) {this.requirePreviousMessageFinished(s); this.scheduleAuxiliary(s, 'TUTORIAL', '练习会议安排在二号会议室。', this.mode(s), 'tutorial', randomUUID());}
+          if (state.phase === 'TUTORIAL_UNIT2') (state.u2_displayed_elapsed ??= {}).PRACTICE ??= displayed.elapsed_ms;
           if (state.phase === 'UNIT' && state.unit === 1) {
             const u2 = this.log(s, 'u2_displayed', { client });
             (state.u2_displayed_elapsed ??= {})[this.assignment(s).stage_id] ??= u2.elapsed_ms;
@@ -697,6 +744,8 @@ export class Engine {
           const key = this.restKey(s), reminder = key ? s.state.rest_reminders?.[key]?.find(r => r.id === command.reminder_id) : undefined;
           if (!reminder) throw new HttpError(409, '提醒不属于当前页面。');
           if (!reminder.displayed) { reminder.displayed = true; this.log(s, 'rest_reminder_displayed', { reminder_id: reminder.id, text: reminder.text, client }); }
+        } else if (this.practiceUnit(s) && ['submit', 'draft'].includes(command.action)) {
+          rejected = this.practiceSubmit(s, command, client);
         } else if (state.phase.startsWith('TUTORIAL') && ['continue','submit','draft'].includes(command.action)) {
           this.requireNotResting(s);
           if (state.phase === 'TUTORIAL_CHECK') {
@@ -708,7 +757,8 @@ export class Engine {
             }
           } else if (command.action !== 'draft') {
             const notice = this.sessionModes(s).includes('confirm_until_ack');
-            if (state.phase === 'TUTORIAL_INTRO' && s.snapshot.content.in_unit_rest) { this.log(s,'tutorial_intro_continue'); this.transition(s,'TUTORIAL_REST'); }
+            if (state.phase === 'TUTORIAL_INTRO' && s.snapshot.content.practice) { this.log(s,'tutorial_intro_continue'); this.transition(s,'TUTORIAL_UNIT1'); }
+            else if (state.phase === 'TUTORIAL_INTRO' && s.snapshot.content.in_unit_rest) { this.log(s,'tutorial_intro_continue'); this.transition(s,'TUTORIAL_REST'); }
             else if (state.phase === 'TUTORIAL_INTRO' || state.phase === 'TUTORIAL_REST') {
               if (state.phase === 'TUTORIAL_REST') {
                 if (!['returning','done'].includes(state.rests?.TUTORIAL?.status ?? '')) throw new HttpError(422, '请先点击右上角按钮练习一次休息，回到本页后再继续。');
@@ -725,21 +775,25 @@ export class Engine {
           }
         } else if (command.action === 'reveal') {
           this.requireNotResting(s);
-          if (state.phase !== 'UNIT' || !this.unit(s).reveal || typeof command.open !== 'boolean') throw new HttpError(409, '当前任务没有此操作。');
-          const unit = this.unit(s); const reveal = state.reveals[unit.unit_id] ?? { open: false, requested: false, displayed: false };
-          if (command.open && !reveal.displayed) this.guardTrigger(s, 'T0');
+          const unit = this.pageUnit(s);
+          if (!unit?.reveal || typeof command.open !== 'boolean') throw new HttpError(409, '当前任务没有此操作。');
+          const reveal = state.reveals[unit.unit_id] ?? { open: false, requested: false, displayed: false };
+          if (command.open && !reveal.displayed && !this.practiceUnit(s)) this.guardTrigger(s, 'T0');
           reveal.open = command.open; reveal.requested ||= command.open; state.reveals[unit.unit_id] = reveal;
           this.log(s, 'reveal_clicked', { open: command.open, client });
         } else if (command.action === 'reveal_displayed') {
-          if (state.phase !== 'UNIT') throw new HttpError(409, '当前不是任务页。');
-          const reveal = state.reveals[this.unit(s).unit_id];
+          const unit = this.pageUnit(s);
+          if (!unit) throw new HttpError(409, '当前不是任务页。');
+          const reveal = state.reveals[unit.unit_id];
           if (!reveal?.open || !reveal.requested || client.visibility_state !== 'visible') throw new HttpError(409, '补充资料尚未展开或不可见。');
-          if (!reveal.displayed) { reveal.displayed = true; this.schedule(s, this.log(s, 'reveal_displayed', { client, marker: 'E' }), 'T0'); }
+          // 练习单元不触发E标记，也不排定消息。
+          if (!reveal.displayed) { reveal.displayed = true; if (this.practiceUnit(s)) this.log(s, 'reveal_displayed', { client }); else this.schedule(s, this.log(s, 'reveal_displayed', { client, marker: 'E' }), 'T0'); }
         } else if (command.action === 'scratchpad') {
           this.requireNotResting(s);
-          if (!state.phase.startsWith('TUTORIAL') && (state.phase !== 'UNIT' || !this.unit(s).scratchpad)) throw new HttpError(409, '当前单元没有草稿本。');
-          const options = state.phase.startsWith('TUTORIAL') ? {max_length:5000} : this.unit(s).scratchpad!;
-          const scratchKey = state.phase.startsWith('TUTORIAL') ? 'TUTORIAL' : this.unit(s).unit_id;
+          const unit = this.pageUnit(s);
+          if (!state.phase.startsWith('TUTORIAL') && !unit?.scratchpad) throw new HttpError(409, '当前单元没有草稿本。');
+          const options = unit?.scratchpad ?? {max_length:5000};
+          const scratchKey = unit ? unit.unit_id : 'TUTORIAL';
           if (typeof command.text !== 'string' || command.text.length > options.max_length) throw new HttpError(422, '草稿本格式或长度无效。');
           state.scratchpads ??= {};
           if (state.scratchpads[scratchKey] !== command.text) {
@@ -843,7 +897,7 @@ export class Engine {
       else if (action === 'remind_rest') {
         // 只由主试判断并点击；固定提醒语显示在被试电脑上，不发到眼镜。之后的休息自动标为“提醒后”。
         const key = this.restKey(s);
-        if (!key || key === 'TUTORIAL' || s.state.paused_at_ms !== null || s.state.rests?.[key]) throw new HttpError(409, '只有被试处于第二单元且本组尚未休息时才能提醒休息。');
+        if (!key || key === 'TUTORIAL' || key === 'PRACTICE' || s.state.paused_at_ms !== null || s.state.rests?.[key]) throw new HttpError(409, '只有被试处于第二单元且本组尚未休息时才能提醒休息。');
         const c = s.snapshot.content.in_unit_rest!, reminder = { id: randomUUID(), text: c.reminder_text, sent_at: this.iso(), sent_elapsed_ms: elapsed, displayed: false };
         ((s.state.rest_reminders ??= {})[key] ??= []).push(reminder);
         this.log(s, 'rest_reminder_sent', { reminder_id: reminder.id, text: reminder.text, reason, u2_elapsed_ms: this.u2Elapsed(s, key, elapsed), display_ms: c.reminder_display_ms, reminder_index: s.state.rest_reminders[key].length });
@@ -887,7 +941,7 @@ export class Engine {
       actions.push(s.state.paused_at_ms === null ? 'pause' : 'resume', 'stop');
       if (s.state.phase === 'BREAK' && s.state.paused_at_ms === null && s.snapshot.content.allow_break_skip !== false) actions.push('skip_break');
       const key = this.restKey(s);
-      if (key && key !== 'TUTORIAL' && s.state.paused_at_ms === null && !s.state.rests?.[key]) actions.push('remind_rest');
+      if (key && key !== 'TUTORIAL' && key !== 'PRACTICE' && s.state.paused_at_ms === null && !s.state.rests?.[key]) actions.push('remind_rest');
     }
     else actions.push('delete');
     if (!s.state.deleted) actions.push('debug_jump');
@@ -897,7 +951,7 @@ export class Engine {
     return { session_id: id, display_mode: this.sessionModes(s).length === 1 ? this.sessionModes(s)[0] : 'mixed', message_duration_ms: s.snapshot.content.message_duration_ms, participant_id: s.snapshot.participant.participant_id, version_label: s.snapshot.participant.version_label,
       is_debug: this.isDebug(s), copied_from: s.snapshot.participant.copied_from ?? null, current_title: this.view(id).title,
       deleted: !!s.state.deleted, deleted_at: s.state.deleted?.deleted_at ?? null, deletion_reason: s.state.deleted?.reason ?? null,
-      answered_fields: answered, total_fields: fields.length, reveal_observed: s.state.phase === 'UNIT' ? s.state.reveals[this.unit(s).unit_id]?.displayed ?? false : null,
+      answered_fields: answered, total_fields: fields.length, reveal_observed: this.pageUnit(s) ? s.state.reveals[this.pageUnit(s)!.unit_id]?.displayed ?? false : null,
       available_actions: actions, last_event_type: lastEvent?.event_type ?? null, last_event_at: lastEvent?.timestamp_iso ?? null, message_status: message?.status ?? t2Status ?? (this.assignment(s).condition === 'NONE' ? 'NONE' : 'not_triggered'), rest,
       phase: s.state.phase, stage_id: s.snapshot.content.stages[s.state.stage].stage_id, unit: s.state.unit + 1, status: s.state.status, paused: s.state.paused_at_ms !== null,
       started_at: s.state.started_at, ended_at: s.state.ended_at, elapsed_ms: s.state.ended_elapsed_ms ?? this.elapsed(s), remaining_ms: s.state.phase === 'BREAK' ? (s.state.break_until_ms === null ? this.breakMs(s) : Math.max(0, s.state.break_until_ms - (s.state.paused_at_ms ?? this.elapsed(s)))) : null,

@@ -250,6 +250,47 @@ def apply_plain_language(data, plain):
 plain = revisions.get('plain_language_revision')
 if plain:
     apply_plain_language(data, plain)
+
+
+def apply_practice(data, practice):
+    """正式任务前的两个练习单元：复用正式单元结构，不含消息；练习休息的窗口与时长写入 in_unit_rest。"""
+    assert data['content_version'] == practice['base_content_version'], data['content_version']
+    rest_config = data['in_unit_rest']
+    assert rest_config['duration_ms'] % 1000 == 0 and practice['rest']['practice_duration_ms'] % 1000 == 0
+    tokens = {'button': rest_config['button_label'], 'seconds': rest_config['duration_ms'] // 1000,
+              'practice_seconds': practice['rest']['practice_duration_ms'] // 1000, 'instruction': rest_config['instruction']}
+
+    def fill(text):
+        for key, value in tokens.items():
+            text = text.replace('{' + key + '}', str(value))
+        assert '{' not in text, text
+        return text
+
+    source_ref = {'file': '用户2026-10-30练习单元设计', 'revision_id': practice['revision_id']}
+    units = []
+    for spec in practice['units']:
+        fields = [field(f['id'], f['label'], f['type']) for f in spec['fields']]
+        assert set(spec['expected']) == {f['id'] for f in fields}
+        value = {'unit_id': spec['unit_id'], 'title': spec['title'], 'paragraphs': [fill(p) for p in spec['paragraphs']],
+                 'tables': [{**t, 'source_ref': source_ref} for t in spec['tables']], 'assets': [], 'fields': fields,
+                 'scoring': {'type': 'exact', 'expected': spec['expected'], 'source_ref': source_ref}, 'source_ref': source_ref,
+                 'scratchpad': {'label': '草稿本', 'placeholder': work['scratchpad_placeholder'], 'max_length': 20000}}
+        if 'reveal' in spec:
+            reveal = spec['reveal']
+            value['reveal'] = {'button_label': reveal['button_label'], 'paragraphs': reveal['paragraphs'], 'assets': [],
+                               'tables': [{**t, 'source_ref': source_ref} for t in reveal['tables']], 'source_ref': source_ref}
+            assert any(f"《{reveal['button_label']}》" in p for p in value['paragraphs']), spec['unit_id']
+        units.append(value)
+    assert [u['unit_id'] for u in units] == ['PRACTICE_U1', 'PRACTICE_U2']
+    data['practice'] = {'revision_id': practice['revision_id'], 'units': units}
+    data['in_unit_rest'].update(practice['rest'])
+    data['content_version'] = practice['content_version']
+    data['practice_revision_id'] = practice['revision_id']
+
+
+practice_revision = revisions.get('practice_revision')
+if practice_revision:
+    apply_practice(data, practice_revision)
 (ROOT / 'content/tasks.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
 
 
@@ -287,4 +328,4 @@ def build_stimuli(uncertain_text):
 
 stimuli = build_stimuli(data['survey_pages']['comprehension']['uncertain_option_text'])
 (ROOT / 'content/stimuli.json').write_text(json.dumps(stimuli, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
-print('已生成7组14单元、22张文本表格；最后应用8个单元的定稿完整替换和大白话文字修订，其余单元及实验配置保留；已生成14条眼镜消息。')
+print('已生成7组14单元、22张文本表格和2个练习单元；最后应用8个单元的定稿完整替换和大白话文字修订，其余单元及实验配置保留；已生成14条眼镜消息。')

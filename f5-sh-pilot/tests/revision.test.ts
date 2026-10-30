@@ -49,7 +49,7 @@ test('22张文本表格保留来源：未改部分沿用原文/V2，8个修改�
   assert.equal(tables.find(t => t.id === 'table-18')?.rows[3][4], '125元');
   // 日常工作语气修订：M1仍为筛选当前基本方案且可多选；补充资料以文件附件名呈现，题干按文件名引用。
   assert.ok(material.content.stages[0].units[0].paragraphs.some(p => p.includes('可以多选。没有合格方案时，选“没有合格方案”。')));
-  assert.equal(material.content.content_version, 'sh-v2-2026-10-29-v14');
+  assert.equal(material.content.content_version, 'sh-v2-2026-10-30-v15');
   for (const unit of material.content.stages.map(s => s.units[0])) {
     assert.match(unit.reveal!.button_label, /\.(xlsx|docx)$/);
     assert.ok(unit.paragraphs.some(p => p.includes(`《${unit.reveal!.button_label}》`)));

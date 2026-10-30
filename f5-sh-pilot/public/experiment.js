@@ -570,7 +570,8 @@ function unitPage(view) {
   const reveal = view.reveal ? attachment(view) : null;
   const answerPane = h('aside', { class: 'answer pane', 'aria-label': '填写' }, h('h2', { class: 'pane-title', text: '填写' }), buildForm(view, submit));
   pageNode.className = 'page page-unit';
-  pageNode.append(pageHeader(view, { tools }), h('div', { class: 'unit-grid' }, materials, answerPane));
+  // 教程与练习页不属于任务组，不显示“任务组 n / 7”进度。
+  pageNode.append(pageHeader(view, { tools, progress: !view.tutorial }), h('div', { class: 'unit-grid' }, materials, answerPane));
   actionsNode.append(submit);
   return { doc, reveal };
 }
