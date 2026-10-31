@@ -24,9 +24,12 @@ test('本机设备配置接入公共菜单；缺控制脚本或设备启动失�
     const entry = join(root, 'scripts/rayneo-control.mjs');
     await writeFile(entry, `import {writeFile} from 'node:fs/promises'; await writeFile(new URL('../.a5-local/args.json',import.meta.url),JSON.stringify(process.argv.slice(2)));`);
     assert.equal(await localDeviceControl(item, options), entry);
-    assert.equal(await localDeviceControl({ name: 'f5-sl-other' }, options), null);
+    assert.equal(await localDeviceControl({ name: 'f5-sl-pilot' }, options), entry, 'SL与SH共用同一副眼镜的设备启动链路');
+    assert.equal(await localDeviceControl({ name: 'f5-mh-other' }, options), null);
     await runDeviceControl(entry, 'start', 5188);
     assert.deepEqual(JSON.parse(await readFile(join(root, '.a5-local/args.json'), 'utf8')), ['start', '--no-open', '--port', '5188']);
+    await runDeviceControl(entry, 'status', undefined, 'f5-sl-pilot');
+    assert.deepEqual(JSON.parse(await readFile(join(root, '.a5-local/args.json'), 'utf8')), ['status', '--no-open', '--experiment', 'f5-sl-pilot']);
     await writeFile(entry, 'process.exit(5);');
     await assert.rejects(runDeviceControl(entry, 'start'), /不会回退为 Mock/);
   } finally { await rm(root, { recursive: true, force: true }); }
@@ -35,8 +38,8 @@ async function freePort() {
   const server = createNetServer(); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const port = server.address().port; await new Promise(resolve => server.close(resolve)); return port;
 }
-async function fixture(entry = undefined) {
-  const root = await mkdtemp(join(tmpdir(), 'a5 启动器测试 ')); const name = 'f5-sh-pilot', path = join(root, name), port = await freePort();
+async function fixture(entry = undefined, name = 'f5-sh-pilot') {
+  const root = await mkdtemp(join(tmpdir(), 'a5 启动器测试 ')); const path = join(root, name), port = await freePort();
   await mkdir(join(path, 'runtime'), { recursive: true }); await writeFile(join(path, 'runtime/admin-key'), 'local-test-only');
   await writeFile(join(path, 'package.json'), JSON.stringify({ name, type: 'module', scripts: { start: 'node server.mjs' }, a5: { launcher: { entry: 'server.mjs', port, health_path: '/api/health', admin_path: '/admin', admin_key_file: 'runtime/admin-key' } } }));
   await writeFile(join(path, 'server.mjs'), entry ?? `
@@ -44,7 +47,7 @@ import {createServer} from 'node:http';
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 let closing=false;
-const server=createServer((request,response)=>{response.setHeader('Content-Type','application/json');response.end(JSON.stringify({ok:true,experiment_id:'f5-sh-pilot'}));});
+const server=createServer((request,response)=>{response.setHeader('Content-Type','application/json');response.end(JSON.stringify({ok:true,experiment_id:'${name}'}));});
 const shutdown=()=>{if(closing)return;closing=true;server.close(async()=>{await writeFile(join(process.env.A5_RUNTIME_DIR,'closed'),'正常关闭');if(process.connected)process.disconnect();});};
 process.on('message',m=>{if(m?.type==='a5:shutdown')shutdown();});
 process.on('disconnect',shutdown);process.on('SIGTERM',shutdown);
@@ -126,6 +129,18 @@ test('异常关闭遗留的启动锁过期后可恢复', async () => {
 test('SH实际服务使用IPC正常关闭SQLite，不写入正式运行数据', async () => {
   const actual = pathToFileURL(join(repositoryRoot, 'f5-sh-pilot/src/server.ts')).href;
   const f = await fixture(`import ${JSON.stringify(actual)};`);
+  try {
+    assert.equal((await startExperiment(f.name, undefined, f.root)).status, 'running');
+    assert.equal((await fetch(`http://127.0.0.1:${f.port}/api/health`)).status, 200);
+    assert.equal((await stopExperiment(f.name, f.root)).status, 'stopped');
+    const { DatabaseSync } = await import('node:sqlite'); const db = new DatabaseSync(join(f.path, 'runtime/experiment.sqlite'));
+    try { assert.equal(db.prepare('SELECT count(*) AS count FROM sessions').get().count, 0); assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check, 'ok'); } finally { db.close(); }
+  } finally { await f.close(); }
+});
+
+test('SL实际服务使用IPC正常关闭SQLite，不写入正式运行数据', async () => {
+  const actual = pathToFileURL(join(repositoryRoot, 'f5-sl-pilot/src/server.ts')).href;
+  const f = await fixture(`import ${JSON.stringify(actual)};`, 'f5-sl-pilot');
   try {
     assert.equal((await startExperiment(f.name, undefined, f.root)).status, 'running');
     assert.equal((await fetch(`http://127.0.0.1:${f.port}/api/health`)).status, 200);

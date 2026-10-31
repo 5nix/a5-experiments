@@ -5,7 +5,7 @@ import { repositoryRoot } from './experiment-manager.mjs';
 
 // 本机配置存在时，公共菜单必须走设备启动链路，不能绕过它默认为 Mock。
 export async function localDeviceControl(item, { root = repositoryRoot, platform = process.platform } = {}) {
-  if (platform !== 'win32' || item.name !== 'f5-sh-pilot') return null;
+  if (platform !== 'win32' || !/^f5-(sh|sl)-/.test(item.name)) return null;
   try { await access(join(root, '.a5-local', 'device.json')); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
   const entry = join(root, 'scripts', 'rayneo-control.mjs');
@@ -13,9 +13,10 @@ export async function localDeviceControl(item, { root = repositoryRoot, platform
   return entry;
 }
 
-export async function runDeviceControl(entry, action, port) {
+export async function runDeviceControl(entry, action, port, experiment) {
   const args = [entry, action, '--no-open'];
   if (port !== undefined) args.push('--port', String(port));
+  if (experiment !== undefined) args.push('--experiment', experiment);
   await new Promise((resolve, reject) => {
     const child = spawn(process.execPath, args, { stdio: 'inherit', windowsHide: true });
     child.once('error', reject);

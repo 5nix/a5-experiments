@@ -37,11 +37,11 @@ async function perform(item, line) {
   const port = portText === undefined ? undefined : Number(portText);
   if (portText !== undefined && (!Number.isInteger(port) || port < 1 || port > 65535)) throw new Error('端口必须是1—65535的整数。');
   const deviceEntry = ['start', 'restart', 'status', 'mock'].includes(action) ? await localDeviceControl(item) : null;
-  if (action === 'start') { if (deviceEntry) await runDeviceControl(deviceEntry, 'start', port); else printStatus(await startExperiment(item.name, port)); if (process.stdin.isTTY) await openUrl(await adminUrl(item.name)); }
+  if (action === 'start') { if (deviceEntry) await runDeviceControl(deviceEntry, 'start', port, item.name); else printStatus(await startExperiment(item.name, port)); if (process.stdin.isTTY) await openUrl(await adminUrl(item.name)); }
   else if (action === 'stop') printStatus(await stopExperiment(item.name));
-  else if (action === 'restart') { const previous = await getStatus(item.name); await stopExperiment(item.name); if (deviceEntry) await runDeviceControl(deviceEntry, 'start', port ?? previous.port ?? undefined); else printStatus(await startExperiment(item.name, port ?? previous.port ?? undefined)); }
-  else if (action === 'status') { if (deviceEntry) await runDeviceControl(deviceEntry, 'status'); else printStatus(await getStatus(item.name)); }
-  else if (action === 'mock') { if (!deviceEntry) throw new Error('当前未配置独立 Mock 入口。'); await runDeviceControl(deviceEntry, 'mock'); if (process.stdin.isTTY) await openUrl(await adminUrl(item.name)); }
+  else if (action === 'restart') { const previous = await getStatus(item.name); await stopExperiment(item.name); if (deviceEntry) await runDeviceControl(deviceEntry, 'start', port ?? previous.port ?? undefined, item.name); else printStatus(await startExperiment(item.name, port ?? previous.port ?? undefined)); }
+  else if (action === 'status') { if (deviceEntry) await runDeviceControl(deviceEntry, 'status', undefined, item.name); else printStatus(await getStatus(item.name)); }
+  else if (action === 'mock') { if (!deviceEntry) throw new Error('当前未配置独立 Mock 入口。'); await runDeviceControl(deviceEntry, 'mock', undefined, item.name); if (process.stdin.isTTY) await openUrl(await adminUrl(item.name)); }
   else if (action === 'logs') console.log(await readLogs(item.name));
   else if (action === 'open') { const url = await adminUrl(item.name); console.log(`后台：${url}`); await openUrl(url); }
   else if (['check', 'doctor', 'install'].includes(action)) { if (action !== 'install' && !item.scripts?.[action]) throw new Error(`本实验未配置${action}命令。`); await runNpm(item, action); }

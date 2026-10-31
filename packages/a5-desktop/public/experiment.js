@@ -343,8 +343,9 @@ function tables(items, container) {
   // 正文中的表格按文档表格排版：标题＋细线表格，不套卡片。
   // 所有表格都以电子表格文件名呈现（标题＋.xlsx，绿色图标），内容仍直接显示在任务单中。
   for (const data of items ?? []) container.append(h('figure', { class: 'doc-table' },
-    h('figcaption', { 'aria-hidden': 'true' }, appIcon('sheet', 20), h('span', { text: /\.xlsx$/i.test(data.caption) ? data.caption : `${data.caption}.xlsx` })),
-    h('div', { class: 'table-scroll', tabIndex: 0, role: 'region', 'aria-label': data.caption }, tableNode(data, 'grid'))));
+    // 没有标题的表格（SL）不显示文件名条，直接显示表格。
+    data.caption ? h('figcaption', { 'aria-hidden': 'true' }, appIcon('sheet', 20), h('span', { text: /\.xlsx$/i.test(data.caption) ? data.caption : `${data.caption}.xlsx` })) : null,
+    h('div', { class: 'table-scroll', tabIndex: 0, role: 'region', 'aria-label': data.caption || '任务表格' }, tableNode(data, 'grid'))));
 }
 async function assets(items, container) {
   // 仅兼容旧快照的图片资料；新材料一律为文本表格。

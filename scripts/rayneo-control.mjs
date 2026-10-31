@@ -10,7 +10,10 @@ const execute = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const local = join(root, '.a5-local');
 const source = root;
-const name = 'f5-sh-pilot';
+// 眼镜与设备配置由 SH、SL 等静态桌面分项共用；默认 SH，启动器通过 --experiment 指定分项。
+const experimentIndex = process.argv.indexOf('--experiment');
+const name = experimentIndex === -1 ? 'f5-sh-pilot' : process.argv[experimentIndex + 1];
+if (!/^f5-(sh|sl)-[a-z0-9-]+$/.test(name ?? '')) throw new Error('--experiment 必须是 f5-sh-* 或 f5-sl-* 实验目录名。');
 const pkg = 'link.ironip.a5.rayneo.localfix';
 const configPath = join(local, 'device.json');
 const action = process.argv[2] ?? 'start';
@@ -69,7 +72,7 @@ async function device() {
   const localScrcpy = join(local, 'scrcpy', 'scrcpy.exe');
   let scrcpyPath = config.scrcpyPath;
   try { await execute(localScrcpy, ['--version'], { cwd: root, windowsHide: true, timeout: 5000 }); scrcpyPath = localScrcpy; } catch {}
-  return { adb, serial, port: requestedPort ?? config.port ?? 5173, packageName, scrcpyPath,
+  return { adb, serial, port: requestedPort ?? (name === 'f5-sh-pilot' ? config.port ?? 5173 : undefined), packageName, scrcpyPath,
     activityName: `${packageName}/link.ironip.a5.rayneo.MainActivity`,
     apkPath: config.apkPath ?? join(local, 'artifacts', 'a5-rayneo-display-localfix.apk'),
     apkSha256: config.apkSha256 ?? '' };
@@ -125,7 +128,7 @@ try {
     } else {
       process.env.A5_GLASSES_MODE = 'mock';
       for (const key of ['A5_RAYNEO_SERIAL', 'A5_ADB_PATH', 'A5_RAYNEO_PACKAGE', 'A5_SCRCPY_PATH', 'A5_RAYNEO_HOST_MODE']) delete process.env[key];
-      const started = await manager.startExperiment(name, requestedPort ?? (await readConfig()).port ?? 5173);
+      const started = await manager.startExperiment(name, requestedPort ?? (name === 'f5-sh-pilot' ? (await readConfig()).port ?? 5173 : undefined));
       console.log(`Mock 预演已启动：http://127.0.0.1:${started.port}/admin`);
     }
     const status = await manager.getStatus(name);
