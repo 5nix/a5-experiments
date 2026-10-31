@@ -35,14 +35,14 @@ export async function preflight() {
       if (!unit.fields.length || unit.fields.some(f => !f.required) || !['exact', 'items'].includes(unit.scoring.type)) materialErrors.push(`${unit.unit_id}必须配置完整必答字段和参考答案。`);
       if (unit.reveal && !unit.paragraphs.some(p => p.includes(`《${unit.reveal!.button_label}》`))) materialErrors.push(`${unit.unit_id}题干必须按文件名引用附件。`);
       for (const table of [...(unit.tables ?? []), ...(unit.reveal?.tables ?? [])]) {
-        if (!table.caption || !table.columns.length || !table.rows.length || table.rows.some(row => row.length !== table.columns.length)) materialErrors.push(`${unit.unit_id}文本表格结构无效。`);
+        if ((profile.attachments && !table.caption) || typeof table.caption !== 'string' || !table.columns.length || !table.rows.length || table.rows.some(row => row.length !== table.columns.length)) materialErrors.push(`${unit.unit_id}文本表格结构无效。`);
       }
     }
   }
   for (const stage of tasks.stages) for (const unit of stage.units) {
     if (!unit.fields.length || unit.fields.some(f => !f.required)) materialErrors.push(`${unit.unit_id}必须配置完整必答字段。`);
     for (const table of [...(unit.tables ?? []), ...(unit.reveal?.tables ?? [])]) {
-      if (!table.caption || !table.columns.length || !table.rows.length || table.rows.some(row => row.length !== table.columns.length)) materialErrors.push(`${unit.unit_id}文本表格结构无效。`);
+      if ((profile.attachments && !table.caption) || typeof table.caption !== 'string' || !table.columns.length || !table.rows.length || table.rows.some(row => row.length !== table.columns.length)) materialErrors.push(`${unit.unit_id}文本表格结构无效。`);
     }
     for (const asset of [...unit.assets, ...(unit.reveal?.assets ?? [])]) {
       if (!/^image\d+\.png$/.test(asset.id)) materialErrors.push(`${unit.unit_id}原图标识非法。`);

@@ -1,0 +1,29 @@
+{
+  "name": "f5-sl-pilot",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "a5": {
+    "launcher": {
+      "entry": "src/server.ts",
+      "port": 5174,
+      "health_path": "/api/health",
+      "admin_path": "/admin"
+    }
+  },
+  "scripts": {
+    "dev": "node --watch src/server.ts",
+    "start": "node src/server.ts",
+    "doctor": "node src/doctor.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test && npm run doctor",
+    "test": "node --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@a5/desktop": "*",
+    "@a5/glasses": "*"
+  }
+}

@@ -1,0 +1,383 @@
+{
+  "content_version": "sl-presentation-2026-10-31-v1",
+  "stimuli": [
+    {
+      "stage_id": "SL01",
+      "message_id": "N01",
+      "text": "请于今天12:00到一楼服务台领取工作餐。",
+      "duration_ms": 11000,
+      "question": "工作餐在哪里领取？",
+      "options": [
+        {
+          "id": "A",
+          "text": "一楼服务台"
+        },
+        {
+          "id": "B",
+          "text": "二楼服务台"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 一楼服务台",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL01",
+      "message_id": "A01",
+      "text": "今天中午要领工作餐，可以帮你设置取餐提醒。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你做什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "设置取餐提醒"
+        },
+        {
+          "id": "B",
+          "text": "查询取餐地点"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 设置取餐提醒",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL02",
+      "message_id": "N02",
+      "text": "领取胸牌的地点改到一楼前台，时间不变。",
+      "duration_ms": 11000,
+      "question": "胸牌改到哪里领取？",
+      "options": [
+        {
+          "id": "A",
+          "text": "三楼前台"
+        },
+        {
+          "id": "B",
+          "text": "一楼前台"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 一楼前台",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL02",
+      "message_id": "A02",
+      "text": "明天彩排要带电脑，可以帮你记到待办里。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你做什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "设置充电提醒"
+        },
+        {
+          "id": "B",
+          "text": "记到待办里"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 记到待办里",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL03",
+      "message_id": "N03",
+      "text": "眼镜样机的寄回截止时间提前到16:00。",
+      "duration_ms": 11000,
+      "question": "样机寄回的截止时间提前到几点？",
+      "options": [
+        {
+          "id": "A",
+          "text": "16:00"
+        },
+        {
+          "id": "B",
+          "text": "15:00"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 16:00",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL03",
+      "message_id": "A03",
+      "text": "今天要寄回样机，可以帮你预约快递上门取件。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你做什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "预约快递上门取件"
+        },
+        {
+          "id": "B",
+          "text": "设置寄件时间提醒"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 预约快递上门取件",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL04",
+      "message_id": "N04",
+      "text": "明天现场准备的到场时间推迟到12:45。",
+      "duration_ms": 11000,
+      "question": "明天的到场时间推迟到几点？",
+      "options": [
+        {
+          "id": "A",
+          "text": "13:00"
+        },
+        {
+          "id": "B",
+          "text": "12:45"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 12:45",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL04",
+      "message_id": "A04",
+      "text": "明天要去创新中心，可以帮你预约出租车。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你做什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "查询公交路线"
+        },
+        {
+          "id": "B",
+          "text": "预约出租车"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 预约出租车",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL05",
+      "message_id": "N05",
+      "text": "工作人员合影的安排已发到你的邮箱。",
+      "duration_ms": 11000,
+      "question": "合影安排发到了哪里？",
+      "options": [
+        {
+          "id": "A",
+          "text": "你的邮箱"
+        },
+        {
+          "id": "B",
+          "text": "项目群"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 你的邮箱",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL05",
+      "message_id": "A05",
+      "text": "明天要拍工作人员合影，可以帮你加日程提醒。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你做什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "加日程提醒"
+        },
+        {
+          "id": "B",
+          "text": "整理合影名单"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 加日程提醒",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL06",
+      "message_id": "N06",
+      "text": "资料分装请在12:00前完成，出发时带上。",
+      "duration_ms": 11000,
+      "question": "资料分装要在几点前完成？",
+      "options": [
+        {
+          "id": "A",
+          "text": "11:30"
+        },
+        {
+          "id": "B",
+          "text": "12:00"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 12:00",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL06",
+      "message_id": "A06",
+      "text": "资料袋要带到活动现场，可以在出门前提醒你。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你做什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "预约搬运推车"
+        },
+        {
+          "id": "B",
+          "text": "出门前提醒带上"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 出门前提醒带上",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL07",
+      "message_id": "N07",
+      "text": "请在12:15前出发去创新中心集合。",
+      "duration_ms": 11000,
+      "question": "最晚几点出发？",
+      "options": [
+        {
+          "id": "A",
+          "text": "12:15"
+        },
+        {
+          "id": "B",
+          "text": "12:30"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "A",
+      "source_answer": "A 12:15",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    },
+    {
+      "stage_id": "SL07",
+      "message_id": "A07",
+      "text": "12:45到创新中心，可以帮你规划路线。",
+      "duration_ms": 11000,
+      "question": "眼镜提出可以帮你做什么？",
+      "options": [
+        {
+          "id": "A",
+          "text": "查看实时路况"
+        },
+        {
+          "id": "B",
+          "text": "规划路线"
+        },
+        {
+          "id": "C",
+          "text": "不记得或不确定"
+        }
+      ],
+      "correct_option": "B",
+      "source_answer": "B 规划路线",
+      "source_ref": {
+        "file": "docs/执行单-f5-sl-pilot-2026-10-31.md",
+        "revision_id": "a5-sl-pilot-sheet-2026-10-31"
+      }
+    }
+  ]
+}

@@ -122,6 +122,9 @@ export function normalize(fields: Field[], raw: Record<string, unknown>): Record
   return normalized;
 }
 
+/** 参考答案（exact/items 评分）；staffing 评分没有逐项参考答案。 */
+export const expectedAnswers = (unit: Unit): Record<string, unknown> => 'expected' in unit.scoring ? unit.scoring.expected : {};
+
 /** 逐项判分的每项对错；非 items 评分返回 null。 */
 export function itemResults(unit: Unit, answer: Record<string, unknown>): Record<string, boolean> | null {
   if (unit.scoring.type !== 'items') return null;

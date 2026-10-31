@@ -1,0 +1,12 @@
+{
+  "experiment_id": "f5-sl-pilot",
+  "stage_prefix": "SL",
+  "title": "SL 静态低负荷",
+  "attachments": false,
+  "remaining": [
+    "雷鸟显示端真机部署与实际硬件呈现验证",
+    "T0（填完第3个作答项后2秒）与10秒休息窗口的现场使用效果验证",
+    "任务材料的实际耗时与负荷复测",
+    "Windows现场实机验证"
+  ]
+}

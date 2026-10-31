@@ -337,7 +337,7 @@ function prose(texts, container) {
 function tableNode(data, cls) {
   const head = h('tr', {}, data.columns.map(name => h('th', { scope: 'col', text: name })));
   const body = data.rows.map(cells => h('tr', {}, cells.map(value => h('td', { text: String(value) }))));
-  return h('table', { class: cls }, h('caption', { text: data.caption }), h('thead', {}, head), h('tbody', {}, body));
+  return h('table', { class: cls }, data.caption ? h('caption', { text: data.caption }) : null, h('thead', {}, head), h('tbody', {}, body));
 }
 function tables(items, container) {
   // 正文中的表格按文档表格排版：标题＋细线表格，不套卡片。
