@@ -4,18 +4,24 @@
 
 | 位置 | 职责 |
 | --- | --- |
-| src/server.ts | 启动、监听、运行目录、定时轮询与正常停止 |
-| src/app.ts | HTTP路由、被试token、静态白名单与CSP |
-| src/engine.ts | 状态机、快照、校验、调度、确认及操作去重 |
-| src/store.ts | SQLite事务、状态、只追加事件及干预记录 |
-| src/config.ts / config-files.ts | JSON校验、目录扫描、选择和导入落盘 |
-| src/tasks.ts | 内容载入、输入归一化与评分 |
-| src/export.ts | CSV、JSONL、快照、清单和ZIP |
-| src/adapters/ | Mock与雷鸟USB适配器 |
-| src/device-control.ts / voice-overlay-guard.ts | 主机恢复、手动通知、scrcpy及语音覆盖防护 |
-| content/ / config/ | 材料、修订及预分配，均不直接公开为静态资源 |
-| public/ | 原生ES module；被试端与后台样式隔离 |
-| rayneo-display/ | Android双眼显示、音频、设备去重账本 |
+代码在公共包中，SH与SL共用；本目录只保留SH的材料、预分配、文档和测试。
+
+| 位置 | 职责 |
+| --- | --- |
+| src/server.ts、src/doctor.ts（本目录） | 分项入口：设置分项目录后加载公共包的服务与自检 |
+| config/experiment.json（本目录） | 分项声明：experiment_id、任务组前缀、是否有附件、F标记单元 |
+| content/ / config/（本目录） | 材料、修订及预分配，均不直接公开为静态资源 |
+| packages/a5-desktop/src/server.ts | 启动、监听、运行目录、定时轮询与正常停止 |
+| packages/a5-desktop/src/app.ts | HTTP路由、被试token、静态白名单与CSP |
+| packages/a5-desktop/src/engine.ts | 状态机、快照、校验、调度、确认及操作去重 |
+| packages/a5-desktop/src/store.ts | SQLite事务、状态、只追加事件及干预记录 |
+| packages/a5-desktop/src/config.ts / config-files.ts | JSON校验、目录扫描、选择和导入落盘 |
+| packages/a5-desktop/src/tasks.ts | 内容载入、输入归一化与评分 |
+| packages/a5-desktop/src/export.ts | CSV、JSONL、快照、清单和ZIP |
+| packages/a5-desktop/src/device-control.ts / voice-overlay-guard.ts | 主机恢复、手动通知、scrcpy及语音覆盖防护 |
+| packages/a5-desktop/public/ | 原生ES module；被试端与后台样式隔离 |
+| packages/a5-glasses/src/contracts.ts、adapters/ | 眼镜通信契约；Mock与雷鸟USB适配器 |
+| packages/a5-glasses/rayneo-display/ | Android双眼显示、音频、设备去重账本 |
 
 Node.js 24+使用内置SQLite；其他运行依赖见package.json。公共启动器管理进程生命周期，不介入实验规则。
 

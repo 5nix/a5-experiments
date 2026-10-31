@@ -11,9 +11,9 @@ Windows存在 `.a5-local/device.json` 时，SH的启动与重启调用scripts/ra
 - 完整platform-tools放到 `.a5-local/android/platform-tools/`，优先使用其中adb.exe。
 - 完整scrcpy放到 `.a5-local/scrcpy/`，可执行文件、DLL和server文件保持齐全。
 - 创建device.json，最小配置为 `{"packageName":"link.ironip.a5.rayneo.localfix"}`，按实际安装包填写。单副已授权设备可自动保存serial；多设备须明确指定。
-- 已有工具可填写adbPath、scrcpyPath。显示端尚未安装时先按 [Android构建说明](../f5-sh-pilot/rayneo-display/BUILDING.md) 部署，或配置apkPath与apkSha256供启动脚本校验安装。
+- 已有工具可填写adbPath、scrcpyPath。显示端尚未安装时先按 [Android构建说明](../packages/a5-glasses/rayneo-display/BUILDING.md) 部署，或配置apkPath与apkSha256供启动脚本校验安装。
 
-工具和设备凭据不提交Git。修改路径或绑定后重启服务加载；换设备须先结束原会话。应用内守护、通知和硬件验收见 [RAYNEO.md](../f5-sh-pilot/RAYNEO.md)。
+工具和设备凭据不提交Git。修改路径或绑定后重启服务加载；换设备须先结束原会话。应用内守护、通知和硬件验收见 [RAYNEO.md](../f5-sh-pilot/RAYNEO.md)。SL与SH共用同一副眼镜和同一份设备配置：启动器对f5-sh-*、f5-sl-*都走设备启动链路，并向rayneo-control.mjs传 `--experiment`；SL默认端口5174，不读取device.json里的port（该项只对SH生效）。同一副眼镜同一时间只能绑定一个活跃会话，SH与SL不能同时做真机会话。
 
 ## 新实验接入
 
@@ -36,7 +36,7 @@ entry相对实验目录，以当前Node版本运行。实验提供自己的start
 
 服务约定：
 
-- 从PORT读取端口。SH默认监听0.0.0.0供局域网使用，健康检查和控制通道使用127.0.0.1；start可指定其他端口。
+- 从PORT读取端口。SH、SL默认监听0.0.0.0供局域网使用，健康检查和控制通道使用127.0.0.1；start可指定其他端口。
 - 健康接口包含ok:true和对应experiment_id，通过后才报告运行中。
 - A5_RUNTIME_DIR与A5_EXPORT_DIR分别指向该实验数据和导出，不与其他实验共用。
 - SH直接打开/admin；其他实验如声明admin_key_file，凭据文件路径必须在实验目录内。

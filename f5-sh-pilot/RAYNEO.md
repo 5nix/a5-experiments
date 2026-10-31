@@ -11,7 +11,7 @@
 
 更换同款眼镜也须重新完成驱动识别、USB调试授权、APK安装和设备绑定。先结束原会话、停止服务，修改device.json的serial为新设备序列号；或移除旧serial，在仅连接一副已授权设备时让启动器重新绑定。不能把已有真机会话转到新设备或Mock。
 
-原包ID为link.ironip.a5.rayneo，本机修复版为link.ironip.a5.rayneo.localfix。A5_RAYNEO_PACKAGE必须与安装包一致。构建、签名与覆盖安装见 [BUILDING.md](rayneo-display/BUILDING.md)。卸载或清除数据会丢失去重账本；升级应同签名覆盖并保留数据，正式会话期间不部署。
+原包ID为link.ironip.a5.rayneo，本机修复版为link.ironip.a5.rayneo.localfix。A5_RAYNEO_PACKAGE必须与安装包一致。构建、签名与覆盖安装见 [BUILDING.md](../packages/a5-glasses/rayneo-display/BUILDING.md)。卸载或清除数据会丢失去重账本；升级应同签名覆盖并保留数据，正式会话期间不部署。
 
 ## 运行配置
 

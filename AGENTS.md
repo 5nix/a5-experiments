@@ -8,7 +8,7 @@
 
 ## 仓库结构
 
-npm 工作区单仓，每套实验是根目录下的 `f5-<sh|sl|mh|ml>-<版本>` 目录（当前只有 `f5-sh-pilot`），代码、内容、配置、测试和数据都在各自目录内。根目录只放共用启动器 `scripts/`、`tsconfig.base.json` 和工作区配置。`reffers/` 是外部参考项目，不属于工作区。
+npm 工作区单仓，每套实验是根目录下的 `f5-<sh|sl|mh|ml>-<版本>` 目录（当前有 `f5-sh-pilot`、`f5-sl-pilot`），内容、预分配、配置、测试和数据在各自目录内；共用代码在 `packages/`：`@a5/glasses`（眼镜契约、Mock/雷鸟适配器、Android 显示端 `rayneo-display/`，所有分项发消息都走它）和 `@a5/desktop`（静态桌面模拟：状态机、存储、导出、被试端与后台页，SH、SL 共用）。以后的动态行走分项只依赖 `@a5/glasses`。根目录只放共用启动器 `scripts/`、`tsconfig.base.json` 和工作区配置。`reffers/` 是外部参考项目，不属于工作区。
 
 ## 常用命令
 
@@ -18,12 +18,13 @@ npm 工作区单仓，每套实验是根目录下的 `f5-<sh|sl|mh|ml>-<版本>`
 npm ci                                              # 仓库根目录安装
 npm run check                                       # 全部工作区 typecheck + test + doctor，外加启动器测试
 npm run start --workspace=f5-sh-pilot               # 启动服务，后台 http://127.0.0.1:5173/admin
+npm run start --workspace=f5-sl-pilot               # SL，后台 http://127.0.0.1:5174/admin
 npm run dev --workspace=f5-sh-pilot                 # node --watch
 npm run test:launcher                               # 仅启动器测试
 npm run launcher                                    # 交互式启动器（同 .command/.bat）
 ```
 
-在 `f5-sh-pilot/` 内：
+在 `f5-sh-pilot/`（`f5-sl-pilot/` 同理，生成脚本只有各自的 `build_task_content.py`，SL 没有 `extract_materials.py`）内：
 
 ```sh
 npm run typecheck
@@ -35,16 +36,18 @@ python scripts/build_task_content.py                # 编辑 content/revisions.j
 python scripts/extract_materials.py                 # 仅从 docs/ 重新提取原始材料（content/source、participants.source.json），不动 tasks/stimuli
 ```
 
-手动启动测试服务必须隔离数据：`PORT=5174 A5_RUNTIME_DIR=... A5_EXPORT_DIR=...`，不要复用 `runtime/` 中的正式被试数据库。`qa/browser/` 的 Playwright 脚本不在 check 内，部分已过时（无教程流程、旧选择器），不能视为当前验收通过的依据。
+手动启动测试服务必须隔离数据：`PORT=5199 A5_RUNTIME_DIR=... A5_EXPORT_DIR=...`，不要复用 `runtime/` 中的正式被试数据库。`qa/browser/` 的 Playwright 脚本不在 check 内，部分已过时（无教程流程、旧选择器），不能视为当前验收通过的依据。
 
-Android 显示端（`f5-sh-pilot/rayneo-display/`，JDK 21）：
+Android 显示端（`packages/a5-glasses/rayneo-display/`，JDK 21）：
 
 ```sh
 ./gradlew :app:assembleDebug :app:lintDebug --console=plain
 node scripts/verify-apk-runtime.mjs app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 架构要点（f5-sh-pilot）
+## 架构要点（@a5/desktop，以 f5-sh-pilot 为例）
+
+以下 `src/`、`public/` 路径均指 `packages/a5-desktop/`，适配器指 `packages/a5-glasses/src/adapters/`。分项目录里只有入口 `src/server.ts`/`doctor.ts`（设置 `A5_EXPERIMENT_ROOT` 后加载公共包）、`config/experiment.json`（experiment_id、任务组前缀、是否有附件、F 标记单元）、`content/`、`config/`、文档与测试；公共包不得写死某个分项的编号或规则，分项差异只能通过 `experiment.json` 或 `content/tasks.json` 的字段声明（如 SL 的 `t0_trigger`、`items` 评分、`tutorial_notice_after_practice`），且新字段缺省时必须保持 SH 原有行为。
 
 电脑端是 Node 服务 + 原生 ES module 浏览器页面（`public/experiment.*` 被试端、`public/admin.*` 主试后台，样式隔离）；眼镜端是雷鸟 X3 Pro Android 应用，经 USB/ADB 与服务通信。
 
@@ -58,11 +61,11 @@ node scripts/verify-apk-runtime.mjs app/build/outputs/apk/debug/app-debug.apk
 
 ## 必须遵守的约束
 
-- 实验规则以 `f5-sh-pilot/DECISIONS.md` 为准；`docs/` 下是原始需求，与 DECISIONS 冲突时以 DECISIONS 为准。不得为让测试或脚本通过而改动正式预分配（P01—P28）或绕过确认规则。
+- 实验规则以各分项的 `DECISIONS.md` 为准（SL 只写与 SH 不同的规则，其余沿用 SH）；`docs/` 下是原始需求，与 DECISIONS 冲突时以 DECISIONS 为准。不得为让测试或脚本通过而改动正式预分配（P01—P28）或绕过确认规则。
 - 不伪造证据：Mock 不生成真机证据，未知时间留空，drawn 不等于光学出光，cue_started 不等于听到，`pilot_ready`/`real_presentation_verified` 不自动置真。
 - `f5-sh-pilot/docs/PRD.md` 必须保持 LF 换行（启动时做 SHA-256 完整性校验）；`.bat` 使用 CRLF，其余 LF。
 - 新实验接入启动器需在其 `package.json` 声明 `a5.launcher`（entry/port/health_path/admin_path），健康接口返回 `ok:true` 与 `experiment_id`，并支持 IPC `{ "type": "a5:shutdown" }` 正常关闭；详见 `scripts/README.md`。
 
 ## 文档索引
 
-`f5-sh-pilot/` 下：ARCHITECTURE（状态机/事务/消息/时钟）、DECISIONS（实验规则）、CONFIG（配置 JSON 格式）、API（鉴权、view、导出结构）、FRONTEND、RAYNEO（设备协议与守护）、TESTING（验证范围与待现场验收项）、`rayneo-display/BUILDING.md`。
+`f5-sh-pilot/` 下：ARCHITECTURE（状态机/事务/消息/时钟，含源码位置对照表）、DECISIONS（实验规则）、CONFIG（配置 JSON 格式）、API（鉴权、view、导出结构）、FRONTEND、RAYNEO（设备协议与守护）、TESTING（验证范围与待现场验收项）；`f5-sl-pilot/` 下：README、DECISIONS（与 SH 不同的规则）；`packages/a5-glasses/rayneo-display/BUILDING.md`。这些文档里写的 `src/`、`public/`、`rayneo-display/` 路径按上面的对照表理解。

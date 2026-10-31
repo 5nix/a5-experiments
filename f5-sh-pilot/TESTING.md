@@ -28,7 +28,7 @@ check包含TypeScript检查、实验/协议/设备/配置测试、材料与启�
 | 主机控制 | 进行中手动通知、忙碌保护、恢复诊断、语音权限备份、退出等待 |
 | 启动器 | 目录发现、端口冲突、跨菜单状态、USB绑定、不回退Mock、IPC正常关闭 |
 
-Android修改另运行assembleDebug、lintDebug、运行类定义检查和签名验证，方法见 [BUILDING.md](rayneo-display/BUILDING.md)。qa/StyleRenderCheck.java支持独立离屏排版检查：双眼样式、15/16字换行、行高、全部刺激、默认通知及超长拒绝；独立QA不能占用正式消息通道。
+Android修改另运行assembleDebug、lintDebug、运行类定义检查和签名验证，方法见 [BUILDING.md](../packages/a5-glasses/rayneo-display/BUILDING.md)。qa/StyleRenderCheck.java支持独立离屏排版检查：双眼样式、15/16字换行、行高、全部刺激、默认通知及超长拒绝；独立QA不能占用正式消息通道。
 
 ## 浏览器回归
 
