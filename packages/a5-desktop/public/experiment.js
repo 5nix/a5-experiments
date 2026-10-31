@@ -461,6 +461,17 @@ function buildForm(view, submitButton) {
     lastDraft = text; command('draft', { answer: value }).catch(showError);
   };
   form.flushDraft = () => { if (dirty) { dirty = false; saveDraft(); } };
+  // SL的T0：U1作答项失去焦点（单选/多选以选中为准）后上报完整答案，由服务端数非空作答项并决定触发；只在服务端要求时上报。
+  let lastBlur = '';
+  const reportBlur = () => {
+    if (!current?.report_answer_blur || !ready) return;
+    const value = answer(form), text = JSON.stringify(value);
+    if (text === lastBlur) return;
+    lastBlur = text; lastDraft = text; dirty = false;
+    command('answers_blur', { answer: value }).then(view => { if (view && current) current.report_answer_blur = view.report_answer_blur; }).catch(showError);
+  };
+  form.addEventListener('focusout', event => { if (event.target.matches?.('input.textbox')) reportBlur(); });
+  form.addEventListener('change', event => { if (event.target.matches?.('input[type=radio],input[type=checkbox],select')) reportBlur(); });
   // 每次输入都按顺序保存完整草稿；零值与空值保持不同。
   form.addEventListener('input', saveDraft);
   form.addEventListener('change', event => {

@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Store } from './store.ts';
-import type { EventRecord, Intervention, Session, Phase } from './store.ts';
-import { hash, InputError, normalize, score } from './tasks.ts';
+import type { EventRecord, Intervention, Session, Phase, T0State } from './store.ts';
+import { hash, InputError, itemResults, normalize, score } from './tasks.ts';
 import type { DataTable, Field, Snapshot, Unit } from './tasks.ts';
 import type { Condition, DisplayMode, GlassesAdapter, GlassesEvent, GlassesReceipt, Participant, ParticipantConfig } from './contracts.ts';
 import { profile, stageIds } from './profile.ts';
@@ -272,7 +272,12 @@ export class Engine {
   debugTargets(s: Session) {
     const targets: { id: string; label: string; phase: Phase; stage: number; unit: number }[] = [{ id: 'INTRO', label: '情景导入', phase: 'INTRO', stage: 0, unit: 0 }];
     const tutorial: typeof targets = [{id:'TUTORIAL_INTRO',label:'工作台、草稿本与时间',phase:'TUTORIAL_INTRO',stage:0,unit:0}];
-    if (s.snapshot.content.practice) s.snapshot.content.practice.units.forEach((unit, i) => tutorial.push({ id: `TUTORIAL_UNIT${i + 1}`, label: unit.title, phase: i === 0 ? 'TUTORIAL_UNIT1' : 'TUTORIAL_UNIT2', stage: 0, unit: 0 }));
+    if (s.snapshot.content.practice) {
+      s.snapshot.content.practice.units.forEach((unit, i) => tutorial.push({ id: `TUTORIAL_UNIT${i + 1}`, label: unit.title, phase: i === 0 ? 'TUTORIAL_UNIT1' : 'TUTORIAL_UNIT2', stage: 0, unit: 0 }));
+      if (s.snapshot.content.tutorial_notice_after_practice && this.sessionModes(s).includes('confirm_until_ack')) tutorial.push(
+        {id:'TUTORIAL_NOTICE',label:'阅读并确认练习消息',phase:'TUTORIAL_NOTICE',stage:0,unit:0},
+        {id:'TUTORIAL_CHECK',label:'消息理解题',phase:'TUTORIAL_CHECK',stage:0,unit:0});
+    }
     else {
       // 旧快照：休息练习页与消息练习仍按原流程。
       if(s.snapshot.content.in_unit_rest) tutorial.push({id:'TUTORIAL_REST',label:'第二单元中的休息',phase:'TUTORIAL_REST',stage:0,unit:0});
@@ -299,6 +304,7 @@ export class Engine {
     if (!target) throw new HttpError(422, '调试跳转目标无效。');
     this.log(s, 'debug_jump', { from_phase: s.state.phase, from_stage: s.state.stage, from_unit: s.state.unit, target: target.id, actor, reason, is_debug: this.isDebug(s) });
     this.interruptRests(s, 'debug_jump');
+    for (const [k, p] of Object.entries(s.state.t0 ?? {})) if (!p.fired) delete s.state.t0![k];
     s.state.stage = target.stage; s.state.unit = target.unit; s.state.paused_at_ms = null;
     s.state.status = target.phase === 'COMPLETED' ? 'completed' : 'active';
     s.state.ended_at = target.phase === 'COMPLETED' ? this.iso() : null;
@@ -359,6 +365,11 @@ export class Engine {
     const s = this.session(id);
     if (s.state.status !== 'active' || s.state.paused_at_ms !== null) return;
     const now = this.elapsed(s);
+    const t0Due = Object.values(s.state.t0 ?? {}).filter(p => !p.fired && p.due_ms !== null && now >= p.due_ms);
+    if (t0Due.length) {
+      this.store.tx(() => { for (const p of t0Due) this.fireT0(s, p); this.store.save(s); });
+      this.dispatch(id);
+    }
     const resting = Object.values(s.state.rests ?? {}).filter(r => r.status === 'resting' && ((r.t2_due_ms !== null && !r.t2_fired && now >= r.t2_due_ms) || now >= r.until_ms!));
     if (resting.length) {
       this.store.tx(() => {
@@ -402,12 +413,49 @@ export class Engine {
     if (!blocked && this.deviceUnavailable(s)) blocked = 'device_not_ready_at_t2';
     if (!blocked) { this.schedule(s, due, 'T2'); return; }
     // 第5秒时眼镜不可用：不覆盖、不排队、不补发，记录失败原因；与“T2未触发”区分。
+    this.recordDeferredFailure(s, a, due, blocked, 'T2', `${a.stage_id}_U2`, { rest_id: r.rest_id });
+  }
+  private recordDeferredFailure(s: Session, a: Participant['stages'][number], due: EventRecord, blocked: string, timing: Timing, unitId: string, extra: Record<string, unknown>) {
     const message: Intervention = { session_id: s.id, participant_id: s.snapshot.participant.participant_id, stage_id: a.stage_id, message_id: a.message_id!, condition: a.condition,
       device_id: s.state.device_id, device_events: [], request_id: randomUUID(), status: 'failed', source: this.deliverySource(s), duration_ms: this.mode(s) === 'confirm_until_ack' ? 8500 : s.snapshot.content.message_duration_ms,
       display_mode: this.mode(s), t_event: due.timestamp_iso, event_elapsed_ms: due.elapsed_ms, t_send: null, t_ack: null, t_display: null, t_hide: null,
       display_time_source: 'unavailable', receipt: null, error: blocked };
     this.store.intervention(message); s.state.attention.push(`${a.stage_id}:${blocked}`);
-    this.log(s, 'message_failed', { request_id: message.request_id, reason: blocked, retry: false, timing: 'T2', trigger_event_id: due.event_id, rest_id: r.rest_id }, { stage_id: a.stage_id, unit_id: `${a.stage_id}_U2`, condition: a.condition });
+    this.log(s, 'message_failed', { request_id: message.request_id, reason: blocked, retry: false, timing, trigger_event_id: due.event_id, ...extra }, { stage_id: a.stage_id, unit_id: unitId, condition: a.condition });
+  }
+  /** SL的T0：U1非空作答项首次达到阈值（失去焦点）后delay_ms送达；到点时眼镜不可用则只记失败，不补发。 */
+  private fireT0(s: Session, p: T0State) {
+    p.fired = true;
+    const a = s.snapshot.participant.stages.find(x => x.stage_id === p.key), cfg = s.snapshot.content.t0_trigger;
+    if (!a || !cfg || !a.condition.endsWith('T0') || this.store.interventions(s.id).some(m => m.stage_id === a.stage_id)) return;
+    const now = this.elapsed(s);
+    const due = this.log(s, 't0_due', { planned_elapsed_ms: p.due_ms, delay_ms: cfg.delay_ms, actual_delay_ms: now - p.threshold_elapsed_ms, threshold_event_id: p.threshold_event_id }, { stage_id: a.stage_id, unit_id: `${a.stage_id}_U1`, condition: a.condition });
+    let blocked: string | null = null;
+    if (this.assignment(s).stage_id !== a.stage_id) blocked = 'stage_changed_before_t0';
+    else { try { this.requirePreviousMessageFinished(s); } catch { blocked = 'previous_message_pending'; } }
+    if (!blocked && this.deviceUnavailable(s)) blocked = 'device_not_ready_at_t0';
+    if (!blocked) { this.schedule(s, due, 'T0'); return; }
+    this.recordDeferredFailure(s, a, due, blocked, 'T0', `${a.stage_id}_U1`, { threshold_event_id: p.threshold_event_id });
+  }
+  /** U1作答项失去焦点：保存草稿，并在非空作答项数量首次达到阈值时记录并排定T0（之后清空或修改不重算）。 */
+  private answersBlur(s: Session, command: Command, client: unknown) {
+    const cfg = s.snapshot.content.t0_trigger, state = s.state;
+    if (!cfg || state.phase !== 'UNIT' || state.unit !== 0) throw new HttpError(409, '当前页面没有此操作。');
+    const raw = command.answer;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || JSON.stringify(raw).length > 20000) throw new HttpError(422, '答案格式无效。');
+    const fields = this.fields(s);
+    if (Object.keys(raw).some(k => !fields.some(f => f.id === k))) throw new HttpError(422, '答案包含不属于本题的字段。');
+    const key = this.draftKey(s);
+    if (JSON.stringify(state.drafts[key]) !== JSON.stringify(raw)) { state.drafts[key] = raw; this.log(s, 'answer_changed', { raw_answer: raw, client }); }
+    const stageId = this.assignment(s).stage_id;
+    if (state.t0?.[stageId]) return;
+    const filled = fields.filter(f => Array.isArray(raw[f.id]) ? (raw[f.id] as unknown[]).length > 0 : raw[f.id] !== undefined && raw[f.id] !== null && String(raw[f.id]).trim() !== '');
+    if (filled.length < cfg.min_answers) return;
+    const event = this.log(s, 'answers_threshold_reached', { answered_fields: filled.length, field_ids: filled.map(f => f.id), min_answers: cfg.min_answers, trigger: 'blur', client, semantics: 'nonempty_fields_first_reached_threshold_on_blur' });
+    const triggers = this.assignment(s).condition.endsWith('T0');
+    const entry: T0State = { key: stageId, threshold_event_id: event.event_id, threshold_elapsed_ms: event.elapsed_ms, due_ms: triggers ? event.elapsed_ms + cfg.delay_ms : null, fired: !triggers };
+    (state.t0 ??= {})[stageId] = entry;
+    if (triggers) { this.log(s, 't0_planned', { planned_elapsed_ms: entry.due_ms, delay_ms: cfg.delay_ms, message_id: this.assignment(s).message_id, threshold_event_id: event.event_id }); this.wake(s.id, cfg.delay_ms); }
   }
   private interruptRests(s: Session, reason: string) {
     for (const r of Object.values(s.state.rests ?? {})) if (r.status !== 'done') {
@@ -493,6 +541,7 @@ export class Engine {
       } : null,
       remaining_ms: 0, break_countdown_started: false, can_continue: true, can_skip_break: false,
       // 当前任务组说明卡中的情景时间，被试端在任务栏固定显示；旧快照无此字段时为null。
+      report_answer_blur: state.phase === 'UNIT' && state.unit === 0 && !!content.t0_trigger && !state.t0?.[content.stages[state.stage].stage_id],
       tutorial: state.phase.startsWith('TUTORIAL'), scene_time: content.stages[state.stage]?.scene_time ?? null, rest: this.restView(s) };
     if (state.paused_at_ms !== null) return { ...base, phase: 'PAUSED', title: '实验已暂停，请等待实验员。', can_continue: false };
     if (state.phase.startsWith('TUTORIAL') && !this.practiceUnit(s)) {
@@ -679,11 +728,12 @@ export class Engine {
       if (state.phase === 'TUTORIAL_UNIT2' && !['returning', 'done'].includes(state.rests?.PRACTICE?.status ?? '')) {
         throw new InputError(`请先点击右上角的“${s.snapshot.content.in_unit_rest!.button_label}”按钮练习一次休息，回到任务后再提交。`);
       }
-      this.log(s, 'tutorial_answer_submitted', { unit_id: unit.unit_id, raw_answer: raw, normalized_answer: normalized, score: score(unit, normalized), client });
+      this.log(s, 'tutorial_answer_submitted', { unit_id: unit.unit_id, raw_answer: raw, normalized_answer: normalized, score: score(unit, normalized), ...(unit.scoring.type === 'items' ? { item_results: itemResults(unit, normalized) } : {}), client });
       if (state.phase === 'TUTORIAL_UNIT1') this.transition(s, 'TUTORIAL_UNIT2');
       else {
         if (state.rests?.PRACTICE?.status === 'returning') this.restReturned(s, { source: 'practice_submitted_before_return_report' });
-        this.log(s, 'tutorial_completed', { practice: true }); this.transition(s, 'INTRO');
+        if (s.snapshot.content.tutorial_notice_after_practice && this.sessionModes(s).includes('confirm_until_ack')) this.transition(s, 'TUTORIAL_NOTICE');
+        else { this.log(s, 'tutorial_completed', { practice: true }); this.transition(s, 'INTRO'); }
       }
       return undefined;
     } catch (error) {
@@ -732,6 +782,7 @@ export class Engine {
       } else {
         if (!state.displayed[state.page_token]) throw new HttpError(409, '当前页面尚未报告实际可见。');
         if (command.action === 'rest_click') this.restClick(s, client);
+        else if (command.action === 'answers_blur') this.answersBlur(s, command, client);
         else if (command.action === 'rest_displayed') this.restDisplayed(s, client);
         else if (command.action === 'rest_return_displayed') this.restReturned(s, client);
         else if (command.action === 'rest_reminder_displayed') {
@@ -814,7 +865,8 @@ export class Engine {
                 if (state.unit === 0) this.guardTrigger(s, 'T1');
                 const unit = this.unit(s); const value = score(unit, normalized);
                 this.log(s, 'submission_recorded', { raw_answer: raw, normalized_answer: normalized });
-                this.log(s, 'unit_scored', { score: value });
+                const items = itemResults(unit, normalized);
+                this.log(s, 'unit_scored', items ? { score: value, max_score: unit.fields.length, item_results: items } : { score: value });
                 if (profile.f_candidate_unit && unit.unit_id === profile.f_candidate_unit && !this.store.events(id).some(e => e.event_type === 'F_candidate')) this.log(s, 'F_candidate', { semantics: 'first_submission', criterion_version: 'user-2026-10-18', score: value, complete: true });
                 if (state.unit === 0) { this.log(s, 'unit_transition_started', { from: unit.unit_id, to: unit.unit_id.replace('U1', 'U2') }); state.unit = 1; this.transition(s, 'UNIT'); }
                 else {
@@ -909,6 +961,7 @@ export class Engine {
           if (r.t2_due_ms !== null && !r.t2_fired) { r.t2_due_ms += paused; this.wake(id, r.t2_due_ms - elapsed); }
           this.wake(id, r.until_ms! - elapsed);
         }
+        for (const p of Object.values(s.state.t0 ?? {})) if (!p.fired && p.due_ms !== null) { p.due_ms += paused; this.wake(id, p.due_ms - elapsed); }
         s.state.paused_at_ms = null;
       } else if (action === 'stop') {
         this.interruptRests(s, 'session_stopped');

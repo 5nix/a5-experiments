@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
-const require = createRequire(new URL('../../../package.json', import.meta.url));
+const require = createRequire(new URL('../../../../package.json', import.meta.url));
 const { unzipSync } = require('fflate');
 const apk = process.argv[2];
 if (!apk) throw new Error('请提供 APK 路径。');

@@ -18,7 +18,8 @@ export interface Unit {
   tables?: DataTable[];
   scratchpad?: { label: string; placeholder: string; max_length: number };
   reveal?: { button_label: string; paragraphs: string[]; assets?: Asset[]; tables?: DataTable[] };
-  scoring: { type: 'exact'; expected: Record<string, unknown> } | { type: 'staffing'; positions: Record<string, { qualification: string; start: string }>; personnel: { name: string; qualifications: string[]; arrival: string; absent: boolean }[] };
+  /** exact：整单元全对记1分；items：逐项判分，单元得分为答对项数（SL）。 */
+  scoring: { type: 'exact'; expected: Record<string, unknown> } | { type: 'items'; expected: Record<string, unknown> } | { type: 'staffing'; positions: Record<string, { qualification: string; start: string }>; personnel: { name: string; qualifications: string[]; arrival: string; absent: boolean }[] };
 }
 export interface TaskContent {
   schema_version: string; content_version: string;
@@ -39,6 +40,10 @@ export interface TaskContent {
   /** 旧快照的组间休息；V2起取消，由 in_unit_rest 替代。 */
   break_ms?: number; break_start_on_display?: boolean; allow_break_skip?: boolean;
   in_unit_rest?: InUnitRest;
+  /** T0触发规则。缺省为SH的“U1附件首次实际呈现（E）”；answers_filled为U1非空作答项数量首次达到min_answers（以失去焦点计）后delay_ms送达（SL）。 */
+  t0_trigger?: { type: 'answers_filled'; min_answers: number; delay_ms: number };
+  /** 练习单元之后是否追加“阅读并确认练习消息→理解题”（仅含持续确认模式的会话生效）。 */
+  tutorial_notice_after_practice?: boolean;
 }
 /** V2：每组第二单元内由被试自主发起一次休息；T2在休息页实际可见后延迟送达。 */
 export interface InUnitRest {
@@ -117,7 +122,15 @@ export function normalize(fields: Field[], raw: Record<string, unknown>): Record
   return normalized;
 }
 
+/** 逐项判分的每项对错；非 items 评分返回 null。 */
+export function itemResults(unit: Unit, answer: Record<string, unknown>): Record<string, boolean> | null {
+  if (unit.scoring.type !== 'items') return null;
+  const expected = normalize(unit.fields, unit.scoring.expected);
+  return Object.fromEntries(unit.fields.map(f => [f.id, JSON.stringify(answer[f.id]) === JSON.stringify(expected[f.id])]));
+}
+
 export function score(unit: Unit, answer: Record<string, unknown>): number {
+  if (unit.scoring.type === 'items') return Object.values(itemResults(unit, answer)!).filter(Boolean).length;
   if (unit.scoring.type === 'exact') {
     const expected = normalize(unit.fields, unit.scoring.expected);
     return unit.fields.every(f => JSON.stringify(answer[f.id]) === JSON.stringify(expected[f.id])) ? 1 : 0;

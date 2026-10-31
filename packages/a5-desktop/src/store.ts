@@ -17,10 +17,13 @@ export interface State {
   rest_feedback?: Record<string, { id: string; text: string }>;
   rest_reminders?: Record<string, RestReminder[]>;
   u2_displayed_elapsed?: Record<string, number>;
+  /** U1作答数量触发T0（SL）：键为任务组编号，每组最多一次；存在即表示已达到阈值。 */
+  t0?: Record<string, T0State>;
   paused_at_ms: number | null; attention: string[]; status: 'active' | 'completed' | 'aborted';
   device_id?: string; delivery_source?: 'mock' | 'device';
   deleted?: { deleted_at: string; reason: string };
 }
+export interface T0State { key: string; threshold_event_id: string; threshold_elapsed_ms: number; due_ms: number | null; fired: boolean }
 export interface RestState {
   rest_id: string; key: string; status: 'requested' | 'resting' | 'returning' | 'done';
   click_event_id: string; requested_elapsed_ms: number; after_reminder: boolean;
