@@ -5,13 +5,13 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { unzipSync, strFromU8 } from 'fflate';
-import { Store } from '../src/store.ts';
-import { Engine } from '../src/engine.ts';
-import { loadMaterial } from '../src/tasks.ts';
-import { readJson } from '../src/preflight.ts';
-import { exportData } from '../src/export.ts';
-import { createApp } from '../src/app.ts';
-import type { DisplayMode, GlassesAdapter, GlassesEvent, GlassesRequest, ParticipantConfig } from '../src/contracts.ts';
+import { Store } from '@a5/desktop/store.ts';
+import { Engine } from '@a5/desktop/engine.ts';
+import { loadMaterial } from '@a5/desktop/tasks.ts';
+import { readJson } from '@a5/desktop/preflight.ts';
+import { exportData } from '@a5/desktop/export.ts';
+import { createApp } from '@a5/desktop/app.ts';
+import type { DisplayMode, GlassesAdapter, GlassesEvent, GlassesRequest, ParticipantConfig } from '@a5/desktop/contracts.ts';
 
 async function fixture(mode: DisplayMode = 'confirm_until_ack', { legacyTutorial = false } = {}) {
   const store = new Store(':memory:'); const epoch = Date.parse('2026-10-20T00:00:00Z'); let clock = epoch, confirms = 0, cancels = 0, rejectConfirm = false;

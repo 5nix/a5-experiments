@@ -5,11 +5,11 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { unzipSync, strFromU8 } from 'fflate';
-import { Store } from '../src/store.ts';
-import { Engine } from '../src/engine.ts';
-import { loadMaterial } from '../src/tasks.ts';
-import { exportData } from '../src/export.ts';
-import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
+import { Store } from '@a5/desktop/store.ts';
+import { Engine } from '@a5/desktop/engine.ts';
+import { loadMaterial } from '@a5/desktop/tasks.ts';
+import { exportData } from '@a5/desktop/export.ts';
+import { MockGlassesAdapter } from '@a5/glasses/adapters/mock-glasses.ts';
 import { testConfig } from './fixtures.ts';
 
 const material = await loadMaterial();

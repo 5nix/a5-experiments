@@ -8,6 +8,7 @@
     "node": ">=24"
   },
   "workspaces": [
+    "packages/*",
     "f5-*-*"
   ],
   "scripts": {

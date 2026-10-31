@@ -1,6 +1,6 @@
-import { readJson } from '../src/preflight.ts';
-import type { TaskContent, Unit } from '../src/tasks.ts';
-import type { Stimulus } from '../src/contracts.ts';
+import { readJson } from '@a5/desktop/preflight.ts';
+import type { TaskContent, Unit } from '@a5/desktop/tasks.ts';
+import type { Stimulus } from '@a5/desktop/contracts.ts';
 
 /** stimuli.json 里的来源记录 source_answer 不属于运行时类型。 */
 export type StimulusRow = Stimulus & { source_answer: string };

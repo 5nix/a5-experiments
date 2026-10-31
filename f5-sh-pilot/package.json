@@ -23,7 +23,7 @@
     "test": "node --test tests/*.test.ts"
   },
   "dependencies": {
-    "fflate": "^0.8.3",
-    "qrcode-generator": "^2.0.4"
+    "@a5/desktop": "*",
+    "@a5/glasses": "*"
   }
 }

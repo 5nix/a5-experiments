@@ -1,0 +1,21 @@
+{
+  "name": "@a5/desktop",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "A5 静态桌面模拟公共包：状态机、存储、导出、被试端与后台页",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@a5/glasses": "*",
+    "fflate": "^0.8.3",
+    "qrcode-generator": "^2.0.4"
+  }
+}

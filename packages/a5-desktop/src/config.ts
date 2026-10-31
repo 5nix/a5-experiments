@@ -1,4 +1,5 @@
-import { conditions as conditionList, stageIds } from './contracts.ts';
+import { conditions as conditionList } from './contracts.ts';
+import { profile, stageIds } from './profile.ts';
 import type { Stimulus } from './contracts.ts';
 
 type ObjectValue = Record<string, unknown>;
@@ -8,8 +9,8 @@ const conditions = new Set<string>(conditionList);
 /** 接收未知 JSON；仅报错，绝不重新分配或修正源数据。 */
 export function validateConfig(input: unknown, stimuli: Stimulus[]): string[] {
   const errors: string[] = [];
-  if (!object(input) || input.experiment_id !== 'f5-sh-pilot' || input.schema_version !== '1.0' || !Array.isArray(input.participants)) {
-    return ['配置必须包含 experiment_id=f5-sh-pilot、schema_version=1.0 和 participants 数组。'];
+  if (!object(input) || input.experiment_id !== profile.experiment_id || input.schema_version !== '1.0' || !Array.isArray(input.participants)) {
+    return [`配置必须包含 experiment_id=${profile.experiment_id}、schema_version=1.0 和 participants 数组。`];
   }
   if (input.participants.length === 0 && input.debug_participant === undefined) errors.push('被试列表不能为空。');
   if (input.debug_participant !== undefined) {
@@ -29,7 +30,7 @@ export function validateConfig(input: unknown, stimuli: Stimulus[]): string[] {
     seen.add(id);
     const stages = new Set<string>();
     for (const stage of participant.stages) {
-      if (!object(stage) || typeof stage.stage_id !== 'string' || !stageIds.includes(stage.stage_id as typeof stageIds[number])) {
+      if (!object(stage) || typeof stage.stage_id !== 'string' || !stageIds.includes(stage.stage_id)) {
         errors.push(`被试 ${id} 包含非法任务。`);
         continue;
       }

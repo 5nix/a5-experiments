@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { experimentRoot, readJson } from './preflight.ts';
+import { experimentRoot, readJson } from './profile.ts';
 import type { Participant, Stimulus, StageId } from './contracts.ts';
 
 export interface Field {

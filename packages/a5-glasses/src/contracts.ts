@@ -1,47 +1,11 @@
-export const stageIds = ['SH01', 'SH02', 'SH03', 'SH04', 'SH05', 'SH06', 'SH07'] as const;
-export type StageId = typeof stageIds[number];
-export const conditions = ['N-T0', 'N-T1', 'N-T2', 'A-T0', 'A-T1', 'A-T2', 'NONE'] as const;
-export type Condition = typeof conditions[number];
+// 眼镜通信契约：消息请求、回执、设备事件与适配器接口。各实验分项（静态桌面、动态行走等）共用。
 export type DisplayMode = 'legacy_8500' | 'tone_8500' | 'confirm_until_ack';
-
-export interface Assignment {
-  stage_id: StageId;
-  condition: Condition;
-  message_id: string | null;
-  display_mode?: DisplayMode;
-}
-
-export interface Participant {
-  participant_id: string;
-  version_label?: string;
-  debug?: boolean;
-  copied_from?: string;
-  stages: Assignment[];
-}
-
-export interface ParticipantConfig {
-  experiment_id: string;
-  schema_version: string;
-  participants: Participant[];
-  debug_participant?: Participant;
-  config_name?: string;
-}
-
-export interface Stimulus {
-  stage_id: StageId;
-  message_id: string;
-  text: string;
-  duration_ms: number;
-  question: string;
-  options: { id: string; text: string }[];
-  correct_option: string;
-}
 
 export interface GlassesRequest {
   request_id: string;
   session_id: string;
   participant_id: string;
-  stage_id: StageId;
+  stage_id: string;
   message_id: string;
   text: string;
   /** 固定模式的目标时长；confirm_until_ack忽略此值，不设置自动隐藏。8500保留兼容旧快照。 */

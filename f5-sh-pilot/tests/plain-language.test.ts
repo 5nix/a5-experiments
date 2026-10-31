@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadMaterial } from '../src/tasks.ts';
-import type { TaskContent } from '../src/tasks.ts';
-import { readJson } from '../src/preflight.ts';
+import { loadMaterial } from '@a5/desktop/tasks.ts';
+import type { TaskContent } from '@a5/desktop/tasks.ts';
+import { readJson } from '@a5/desktop/preflight.ts';
 import { maskContent, maskStimuli } from './text-mask.ts';
 import type { StimulusRow } from './text-mask.ts';
 

@@ -3,7 +3,8 @@ import { Store } from './store.ts';
 import type { EventRecord, Intervention, Session, Phase } from './store.ts';
 import { hash, InputError, normalize, score } from './tasks.ts';
 import type { DataTable, Field, Snapshot, Unit } from './tasks.ts';
-import type { DisplayMode, GlassesAdapter, GlassesEvent, GlassesReceipt, Participant, ParticipantConfig } from './contracts.ts';
+import type { Condition, DisplayMode, GlassesAdapter, GlassesEvent, GlassesReceipt, Participant, ParticipantConfig } from './contracts.ts';
+import { profile, stageIds } from './profile.ts';
 import { validateConfig } from './config.ts';
 
 export class HttpError extends Error {
@@ -18,17 +19,10 @@ export interface Command {
 export type Material = Omit<Snapshot, 'participant' | 'config_hash' | 'content_hash'>;
 
 /** 固定的 000 调试配置（V2分配表V1列，覆盖全部7种条件），不随正式被试预分配或后台导入变化。 */
+const DEBUG_CONDITIONS: [Condition, string | null][] = [['N-T0', 'N01'], ['N-T1', 'N02'], ['A-T0', 'A03'], ['A-T1', 'A04'], ['N-T2', 'N05'], ['A-T2', 'A06'], ['NONE', null]];
 const DEBUG_PARTICIPANT: Participant = {
   participant_id: '000', version_label: 'V1', debug: true, copied_from: '001',
-  stages: [
-    { stage_id: 'SH01', condition: 'N-T0', message_id: 'N01' },
-    { stage_id: 'SH02', condition: 'N-T1', message_id: 'N02' },
-    { stage_id: 'SH03', condition: 'A-T0', message_id: 'A03' },
-    { stage_id: 'SH04', condition: 'A-T1', message_id: 'A04' },
-    { stage_id: 'SH05', condition: 'N-T2', message_id: 'N05' },
-    { stage_id: 'SH06', condition: 'A-T2', message_id: 'A06' },
-    { stage_id: 'SH07', condition: 'NONE', message_id: null },
-  ],
+  stages: stageIds.map((stage_id, i) => ({ stage_id, condition: DEBUG_CONDITIONS[i][0], message_id: DEBUG_CONDITIONS[i][1] })),
 };
 type Timing = 'T0' | 'T1' | 'T2';
 const ACTIVE_REST = ['requested', 'resting'];
@@ -567,7 +561,7 @@ export class Engine {
   }
   private dispatch(id: string) {
     for (const message of this.store.interventions(id).filter(m => m.status === 'scheduled')) {
-      const s = this.session(id); const stimulus = message.text ? {text:message.text, stage_id:'SH01' as const, message_id:message.message_id} : s.snapshot.stimuli.find(m => m.stage_id === message.stage_id && m.message_id === message.message_id)!;
+      const s = this.session(id); const stimulus = message.text ? {text:message.text, stage_id:`${profile.stage_prefix}01`, message_id:message.message_id} : s.snapshot.stimuli.find(m => m.stage_id === message.stage_id && m.message_id === message.message_id)!;
       const context = { stage_id: message.stage_id, unit_id: null, condition: message.condition };
       this.store.tx(() => {
         message.status = 'send_requested'; message.t_send = this.iso(); this.store.intervention(message);
@@ -821,7 +815,7 @@ export class Engine {
                 const unit = this.unit(s); const value = score(unit, normalized);
                 this.log(s, 'submission_recorded', { raw_answer: raw, normalized_answer: normalized });
                 this.log(s, 'unit_scored', { score: value });
-                if (unit.unit_id === 'SH05_U1' && !this.store.events(id).some(e => e.event_type === 'F_candidate')) this.log(s, 'F_candidate', { semantics: 'first_submission', criterion_version: 'user-2026-10-18', score: value, complete: true });
+                if (profile.f_candidate_unit && unit.unit_id === profile.f_candidate_unit && !this.store.events(id).some(e => e.event_type === 'F_candidate')) this.log(s, 'F_candidate', { semantics: 'first_submission', criterion_version: 'user-2026-10-18', score: value, complete: true });
                 if (state.unit === 0) { this.log(s, 'unit_transition_started', { from: unit.unit_id, to: unit.unit_id.replace('U1', 'U2') }); state.unit = 1; this.transition(s, 'UNIT'); }
                 else {
                   const a = this.assignment(s), restKey = a.stage_id;

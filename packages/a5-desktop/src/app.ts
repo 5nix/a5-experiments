@@ -1,16 +1,20 @@
 import { createServer } from 'node:http';
 import qrcode from 'qrcode-generator';
-import { lanAddresses } from '../../scripts/network.mjs';
+import { lanAddresses } from '../../../scripts/network.mjs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Engine, HttpError } from './engine.ts';
 import { exportData } from './export.ts';
 import { InputError } from './tasks.ts';
-import { experimentRoot, preflight } from './preflight.ts';
+import { preflight } from './preflight.ts';
+import { profile, stageIds } from './profile.ts';
 import { ConfigFiles } from './config-files.ts';
 import type { DeviceControl } from './device-control.ts';
+
+/** 被试端与后台页随公共包提供；与实验分项目录无关。 */
+const publicRoot = resolve(import.meta.dirname, '../public');
 
 export async function body(request: IncomingMessage): Promise<any> {
   if (!request.headers['content-type']?.startsWith('application/json')) throw new HttpError(415, '请使用application/json请求。');
@@ -39,9 +43,9 @@ export function createApp(engine: Engine, exportRoot: string, deviceControl?: De
       if (method === 'GET' && ['/', '/admin', '/experiment', '/app.css', '/desktop.css', '/admin.js', '/experiment.js', '/favicon.svg', '/favicon-admin.svg', '/favicon.ico'].includes(path)) {
         const files: Record<string, string> = { '/': 'admin.html', '/admin': 'admin.html', '/experiment': 'experiment.html', '/app.css': 'app.css', '/desktop.css': 'desktop.css', '/admin.js': 'admin.js', '/experiment.js': 'experiment.js', '/favicon.svg': 'favicon.svg', '/favicon-admin.svg': 'favicon-admin.svg', '/favicon.ico': 'favicon.svg' };
         const name = files[path]; const mime = name.endsWith('.html') ? 'text/html' : name.endsWith('.js') ? 'text/javascript' : name.endsWith('.svg') ? 'image/svg+xml' : 'text/css';
-        response.writeHead(200, { 'Content-Type': `${mime}; charset=utf-8` }); response.end(await readFile(join(experimentRoot, 'public', name))); return;
+        response.writeHead(200, { 'Content-Type': `${mime}; charset=utf-8` }); response.end(name.endsWith('.html') ? (await readFile(join(publicRoot, name), 'utf8')).replaceAll('{{EXPERIMENT_ID}}', profile.experiment_id).replaceAll('{{STAGE_RANGE}}', `${stageIds[0]}—${stageIds.at(-1)}`).replaceAll('{{STAGE_EXAMPLE}}', stageIds[2]).replaceAll('{{STAGE_PREFIX}}', profile.stage_prefix) : await readFile(join(publicRoot, name))); return;
       }
-      if (method === 'GET' && path === '/api/health') { json(response, { ok: true, repository: 'a5-experiments', experiment_id: 'f5-sh-pilot', phase: 'core', mock_only: engine.adapter.getStatus().source === 'mock', real_presentation_verified: false, adapter: engine.adapter.getStatus() }); return; }
+      if (method === 'GET' && path === '/api/health') { json(response, { ok: true, repository: 'a5-experiments', experiment_id: profile.experiment_id, phase: 'core', mock_only: engine.adapter.getStatus().source === 'mock', real_presentation_verified: false, adapter: engine.adapter.getStatus() }); return; }
       if (path.startsWith('/api/admin/') || path === '/api/preflight') {
         if (method === 'GET' && path === '/api/admin/network') {
           const port = request.socket.localPort!;

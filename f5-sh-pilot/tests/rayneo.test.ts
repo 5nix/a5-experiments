@@ -7,14 +7,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { unzipSync, strFromU8 } from 'fflate';
-import { RayNeoGlassesAdapter, rayneoProtocol } from '../src/adapters/rayneo-glasses.ts';
-import type { GlassesEvent, GlassesRequest, ParticipantConfig, GlassesAdapter } from '../src/contracts.ts';
-import { Engine } from '../src/engine.ts';
-import { Store } from '../src/store.ts';
-import { loadMaterial } from '../src/tasks.ts';
-import { readJson } from '../src/preflight.ts';
+import { RayNeoGlassesAdapter, rayneoProtocol } from '@a5/glasses/adapters/rayneo-glasses.ts';
+import type { GlassesEvent, GlassesRequest, ParticipantConfig, GlassesAdapter } from '@a5/desktop/contracts.ts';
+import { Engine } from '@a5/desktop/engine.ts';
+import { Store } from '@a5/desktop/store.ts';
+import { loadMaterial } from '@a5/desktop/tasks.ts';
+import { readJson } from '@a5/desktop/preflight.ts';
 import { testConfig } from './fixtures.ts';
-import { exportData } from '../src/export.ts';
+import { exportData } from '@a5/desktop/export.ts';
 
 // 使用真实 TCP 帧测试电脑协议；此服务不替代 Android 或光学验收。
 async function bridge() {

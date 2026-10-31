@@ -5,14 +5,14 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { unzipSync, strFromU8 } from 'fflate';
-import { Store } from '../src/store.ts';
-import { Engine } from '../src/engine.ts';
-import { loadMaterial } from '../src/tasks.ts';
-import { readJson } from '../src/preflight.ts';
+import { Store } from '@a5/desktop/store.ts';
+import { Engine } from '@a5/desktop/engine.ts';
+import { loadMaterial } from '@a5/desktop/tasks.ts';
+import { readJson } from '@a5/desktop/preflight.ts';
 import { testConfig } from './fixtures.ts';
-import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
-import { exportData } from '../src/export.ts';
-import type { ParticipantConfig } from '../src/contracts.ts';
+import { MockGlassesAdapter } from '@a5/glasses/adapters/mock-glasses.ts';
+import { exportData } from '@a5/desktop/export.ts';
+import type { ParticipantConfig } from '@a5/desktop/contracts.ts';
 
 const material = await loadMaterial();
 /** 旧快照兼容：V2之前的会话快照没有 in_unit_rest，仍走组间30秒休息。 */

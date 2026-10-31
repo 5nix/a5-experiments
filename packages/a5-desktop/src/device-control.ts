@@ -4,6 +4,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { randomUUID } from 'node:crypto';
 import { Engine, HttpError } from './engine.ts';
 import type { DisplayMode, GlassesEvent, GlassesReceipt, GlassesRequest } from './contracts.ts';
+import { profile } from './profile.ts';
 import { VoiceOverlayGuard } from './voice-overlay-guard.ts';
 
 const execute = promisify(execFile);
@@ -199,7 +200,7 @@ export class DeviceControl {
     this.engine.requireFixedDuration(mode);
     const record: DebugRecord = { request_id: input.request_id, text: input.text, device_id: state.device_id, created_at: new Date(this.now()).toISOString(), display_mode:mode,status: 'sending', error: null, events: [] };
     this.save(record);
-    const request: GlassesRequest = { request_id: record.request_id, session_id: `device-debug:${randomUUID()}`, participant_id: 'DEVICE_DEBUG', stage_id: 'SH01', message_id: 'DEVICE_DEBUG', text: record.text, duration_ms: mode === 'confirm_until_ack' ? 8500 : 11000, display_mode:mode, device_id: state.device_id };
+    const request: GlassesRequest = { request_id: record.request_id, session_id: `device-debug:${randomUUID()}`, participant_id: 'DEVICE_DEBUG', stage_id: `${profile.stage_prefix}01`, message_id: 'DEVICE_DEBUG', text: record.text, duration_ms: mode === 'confirm_until_ack' ? 8500 : 11000, display_mode:mode, device_id: state.device_id };
     try {
       const receipt = await this.engine.adapter.send(request);
       const current = JSON.parse((this.engine.store.db.prepare('SELECT data FROM device_debug_requests WHERE request_id=?').get(record.request_id) as { data: string }).data) as DebugRecord;

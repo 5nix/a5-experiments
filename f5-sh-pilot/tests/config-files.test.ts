@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, copyFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Store } from '../src/store.ts';
-import { Engine } from '../src/engine.ts';
-import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
-import { loadMaterial } from '../src/tasks.ts';
-import { readJson, experimentRoot } from '../src/preflight.ts';
-import { createApp } from '../src/app.ts';
-import { ConfigFiles } from '../src/config-files.ts';
-import type { ParticipantConfig } from '../src/contracts.ts';
+import { Store } from '@a5/desktop/store.ts';
+import { Engine } from '@a5/desktop/engine.ts';
+import { MockGlassesAdapter } from '@a5/glasses/adapters/mock-glasses.ts';
+import { loadMaterial } from '@a5/desktop/tasks.ts';
+import { readJson, experimentRoot } from '@a5/desktop/preflight.ts';
+import { createApp } from '@a5/desktop/app.ts';
+import { ConfigFiles } from '@a5/desktop/config-files.ts';
+import type { ParticipantConfig } from '@a5/desktop/contracts.ts';
 
 test('六份通知配置保持28人7组分配，000三种模式均来自文件且为V1列七组', async () => {
   const material = await loadMaterial();

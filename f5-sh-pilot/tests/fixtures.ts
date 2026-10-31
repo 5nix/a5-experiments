@@ -1,5 +1,5 @@
-import { readJson } from '../src/preflight.ts';
-import type { ParticipantConfig } from '../src/contracts.ts';
+import { readJson } from '@a5/desktop/preflight.ts';
+import type { ParticipantConfig } from '@a5/desktop/contracts.ts';
 
 /** 测试夹具：从默认28人预分配取V1—V4各一人，改编号为001—004，沿用旧用例的编号习惯。 */
 export async function testConfig(): Promise<ParticipantConfig> {

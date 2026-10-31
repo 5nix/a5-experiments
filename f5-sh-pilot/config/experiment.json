@@ -1,0 +1,7 @@
+{
+  "experiment_id": "f5-sh-pilot",
+  "stage_prefix": "SH",
+  "title": "SH 静态高负荷",
+  "attachments": true,
+  "f_candidate_unit": "SH05_U1"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@a5/glasses",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "A5 眼镜通信公共包：契约、Mock/雷鸟适配器与 Android 显示端（rayneo-display）",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { Engine } from '../src/engine.ts';
-import { Store } from '../src/store.ts';
-import { loadMaterial } from '../src/tasks.ts';
-import { readJson } from '../src/preflight.ts';
-import { DeviceControl } from '../src/device-control.ts';
-import { createApp } from '../src/app.ts';
-import type { GlassesAdapter, GlassesEvent, GlassesRequest, ParticipantConfig } from '../src/contracts.ts';
+import { Engine } from '@a5/desktop/engine.ts';
+import { Store } from '@a5/desktop/store.ts';
+import { loadMaterial } from '@a5/desktop/tasks.ts';
+import { readJson } from '@a5/desktop/preflight.ts';
+import { DeviceControl } from '@a5/desktop/device-control.ts';
+import { createApp } from '@a5/desktop/app.ts';
+import type { GlassesAdapter, GlassesEvent, GlassesRequest, ParticipantConfig } from '@a5/desktop/contracts.ts';
 
 /** 建立独立内存数据库和可控设备替身，避免测试触碰真实眼镜。 */
 async function fixture() {

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { validateConfig } from '../src/config.ts';
-import { MockGlassesAdapter } from '../src/adapters/mock-glasses.ts';
-import { preflight, readJson } from '../src/preflight.ts';
-import type { GlassesRequest, ParticipantConfig, Stimulus } from '../src/contracts.ts';
+import { validateConfig } from '@a5/desktop/config.ts';
+import { MockGlassesAdapter } from '@a5/glasses/adapters/mock-glasses.ts';
+import { preflight, readJson } from '@a5/desktop/preflight.ts';
+import type { GlassesRequest, ParticipantConfig, Stimulus } from '@a5/desktop/contracts.ts';
 
 const { stimuli } = await readJson<{ stimuli: Stimulus[] }>('content/stimuli.json');
 const pilot = await readJson<ParticipantConfig>('config/participants.pilot.json');
